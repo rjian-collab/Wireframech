@@ -127,7 +127,8 @@
 <div id="flash"></div>
 <div id="touch">
   <div class="stick" id="stickBase"></div><div class="knob" id="stickKnob"></div>
-  <div class="btn rope" id="bRopeL"><b>機動</b><small id="sRopeL">—</small></div>
+  <div class="stick" id="stickBase2"></div><div class="knob" id="stickKnob2"></div>
+  <div class="btn rope" id="bRopeL"><b>左索</b><small id="sRopeL">—</small></div>
   <div class="btn rope" id="bRopeR"><b>右索</b><small id="sRopeR">—</small></div>
   <div class="btn fire" id="bFire"><b id="lFire">射擊</b><small id="sFire">1000</small></div>
   <div id="swapHint">▲ 上甩切換 · <span id="swapCur">主武</span></div>
@@ -158,15 +159,14 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.1</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.2</div>
   <ul>
     <li>空島戰場：<b>掉到最下面就是虛空</b>；發光平台是補給島，站上去補燃料和彈藥</li>
     <li><b>藍色搖桿</b>：移動</li>
-    <li><b>機動鈕</b>（搖桿右上）：準星附近有勾點＝<b style="color:#63e6ff">青色</b>，按住射出左鋼索；沒有勾點＝<b style="color:#ffb040">橘色</b>，按住推進（往拖曳方向飛）。勾住時按著拖曳＝上收索、下放索、左右擺盪，拖出外圈＝邊吊邊推進</li>
-    <li><b style="color:#63e6ff">右索</b>：按住＝勾住；按著拖曳＝瞄準</li>
+    <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
     <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">往上一甩＝切換主武／副武</b></li>
-    <li>鋼索鈕上會顯示勾點距離；變灰＝附近沒有勾點，抬頭找浮游岩</li>
-    <li>副武是釘槍：打中牆面＝把自己釘在牆上（推進或勾索就脫離）</li>
+    <li>準星左右的括弧＝左索／右索：灰＝沒勾點、黃＝可以勾、青＝勾住（亮段＝張力）；準星上方＝彈種／彈量</li>
+    <li>副武是釘槍：身邊 6m 內有牆時開槍＝釘在最近的牆上（自動收回鋼索；推進或勾索就脫離）</li>
     <li>地圖中央的補給站有<b style="color:#40ffb0">無敵區</b>：不會受傷，也不能開火；設定裡可選「跟手準星」</li>
     <li>擺盪時鏡頭會<b>鎖住準星下的地形</b>，不會亂晃；一轉視角就解除</li>
     <li>擺到最低點（預測線變<b style="color:#7f7">綠</b>）放手速度 ×1.15；放手後的最高點有短暫懸停</li>
@@ -189,7 +189,7 @@ const CONFIG = Object.freeze({
   body: { mass: 3000, radius: 1.2, halfHeight: 0.9, linDamping: 0.05 },
   ground: { speed: 9, accel: 40, friction: 30, slideFriction: 8, slideAbove: 12, jump: 7 },
   air: { control: 2 },
-  boost: { accel: 32, fuel: 6, horizontal: 0.75, lift: 0.8, fallBrake: 2.5, hCap: 24, regenGround: 0.6, regenPad: 4 },
+  boost: { accel: 40, fuel: 6, horizontal: 0.75, lift: 0.8, fallBrake: 2.5, hCap: 24, regenGround: 0.6, regenPad: 4 },
   supply: { ammoPerSec: 200 },
   fireControl: { coneDeg: 2.0 },
   speedCap: 45,
@@ -203,13 +203,13 @@ const CONFIG = Object.freeze({
   },
   touch: { fireDelayMs: 80, swapFlick: 40, swapWindowMs: 250, followGain: 1.3, thrustOvershoot: 1.35, holdDecideMs: 110, moveDeadzone: 0.15, doubleTapWindow: 300, doubleTapDist: 40, tapMaxMs: 200, tapMaxMove: 12, edgeGraceMs: 150,
     dragSlowK: 0.7, dragFastK: 1.6, dragSlowAt: 40, dragFastAt: 400 },
-  rope: { swingAccel: 6, swingDeadzone: 0.2, reelOn: 0.3, payoutOn: 0.3, payoutSpeed: 8, groundDetach: 0.5,
+  rope: { swingAccel: 6, swingDeadzone: 0.2, reelOn: 0.3, payoutOn: 0.3, payoutSpeed: 8, groundDetach: 0.5, groundDetachSpeed: 3,
     bottomWindowDeg: 15, bottomBonus: 1.15, apexHang: 0.35, apexGravityCut: 10, predictPoints: 24, predictTime: 0.8,
     coneH: 12, coneUp: 25, coneDown: 10, groundMinUp: 5, minDist: 6, upBias: 6, switchHysteresis: 2 },
   camera: { stabHoldMs: 150, stabMinSpeed: 4, stabMinDist: 8, stabMaxRate: 300, stabGyroInput: 25, shakeScale: 0.4, eye: 1.1, fovBase: 70, fovAt40: 85, fovMax: 90, fovTau: 0.3, rollMaxDeg: 8, pitchLimit: 85,
     shakeDur: 0.5, speedLinesMin: 25, speedLinesMax: 60 },
   render: { dprMax: 1.5, dprFallback: 1.0, fallbackFps: 50, fpsWindow: 2 },
-  nail: { damage: 1000, mag: 5, reserve: 5, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15 },   // 副武：釘槍（5×2 發）
+  nail: { damage: 1000, mag: 5, reserve: 5, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6 },   // 副武：釘槍（5×2 發）
   safeZone: { radius: 22 },
   weapon: { rpm: 600, range: 500, damage: 200, ammo: 1000, reload: 3,
     spread: { base: 0.3, moving: 0.5, swinging: 1.0, swingSpeed: 12, max: 2.0, bloomPerShot: 0.08, recover: 0.3 },
@@ -676,10 +676,11 @@ function simTick(cmd){
     }
     if (payOut > 0) r.L = Math.min(G.range, r.L + (ropeStick ? RC.payoutSpeed : G.payout)*payOut*dt);
     // 落地且沒在收索：0.5 秒後自動脫鉤
-    if (r.smart && P.grounded && !r.reeling){ r.groundT = (r.groundT || 0) + dt; if (r.groundT > RC.groundDetach){ r.hooked = false; events.push({ type: 'release', side: r.side }); } } else r.groundT = 0;
+    if (r.smart && P.grounded && !r.reeling && speedNow < RC.groundDetachSpeed){ r.groundT = (r.groundT || 0) + dt; if (r.groundT > RC.groundDetach){ r.hooked = false; events.push({ type: 'release', side: r.side }); } } else r.groundT = 0;
   }
 
   if (P.pinned){ _v.set(0, 0, 0); playerBody.setTranslation(P.pinned.pos, true); P.fuel = Math.min(CONFIG.boost.fuel, P.fuel + CONFIG.boost.regenGround * dt); }
+  playerBody.setLinearDamping(anyHooked ? 0 : CONFIG.body.linDamping);   // 勾住時不減速：鉤索勾著就能一直擺盪回來
   playerBody.setLinvel(_v, true);
   world.step();
   if (P.pinned){ playerBody.setTranslation(P.pinned.pos, true); playerBody.setLinvel({ x: 0, y: 0, z: 0 }, true); }
@@ -854,11 +855,27 @@ function nailTick(cmd, dt, fireEdge){
   if (hit){
     const t = targetsByCollider.get(hit.handle);
     if (t && !t.dead){ t.hp -= N.damage; hitTarget = true; w.hits++; if (t.hp <= 0){ t.dead = CONFIG.target.respawn; t.col.setEnabled(false); t.mesh.visible = false; events.push({ type: 'kill' }); } }
-    else if (hookable.has(hit.handle) && hit.toi <= N.pinRange && Math.abs(hit.normal.y) < 0.6){
+    else if (false){
       // 釘在牆上：機體貼著牆面停住，可以站在垂直壁面射擊；勾索或推進就會脫離
       const pos = V(hit.point.x + hit.normal.x * (CONFIG.body.radius + 0.25), hit.point.y - CONFIG.camera.eye, hit.point.z + hit.normal.z * (CONFIG.body.radius + 0.25));
       P.pinned = { pos }; for (const r of state.ropes) r.hooked = false;
       events.push({ type: 'pin' });
+    }
+  }
+  // v1.2 釘牆判定放寬：只要身邊 6m 內有牆（8 個水平方向＋準星方向），就釘到最近的那面牆；沒打中靶時才判定
+  if (!hitTarget){
+    let best = null; const cand = [];
+    for (let k = 0; k < 8; k++){ const a = k / 8 * Math.PI * 2; cand.push([V(Math.cos(a), 0, Math.sin(a)), N.nearWall]); }
+    cand.push([dir.clone(), N.pinRange]);
+    for (const [dv, maxd] of cand){
+      const h = castRay(origin, dv, maxd);
+      if (h && hookable.has(h.handle) && Math.abs(h.normal.y) < 0.6 && (!best || h.toi < best.toi)) best = h;
+    }
+    if (best){
+      const pos = V(best.point.x + best.normal.x * (CONFIG.body.radius + 0.25), best.point.y - CONFIG.camera.eye, best.point.z + best.normal.z * (CONFIG.body.radius + 0.25));
+      P.pinned = { pos };
+      for (const r of state.ropes) if (r.hooked){ r.hooked = false; events.push({ type: 'release', side: r.side }); }   // 釘上去時自動收回兩條鋼索
+      events.push({ type: 'pin', at: best.point.clone() });
     }
   }
   events.push({ type: 'shot', from: origin, to: end, hit: !!hit, hitTarget, normal: hit ? hit.normal : null, tracer: true, nail: true });
@@ -946,6 +963,7 @@ function sfx(type, strength=1){
 // =====================================================================
 const touchEl = document.getElementById('touch');
 const stickBase = document.getElementById('stickBase'), stickKnob = document.getElementById('stickKnob');
+const stickBase2 = document.getElementById('stickBase2'), stickKnob2 = document.getElementById('stickKnob2');   // 右索搖桿的顯示
 const pointers = new Map(); // id → { role, x, y, ox, oy }
 let R_STICK = 60;
 function calcStick(){ R_STICK = clamp(Math.min(innerWidth, innerHeight)*0.13, 38, 64); stickBase.style.width = stickBase.style.height = (R_STICK*2)+'px'; }
@@ -963,14 +981,19 @@ function setStick(p){
   let dx = p.x - p.ox, dy = p.y - p.oy; const l = Math.hypot(dx, dy);
   if (l > R_STICK){ dx = dx/l*R_STICK; dy = dy/l*R_STICK; }
   let nx = dx/R_STICK, nz = -dy/R_STICK; const m = Math.hypot(nx, nz);
-  // v1.1：搖桿只管移動。推進整合進「機動鈕」（左索）：沒勾點時按住＝推進；勾住時拖出外圈＝邊吊邊推進
-  if (p.role === 'ropeL'){ input.thrust = p.mode === 'thrust' || l > R_STICK * CONFIG.touch.thrustOvershoot; stickBase.classList.toggle('thrust', input.thrust); }
+  const isRope = p.role === 'ropeL' || p.role === 'ropeR';
+  // v1.2：兩個鋼索鈕都是小搖桿——按住＝射出鋼索，圈內拖曳＝收放／擺盪，拖出外圈＝推進（往拖曳方向）
+  if (isRope){ p.thrust = l > R_STICK * CONFIG.touch.thrustOvershoot; updateThrust(); }
   if (p.role === 'stick'){ const dz = CONFIG.touch.moveDeadzone; if (m < dz){ nx = 0; nz = 0; } else { const k = (m-dz)/(1-dz)/m; nx*=k; nz*=k; } }
   input.stickX = nx; input.stickZ = nz; // 鋼索搖桿給原始值，門檻在模擬裡判斷
-  if (p.showStick){ stickBase.style.display = stickKnob.style.display = 'block'; stickBase.classList.remove('idle'); stickKnob.classList.remove('idle');
-    stickBase.classList.toggle('rope', p.role === 'ropeL');
-    stickBase.style.left = p.ox+'px'; stickBase.style.top = p.oy+'px'; stickKnob.style.left = (p.ox+dx)+'px'; stickKnob.style.top = (p.oy+dy)+'px'; }
+  if (p.showStick){
+    const [base, knob] = p.role === 'ropeR' ? [stickBase2, stickKnob2] : [stickBase, stickKnob];
+    base.style.display = knob.style.display = 'block'; base.classList.remove('idle'); knob.classList.remove('idle');
+    base.classList.toggle('rope', isRope); base.classList.toggle('thrust', !!p.thrust);
+    base.style.width = base.style.height = (R_STICK*2)+'px';
+    base.style.left = p.ox+'px'; base.style.top = p.oy+'px'; knob.style.left = (p.ox+dx)+'px'; knob.style.top = (p.oy+dy)+'px'; }
 }
+function updateThrust(){ let t = false; for (const q of pointers.values()) if (q.thrust) t = true; input.thrust = t; }
 // ---------- 1€ 濾波（低速去抖、高速低延遲）----------
 class OneEuro {
   constructor(minCutoff, beta, dCutoff){ this.mc = minCutoff; this.b = beta; this.dc = dCutoff; this.x = null; this.dx = 0; }
@@ -1085,18 +1108,17 @@ touchEl.addEventListener('pointerdown', e => {
   const p = { x: e.clientX, y: e.clientY, ox: e.clientX, oy: e.clientY, lx: e.clientX, ly: e.clientY, t0: now, lt: now, moved: 0 };
   if (btnId){
     p.role = btnRoles[btnId];
-    if (p.role === 'ropeL'){
-      // 機動鈕：準星附近有勾點 → 射出左鋼索；沒有 → 推進（往拖曳方向飛）
-      const r = bEl.getBoundingClientRect(); p.ox = r.left + r.width/2; p.oy = r.top + r.height/2; p.drag = 'stick';
-      p.mode = (hookPreview[0] || state.ropes[0].hooked) ? 'rope' : 'thrust';
-      if (p.mode === 'rope') setRole('ropeL', true); else { input.thrust = true; buzz(10); }
-      p.showStick = p.mode === 'thrust'; setStick(p);
+    if ((p.role === 'ropeL' || (p.role === 'ropeR' && opts.follow !== 'rope'))){
+      // 鋼索鈕＝小搖桿：按下就射出該側鋼索（有勾點才會勾到），拖曳控制收放／擺盪，拖出外圈＝推進
+      const r = bEl.getBoundingClientRect(); p.ox = r.left + r.width/2; p.oy = r.top + r.height/2; p.drag = 'stick'; p.showStick = false;
+      setRole(p.role, true);
     }
     else if (p.role === 'fire'){ p.drag = null; p.firePending = true; }   // 射擊鈕：先等 70ms 判斷是不是「往上甩＝切換」
     else setRole(p.role, true);
-    if (p.role === 'ropeL' || p.role === 'fire'){}
+    if (p.role === 'ropeL' || p.role === 'fire' || (p.role === 'ropeR' && opts.follow !== 'rope')){}   // 已在上面處理
     else if (p.role === 'swap') p.drag = null;
     else if (p.role === 'ropeR' && opts.follow === 'rope'){
+      setRole('ropeR', true);
       // 鋼索跟手：已勾住→按一下放開；沒勾住→拖曳瞄準、放開射出（荒野亂鬥大招式）
       setRole('ropeR', false);
       if (state.ropes[1].hooked){ input.ropeLatch = false; input.hookR = false; p.role = 'ropeRDone'; p.drag = null; }
@@ -1121,7 +1143,7 @@ touchEl.addEventListener('pointermove', e => {
     const up = p.oy - p.y, side = Math.abs(p.x - p.ox);
     if (up > CONFIG.touch.swapFlick && side < up){ p.lateChecked = true; setRole('fire', false); p.role = 'swapped'; p.drag = null; input.swapQueued = true; buzz(12); swapHint(); }
   }
-  if (p.drag === 'stick'){ if (p.role === 'ropeL' && !p.showStick && Math.hypot(p.x - p.ox, p.y - p.oy) > 10) p.showStick = true; setStick(p); }
+  if (p.drag === 'stick'){ if ((p.role === 'ropeL' || p.role === 'ropeR') && !p.showStick && Math.hypot(p.x - p.ox, p.y - p.oy) > 10) p.showStick = true; setStick(p); }
   else if (p.drag === 'look'){ const speed = dd / Math.max(1, now - p.lt) * 1000; look(ddx, ddy, speed); }
   else if (p.drag === 'aimGun'){ aimOff.x += ddx * CONFIG.touch.followGain; aimOff.y += ddy * CONFIG.touch.followGain; clampOff(aimOff); }
   else if (p.drag === 'aimRope'){ ropeOff.x += ddx * CONFIG.touch.followGain; ropeOff.y += ddy * CONFIG.touch.followGain; clampOff(ropeOff); }
@@ -1137,11 +1159,11 @@ function endPointer(e){
   if (p.role === 'ropeRDone' || p.role === 'swapped'){ pointers.delete(e.pointerId); return; }
   if (p.role === 'fire' && p.firePending){ p.firePending = false; input.fireTap = true; pointers.delete(e.pointerId); return; }   // 輕點＝開一槍
   if (p.drag === 'aimGun') aimReturn = true;
-  if (p.role === 'ropeL' && p.mode === 'thrust'){ input.thrust = false; }
-  else if (p.role === 'ropeL' && e.type === 'pointercancel'){ ropeGraceTimer = setTimeout(() => setRole('ropeL', false), CONFIG.touch.edgeGraceMs); }
+  if (p.role === 'ropeL' && e.type === 'pointercancel'){ ropeGraceTimer = setTimeout(() => setRole('ropeL', false), CONFIG.touch.edgeGraceMs); }
   else if (btnRoles[p.role] || p.role === 'ropeL' || p.role === 'ropeR' || p.role === 'fire') setRole(p.role, false);
-  if (p.drag === 'stick'){ input.stickX = 0; input.stickZ = 0; input.thrust = false; stickBase.classList.remove('thrust'); }
-  pointers.delete(e.pointerId);
+  if (p.drag === 'stick'){ input.stickX = 0; input.stickZ = 0; }
+  if (p.role === 'ropeR'){ stickBase2.style.display = stickKnob2.style.display = 'none'; }
+  pointers.delete(e.pointerId); updateThrust(); stickBase.classList.remove('thrust');
   idleStick();
 }
 touchEl.addEventListener('pointerup', endPointer); touchEl.addEventListener('pointercancel', endPointer);
@@ -1260,24 +1282,55 @@ function drawHUD(dt){
   { const msgs = []; if (P.safe) msgs.push(['無敵區：不會受傷，也不能開火', '#40ffb0']); if (P.pinned) msgs.push(['釘在牆上：勾索或推進就會脫離', '#ffc94a']);
     msgs.forEach(([m, col], i) => { c.font = '700 14px sans-serif'; c.textAlign = 'center'; const tw2 = c.measureText(m).width;
       c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(cx - tw2/2 - 10, cy - 96 - i*26, tw2 + 20, 22); c.fillStyle = col; c.fillText(m, cx, cy - 80 - i*26); }); }
-  // 準星（隨擴散縮放）
-  const spread = currentSpread(); const gap = 6 + spread*7 + crossPulse*6;
-  c.strokeStyle = hitMarkT > 0 ? '#ff5050' : '#ffffff'; c.lineWidth = 2;
-  c.beginPath(); c.moveTo(cx-gap-8, cy); c.lineTo(cx-gap, cy); c.moveTo(cx+gap, cy); c.lineTo(cx+gap+8, cy);
-  c.moveTo(cx, cy-gap-8); c.lineTo(cx, cy-gap); c.moveTo(cx, cy+gap); c.lineTo(cx, cy+gap+8); c.stroke();
-  if (hitMarkT > 0){ c.beginPath(); for (const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ c.moveTo(cx+a*6, cy+b*6); c.lineTo(cx+a*12, cy+b*12); } c.stroke(); }
-  if (opts.autoFire && !mouseMode){ c.font = '700 11px sans-serif'; c.textAlign = 'left'; c.fillStyle = state.weapon.autoOn ? '#ff7060' : 'rgba(255,255,255,.7)'; c.fillText('AUTO', cx + gap + 12, cy + 4); }
+  // ===== v1.2 準星介面（依設計手稿）：中央「—·—」、左右括弧＝左索／右索、括弧上方＝發射器狀態、正上方＝彈種／彈量 =====
+  { const sc = clamp(h / 700, 0.8, 1.15), spread = currentSpread(), gap = (7 + spread*6 + crossPulse*6) * sc;
+    const hot = hitMarkT > 0 ? '#ff5050' : '#ffffff';
+    // 中央：橫線＋中心點＋小刻度（隨擴散撐開）
+    c.strokeStyle = hot; c.lineWidth = 2; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(cx - gap - 16*sc, cy); c.lineTo(cx - gap, cy); c.moveTo(cx + gap, cy); c.lineTo(cx + gap + 16*sc, cy); c.stroke();
+    c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx - gap - 9*sc, cy - 4*sc); c.lineTo(cx - gap - 9*sc, cy + 4*sc); c.moveTo(cx + gap + 9*sc, cy - 4*sc); c.lineTo(cx + gap + 9*sc, cy + 4*sc); c.stroke();
+    c.fillStyle = hot; c.beginPath(); c.arc(cx, cy, 2.2*sc, 0, Math.PI*2); c.fill();
+    if (hitMarkT > 0){ c.lineWidth = 2; c.beginPath(); for (const [a2,b2] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ c.moveTo(cx+a2*6*sc, cy+b2*6*sc); c.lineTo(cx+a2*11*sc, cy+b2*11*sc); } c.stroke(); }
+    // 左右括弧：灰＝沒勾點、黃＝可以勾、青＝已勾住（亮的那段＝張力）、橘＝推進中
+    const R0 = 46 * sc, half = 32 * DEG;
+    state.ropes.forEach((r, i) => {
+      const left = i === 0, mid = left ? Math.PI : 0, a0 = mid - half, a1 = mid + half;
+      const col = r.hooked ? '#3de0ff' : hookPreview[0] ? '#ffe14a' : 'rgba(200,210,220,.55)';
+      c.lineCap = 'round';
+      c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = 7*sc; c.beginPath(); c.arc(cx, cy, R0, a0, a1); c.stroke();
+      c.strokeStyle = col; c.lineWidth = 4*sc; c.beginPath(); c.arc(cx, cy, R0, a0, a1); c.stroke();
+      if (r.hooked){ // 張力：從下往上填滿
+        const t = clamp(r.tension, 0, 1), from = left ? a1 : a0, to = left ? a1 - (a1 - a0) * t : a0 + (a1 - a0) * t;
+        c.strokeStyle = r.tension > 0.85 ? '#ff6050' : '#c8f7ff'; c.lineWidth = 4*sc; c.beginPath(); c.arc(cx, cy, R0, Math.min(from, to), Math.max(from, to)); c.stroke();
+      }
+      // 括弧上方：發射器圖示（卄）＋狀態
+      const tx = cx + Math.cos(left ? a0 + 0 : a0) * 0 + (left ? -1 : 1) * R0 * Math.cos(half) , ty = cy - R0 * Math.sin(half) - 10*sc;
+      c.strokeStyle = col; c.lineWidth = 2; c.beginPath();
+      c.moveTo(tx - 4*sc, ty - 7*sc); c.lineTo(tx - 4*sc, ty + 4*sc); c.moveTo(tx + 4*sc, ty - 7*sc); c.lineTo(tx + 4*sc, ty + 4*sc);
+      c.moveTo(tx - 8*sc, ty - 2*sc); c.lineTo(tx + 8*sc, ty - 2*sc); c.stroke();
+      if (r.hooked || P.thrusting){ c.fillStyle = P.thrusting && !r.hooked ? '#ffb040' : col; c.font = `700 ${Math.round(10*sc)}px ui-monospace, monospace`; c.textAlign = left ? 'right' : 'left';
+        c.fillText(r.hooked ? r.L.toFixed(0) + 'm' : 'BST', tx + (left ? -11 : 11)*sc, ty + 2*sc); }
+      c.fillStyle = 'rgba(220,235,245,.7)'; c.font = `600 ${Math.round(9*sc)}px sans-serif`; c.textAlign = left ? 'right' : 'left';
+      c.fillText(left ? 'L' : 'R', cx + (left ? -1 : 1) * (R0 + 10*sc), cy + 4*sc);
+    });
+    // 正上方：彈種／彈量
+    const wst2 = state.weapon, sub = wst2.active === 'sub';
+    const kind = sub ? 'NAIL' : '14.5', cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : (wst2.reloading > 0 ? 'RLD' : String(Math.floor(wst2.ammo)));
+    const ay = cy - R0 - 24*sc;
+    c.font = `700 ${Math.round(11*sc)}px ui-monospace, monospace`; c.textAlign = 'center';
+    const txt2 = kind + '  ' + cnt, tw3 = c.measureText(txt2).width + 14*sc;
+    c.fillStyle = 'rgba(4,14,24,.55)'; c.strokeStyle = wst2.blocked ? '#6b7a88' : sub ? '#ffc94a' : '#ff6a50'; c.lineWidth = 1.5;
+    c.beginPath(); c.roundRect(cx - tw3/2, ay - 9*sc, tw3, 16*sc, 8*sc); c.fill(); c.stroke();
+    const frac = sub ? wst2.nail.ammo / CONFIG.nail.mag : wst2.ammo / W.ammo;
+    c.fillStyle = sub ? '#ffc94a' : '#ff6a50'; c.fillRect(cx - tw3/2 + 6*sc, ay + 4.5*sc, (tw3 - 12*sc) * clamp(frac, 0, 1), 1.6*sc);
+    c.fillStyle = '#eafcff'; c.fillText(txt2, cx, ay + 3*sc);
+    if (opts.autoFire && !mouseMode){ c.font = '700 10px sans-serif'; c.textAlign = 'left'; c.fillStyle = wst2.autoOn ? '#ff7060' : 'rgba(255,255,255,.7)'; c.fillText('AUTO', cx + R0 + 14*sc, cy - 10*sc); }
+  }
   // 左側：雙索狀態＋推進燃料（觸控）
   if (!mouseMode){
     const fz = clamp(h / 700, 0.75, 1), y0 = h * 0.24;
     c.textAlign = 'left'; c.font = `600 ${Math.round(13*fz)}px sans-serif`;
-    state.ropes.forEach((r, i) => {
-      const name = i === 0 ? '左索' : '右索', y = y0 + i * 26 * fz;
-      const st = r.hooked ? (r.reeling ? '收索中 ' : '') + r.L.toFixed(0) + 'm' : (i === 0 ? '按住「機動」鈕' : '按住「右索」鈕');
-      c.fillStyle = r.hooked ? '#40e0ff' : 'rgba(220,230,240,.6)'; c.fillText(name + '  ' + st, 16, y);
-      if (r.hooked){ c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(16, y + 5, 110, 4); c.fillStyle = r.tension > 0.85 ? '#ff6050' : '#40e0ff'; c.fillRect(16, y + 5, 110 * r.tension, 4); }
-    });
-    const yb = y0 + 54 * fz, fr = P.fuel / CONFIG.boost.fuel, low = fr < 0.25;
+    const yb = y0, fr = P.fuel / CONFIG.boost.fuel, low = fr < 0.25;
     c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(16, yb, 140, 7);
     c.fillStyle = low ? (Math.floor(performance.now()/250) % 2 ? '#ff5040' : '#ff9070') : (P.thrusting ? '#ffd060' : '#ffb040'); c.fillRect(16, yb, 140 * fr, 7);
     c.fillStyle = low ? '#ff8070' : 'rgba(255,210,150,.85)'; c.font = `600 ${Math.round(12*fz)}px sans-serif`;
@@ -1288,7 +1341,7 @@ function drawHUD(dt){
   const fs = clamp(h / 700, 0.75, 1), wst = state.weapon;
   const acc = wst.fired ? Math.round(wst.hits / wst.fired * 100) : 0;
   c.textAlign = 'center'; c.font = `600 ${Math.round(15*fs)}px sans-serif`;
-  c.fillStyle = 'rgba(0,0,0,.35)'; const line = `${wst.active === 'sub' ? '釘槍 ' + (wst.nail.reloading > 0 ? '裝填中' : wst.nail.ammo + '/' + wst.nail.reserve) : wst.reloading > 0 ? '裝填中 ' + wst.reloading.toFixed(1) + 's' : '14.5mm ' + Math.floor(wst.ammo)}   ${sp.toFixed(0)} m/s   命中 ${acc}%   墜落 ${P.falls || 0}`;
+  c.fillStyle = 'rgba(0,0,0,.35)'; const line = `${sp.toFixed(0)} m/s   命中 ${acc}%   墜落 ${P.falls || 0}`;
   const tw = c.measureText(line).width; c.fillRect(cx - tw/2 - 10, 8, tw + 20, 24*fs + 4);
   c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs);
 }
@@ -1302,9 +1355,8 @@ function updateButtons(){
   const hp = hookPreview[0];
   [[0, elRopeL, elSL], [1, elRopeR, elSR]].forEach(([i, el, sub]) => {
     const r = state.ropes[i];
-    const thrustMode = i === 0 && !r.hooked && !hp;   // 左鈕＝機動鈕：沒勾點時會推進
-    const txt = r.hooked ? (r.reeling ? '收 ' : '') + r.L.toFixed(0) + 'm' : hp ? hp.toi.toFixed(0) + 'm' : (i === 0 ? '推進' : '無勾點');
-    const cls = r.hooked ? 'hooked' : hp ? '' : (thrustMode ? 'thrustmode' : 'none');
+    const txt = r.hooked ? (r.reeling ? '收 ' : '') + r.L.toFixed(0) + 'm' : hp ? hp.toi.toFixed(0) + 'm' : '拖出＝推進';
+    const cls = r.hooked ? 'hooked' : hp ? '' : 'none';
     if (lastUI['t'+i] !== txt){ lastUI['t'+i] = txt; sub.textContent = txt; }
     if (lastUI['c'+i] !== cls){ lastUI['c'+i] = cls; el.classList.toggle('hooked', cls === 'hooked'); el.classList.toggle('none', cls === 'none'); el.classList.toggle('thrustmode', cls === 'thrustmode'); }
   });
