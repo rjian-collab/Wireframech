@@ -1,4 +1,4 @@
-# WIREFRAMECH 鋼弦機兵：空島原型規格（v1.2）
+# WIREFRAMECH 鋼弦機兵：空島原型規格（v1.3）
 
 正式網址：https://wireframech.vercel.app（Vercel Drop 手動上傳單一 index.html；陀螺儀只能在這個網址使用，Claude 內嵌頁面會擋住感測器）
 
