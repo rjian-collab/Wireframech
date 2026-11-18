@@ -60,6 +60,16 @@
     width:calc(var(--Fk)*1.6); white-space:nowrap; text-align:right; pointer-events:none; font-size:12px; font-weight:700; letter-spacing:1px; color:#ffc94a;
     text-shadow:0 0 6px rgba(255,201,74,.8), 0 0 2px #000; }
   #swapHint.pulse { animation:pulse .5s ease-out; }
+  /* v2.5 武器圖示與「按住拉出三個位置」的切換提示 */
+  .wslot { position:fixed; width:44px; height:44px; margin:-22px 0 0 -22px; border-radius:50%; pointer-events:none; display:flex; align-items:center; justify-content:center;
+    background:rgba(10,22,32,.55); border:1.5px solid rgba(255,201,74,.45); opacity:.55; transform:scale(.72); transition:transform .12s, opacity .12s, background .12s; z-index:6; }
+  .wslot svg { width:30px; height:16px; fill:#ffd770; }
+  .wslot.cur { border-color:#ffd770; box-shadow:0 0 8px rgba(255,215,112,.6); }
+  .wslot.open { opacity:.95; transform:scale(1); }
+  .wslot.hot { background:rgba(255,201,74,.45); transform:scale(1.18); opacity:1; }
+  .wslot .dir { position:absolute; bottom:-2px; right:2px; font-size:10px; color:#ffd770; opacity:.8; }
+  #lFire svg { width:46px; height:24px; fill:currentColor; display:block; }
+  #bFire.none #lFire { position:relative; } #bFire.none #lFire::after { content:''; position:absolute; left:-4px; right:-4px; top:50%; height:3px; background:#ff5050; transform:rotate(-20deg); }
   #swapHint span { opacity:.45; } #swapHint span.cur { opacity:1; text-decoration:underline; text-underline-offset:3px; }
   @keyframes pulse { 0% { transform:translateY(-8px) scale(1.25); color:#fff; } 100% { transform:none; } }
   .btn.rope.thrustmode { --c:#ffb040; }
@@ -133,7 +143,8 @@
   <div class="btn rope" id="bRopeL"><b>左索</b><small id="sRopeL">—</small></div>
   <div class="btn rope" id="bRopeR"><b>右索</b><small id="sRopeR">—</small></div>
   <div class="btn fire" id="bFire"><b id="lFire">射擊</b><small id="sFire">1000</small></div>
-  <div id="swapHint"><span data-s="main">▲主武</span> <span data-s="mg">◀副武</span> <span data-s="sub">▶腿部</span><span id="swapCur" style="display:none">主武</span></div>
+  <div id="swapHint" style="display:none"><span id="swapCur">主武</span></div>
+  <div class="wslot" id="ws_main" data-s="main"></div><div class="wslot" id="ws_mg" data-s="mg"></div><div class="wslot" id="ws_sub" data-s="sub"></div>
 </div>
 <div id="topbar">
   <button class="small" id="bReset" aria-label="重生">↺</button>
@@ -144,6 +155,8 @@
 <div id="settings">
   <label>跟手準星 <select id="optFollow" style="font-size:15px"><option value="none">無（都用畫面中央）</option><option value="weapon">武器（按住射擊拖曳＝移動準星）</option><option value="rope">鋼索（按住右索拖曳瞄準、放開射出）</option></select></label>
   <label><input type="checkbox" id="optAutoFire"> 自動開火（準星對到敵人就射，只限機槍）</label>
+  <label>速度區間 <select id="optSpeed" style="font-size:15px"><option value="0.8">穩定（×0.8，好控制）</option><option value="1" selected>標準</option><option value="1.25">高速（×1.25）</option></select>
+    <input type="range" id="optSpeedK" min="0.7" max="1.4" step="0.05" value="1" style="width:120px;vertical-align:middle"> <span id="optSpeedV">×1.00</span></label>
   <label>機體塗裝 <select id="optPaint" style="font-size:15px"><option value="steel">鋼灰＋青綠（預設）</option><option value="night">夜戰深灰＋發光</option><option value="desert">沙漠＋橘</option><option value="white">原色白＋紅</option></select></label>
   <label><input type="checkbox" id="optView3P" checked> 第三人稱視角（看得到機體；左上角 3P／1P 也能切換）</label>
   <label><input type="checkbox" id="optStab" checked> 鏡頭鎖定地形（擺盪時自動補正，準星停在地形上）</label>
@@ -168,14 +181,14 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.4</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.5</div>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
     <li style="opacity:.75;font-size:12px">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）</li>
     <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），左上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>按住後往任一方向快速一滑＝往那邊撲擊</b>（在地上、坡上、貼牆或釘在牆上時）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
-    <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">快速一甩切換武器：上＝01 主武 57mm 滑膛炮、左＝02 副武 14.5mm 機槍、右＝03 腿部釘槍</b></li>
+    <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">按住會在旁邊彈出三個武器圖示，往圖示方向一甩就切換：上＝01 主武 57mm、左上＝02 副武機槍、更左＝03 腿部釘槍</b></li>
     <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、欄位（01 主武／02 副武／03 腿部）、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
     <li><b>腿部釘槍</b>（不佔手臂）：身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器打敵人。</li>
     <li><b>57mm 滑膛炮</b>：每 0.8 秒一發、6 發一匣，砲彈有飛行時間與下墜，落點 4m 內有爆炸傷害；空中開砲會被後座力往後推</li>
@@ -320,11 +333,48 @@ const matRock   = new THREE.MeshLambertMaterial({ color: 0x7a8494 });
 const matClutter= new THREE.MeshLambertMaterial({ color: 0x8b8072 });
 const matPad    = new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.55 });
 const islands = [], supplyPads = [];
+// ===== v2.5 真正的空島外型：不規則平頂草地＋往下收的岩石倒錐＋垂下的石筍；碰撞用凸包（站立、鋼索判定照舊）=====
+const matIslandV = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+const matRockF = new THREE.MeshLambertMaterial({ color: 0x6f6a64, flatShading: true });
+const _c1 = new THREE.Color(), _c2 = new THREE.Color();
+function islandShape(rx, rz, th, depth){
+  const N = 26, s1 = mrng() * 6.28, s2 = mrng() * 6.28, rr = [];
+  for (let i = 0; i < N; i++){ const a = i / N * Math.PI * 2; rr.push(1 + 0.09 * Math.sin(3 * a + s1) + 0.06 * Math.sin(5 * a + s2) + (mrng() - 0.5) * 0.06); }
+  const ring = (y, k, jit) => rr.map((r, i) => { const a = i / N * Math.PI * 2, kk = k * (1 + (mrng() - 0.5) * jit); return new THREE.Vector3(Math.cos(a) * rx * r * kk, y, Math.sin(a) * rz * r * kk); });
+  const tx = (mrng() - 0.5) * rx * 0.2, tz = (mrng() - 0.5) * rz * 0.2;
+  const R = [ring(0, 1, 0), ring(-0.7, 1.03, 0.02), ring(-th, 0.97, 0.05), ring(-th - depth * 0.35, 0.72, 0.16), ring(-th - depth * 0.7, 0.4, 0.22)];
+  const tip = new THREE.Vector3(tx, -th - depth, tz);
+  const pos = [], col = [];
+  const tri = (a, b, c, color) => { pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z); for (let k = 0; k < 3; k++) col.push(color.r, color.g, color.b); };
+  const grass = new THREE.Color(0x5f8a4f), grass2 = new THREE.Color(0x6f9a5a), lip = new THREE.Color(0x7a6a52), rock = new THREE.Color(0x6d6255), rock2 = new THREE.Color(0x574e45);
+  const ctr = new THREE.Vector3(0, 0, 0);
+  for (let i = 0; i < N; i++){ const j = (i + 1) % N; tri(ctr, R[0][j], R[0][i], i % 2 ? grass : grass2); }
+  const bands = [grass, lip, rock, rock2];
+  for (let r = 0; r < 4; r++) for (let i = 0; i < N; i++){ const j = (i + 1) % N, A = R[r][i], B = R[r][j], C = R[r + 1][j], D = R[r + 1][i];
+    _c1.copy(bands[r]).offsetHSL(0, 0, (mrng() - 0.5) * 0.06); tri(A, B, C, _c1); tri(A, C, D, _c1); }
+  for (let i = 0; i < N; i++){ const j = (i + 1) % N; _c2.copy(rock2).offsetHSL(0, 0, (mrng() - 0.5) * 0.06); tri(R[4][i], R[4][j], tip, _c2); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
+  const flat = arr => { const f = new Float32Array(arr.length * 3); arr.forEach((v, i) => { f[i*3] = v.x; f[i*3+1] = v.y; f[i*3+2] = v.z; }); return f; };
+  return { geo: g, hullTop: flat([...R[0], ...R[2]]), hullBot: flat([...R[2], ...R[3], ...R[4], tip]), bottomY: -th - depth, R };
+}
+function addHullBody(pos, q, hulls){ const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(pos.x, pos.y, pos.z).setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }));
+  for (const h of hulls){ const d = RAPIER.ColliderDesc.convexHull(h); if (d){ const c = world.createCollider(d.setFriction(0), body); hookable.add(c.handle); } } }
+function addRock(x, y, z, size, q = null){   // 不規則石塊（浮游岩、掩體、石筍）
+  const g = new THREE.IcosahedronGeometry(size * 0.62, 0), pa = g.attributes.position, jit = new Map();
+  for (let i = 0; i < pa.count; i++){ const key = [pa.getX(i), pa.getY(i), pa.getZ(i)].map(v => v.toFixed(3)).join(); if (!jit.has(key)) jit.set(key, [0.8 + mrng() * 0.4, 0.7 + mrng() * 0.4, 0.8 + mrng() * 0.4]);
+    const j = jit.get(key); pa.setXYZ(i, pa.getX(i) * j[0], pa.getY(i) * j[1], pa.getZ(i) * j[2]); }
+  g.computeVertexNormals(); const m = new THREE.Mesh(g, matRockF); m.position.set(x, y, z); if (q) m.quaternion.copy(q); scene.add(m);
+  const pts = new Float32Array(pa.count * 3); for (let i = 0; i < pa.count; i++){ pts[i*3] = pa.getX(i); pts[i*3+1] = pa.getY(i); pts[i*3+2] = pa.getZ(i); }
+  addHullBody(new THREE.Vector3(x, y, z), q || new THREE.Quaternion(), [pts]); }
+function addStalactites(cx, top, cz, rx, rz, depthY, n, q){   // 島底垂下的石筍（可勾）
+  for (let i = 0; i < n; i++){ const a = mrng() * 6.28, r = 0.25 + mrng() * 0.25, len = 8 + mrng() * 10;
+    const g = new THREE.ConeGeometry(1.1 + mrng() * 0.6, len, 6); g.rotateX(Math.PI); g.translate(Math.cos(a) * rx * r, depthY * 0.7 - len / 2 + 2, Math.sin(a) * rz * r);
+    const m = new THREE.Mesh(g, matRockF); const grp = new THREE.Group(); grp.position.set(cx, top, cz); if (q) grp.quaternion.copy(q); grp.add(m); scene.add(grp);
+    const pa = g.attributes.position, pts = new Float32Array(pa.array.length); pts.set(pa.array); addHullBody(new THREE.Vector3(cx, top, cz), q || new THREE.Quaternion(), [pts]); } }
 function addIsland(name, cx, top, cz, w, d, th, opt = {}){
-  addBox(cx, top - th/2, cz, w, th, d, matIsland, true);                       // 島身
-  const g = new THREE.Mesh(new THREE.BoxGeometry(w + 0.2, 0.4, d + 0.2), matGrass); g.position.set(cx, top + 0.01 - 0.2, cz); scene.add(g);
-  addBox(cx, top - th - th*0.4, cz, w*0.6, th*0.8, d*0.6, matIsland, true);    // 島底（倒錐感）
-  addBox(cx, top - th - th*1.1, cz, w*0.3, th*0.7, d*0.3, matIsland, true);
+  const sh = islandShape(w / 2, d / 2, th, th * 1.6 + Math.min(w, d) * 0.25), q = new THREE.Quaternion();
+  const m = new THREE.Mesh(sh.geo, matIslandV); m.position.set(cx, top, cz); scene.add(m);
+  addHullBody(new THREE.Vector3(cx, top, cz), q, [sh.hullTop, sh.hullBot]);
   islands.push({ name, cx, top, cz, w, d });
   if (opt.supply){ // 補給島：發光補給平台（站上去補燃料與彈藥）
     const pad = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 0.3, 24), matPad); pad.position.set(cx, top + 0.15, cz); scene.add(pad);
@@ -332,20 +382,9 @@ function addIsland(name, cx, top, cz, w, d, th, opt = {}){
     beam.position.set(cx, top + 30, cz); scene.add(beam);
     supplyPads.push({ x: cx, y: top, z: cz, r: 6 });
   }
-  if (opt.dense){ // 密集地形：小柱、牆片、拱門，利於近身
-    for (let i = 0; i < opt.dense; i++){
-      const sx = 2 + mrng()*3, sz = 2 + mrng()*3, sh = 4 + mrng()*9;
-      const px = cx + (mrng() - 0.5) * (w - 8), pz = cz + (mrng() - 0.5) * (d - 8);
-      addBox(px, top + sh/2, pz, sx, sh, sz, matClutter, true);
-    }
-    addBox(cx - 8, top + 7, cz + 12, 2, 14, 2, matClutter, true); addBox(cx + 8, top + 7, cz + 12, 2, 14, 2, matClutter, true); addBox(cx, top + 15, cz + 12, 18, 2, 2, matClutter, true);
-  }
-  if (opt.chains){ // 島底垂下的鎖鏈（可勾）
-    for (let i = 0; i < opt.chains; i++){
-      const px = cx + (mrng() - 0.5) * w * 0.5, pz = cz + (mrng() - 0.5) * d * 0.5, ln = 10 + mrng()*14;
-      addBox(px, top - th*1.5 - ln/2, pz, 0.8, ln, 0.8, matRock, true);
-    }
-  }
+  if (opt.boulders) for (let i = 0; i < opt.boulders; i++){ const a = i / opt.boulders * 6.28 + mrng() * 0.6, r = 0.55 + mrng() * 0.28, sz = 3 + mrng() * 2.5;   // 只放在外側，中間（補給台、靶）保持淨空
+    addRock(cx + Math.cos(a) * w / 2 * r, top + sz * 0.3, cz + Math.sin(a) * d / 2 * r, sz); }   // v2.5 只留幾顆石頭當掩體
+  if (opt.chains) addStalactites(cx, top, cz, w / 2, d / 2, sh.bottomY, opt.chains, null);
 }
 // v1.8 坡道（蜘蛛腳測試用）：從 (x0, y0, z) 往 +x 方向以 deg 角度往上斜，長 len、寬 wid
 function addRamp(x0, y0, z, len, wid, deg, mat = matClutter){
@@ -364,16 +403,11 @@ const MAPC = CONFIG.map, MC = MAPC.center;
 function addTiltIsland(name, cx, top, cz, w, d, th, tiltDeg, opt = {}){
   const yaw = Math.atan2(MC.x - cx, MC.z - cz);   // 局部 +z 指向環中心
   const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(tiltDeg * DEG, yaw, 0, 'YXZ'));
-  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
-  const c = new THREE.Vector3(cx, top, cz).addScaledVector(up, -th / 2);
-  const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(c.x, c.y, c.z).setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }));
-  const col = world.createCollider(RAPIER.ColliderDesc.cuboid(w / 2, th / 2, d / 2).setFriction(0), body); hookable.add(col.handle);
-  const grp = new THREE.Group(); grp.position.copy(c); grp.quaternion.copy(q); scene.add(grp);
-  grp.add(new THREE.Mesh(new THREE.BoxGeometry(w, th, d), matIsland));
-  const g = new THREE.Mesh(new THREE.BoxGeometry(w + 0.2, 0.4, d + 0.2), matGrass); g.position.y = th / 2 - 0.19; grp.add(g);
-  addBox(cx, top - th * 1.6, cz, w * 0.55, th * 0.9, d * 0.55, matIsland, true);   // 島底（不傾斜）
-  if (opt.chains) for (let i = 0; i < opt.chains; i++){ const px = cx + (mrng() - 0.5) * w * 0.4, pz = cz + (mrng() - 0.5) * d * 0.4, ln = 10 + mrng() * 12; addBox(px, top - th * 2.2 - ln / 2, pz, 0.8, ln, 0.8, matRock, true); }
-  islands.push({ name, cx, top, cz, w, d, tilt: tiltDeg });
+  const sh = islandShape(w / 2, d / 2, th, th * 1.4 + Math.min(w, d) * 0.3);
+  const m = new THREE.Mesh(sh.geo, matIslandV); m.position.set(cx, top, cz); m.quaternion.copy(q); scene.add(m);
+  addHullBody(new THREE.Vector3(cx, top, cz), q, [sh.hullTop, sh.hullBot]);
+  if (opt.chains) addStalactites(cx, top, cz, w / 2, d / 2, sh.bottomY, opt.chains, q);
+  islands.push({ name, cx, top, cz, w, d, tilt: tiltDeg, bottom: top + sh.bottomY });
 }
 // 兩邊基地（平的、有補給、有出生保護區）
 addIsland('基地 A', 50, 10, 0, 40, 40, 10, { supply: true, chains: 2 });
@@ -388,7 +422,7 @@ for (let deg = MAPC.ringStepDeg; deg < 360; deg += MAPC.ringStepDeg){
   const name = '外圈 ' + deg + '°'; addTiltIsland(name, x, top, z, 26, 22, 6, MAPC.ringTiltDeg, { chains: 1 }); ring.push(name);
 }
 // 中央大平台：全場最低、平的，有掩體與補給
-addIsland('中央平台', MC.x, -20, MC.z, 110, 60, 12, { supply: true, dense: 12, chains: 3 });
+addIsland('中央平台', MC.x, -20, MC.z, 110, 60, 12, { supply: true, boulders: 5, chains: 3 });   // v2.5 中央淨空，只留 5 顆石頭
 // 出生保護區（兩邊基地各一）：區內不能開火，日後 PvP 區內不受傷
 const safeZones = [{ x: 50, y: 10, z: 0, r: CONFIG.safeZone.radius }, { x: 350, y: 10, z: 0, r: CONFIG.safeZone.radius }];
 for (const sz of safeZones){
@@ -409,7 +443,7 @@ for (const d of [60, 120, 240, 300]) routes.push(['外圈 ' + d + '°', '中央�
 routes.push(['基地 A', '中央平台'], ['基地 B', '中央平台']);
 const rocks = [];
 // 兩邊基地正前方高處各一顆（新手平視就勾得到；夠高，不擋兩基地對射）
-for (const [fx, fz] of [[MAPC.spawn.x + 40, 0], [350 - 44, 0]]){ rocks.push({ x: fx, y: 44, z: fz }); addBox(fx, 44, fz, 6, 4.8, 6, matRock, true); }
+for (const [fx, fz] of [[MAPC.spawn.x + 40, 0], [350 - 44, 0]]){ rocks.push({ x: fx, y: 44, z: fz }); addRock(fx, 44, fz, 6.5); }
 for (const [a, b] of routes){
   const A = byName(a), B = byName(b), dist = Math.hypot(B.cx - A.cx, B.cz - A.cz);
   const nRocks = Math.max(1, Math.ceil(dist / 32) - 1);
@@ -420,7 +454,7 @@ for (const [a, b] of routes){
     if (rocks.some(q => Math.hypot(q.x - x, q.y - y, q.z - z) < 28)) continue;
     // 兩基地之間的中線保持淨空（|z|<10 且在兩基地之間的岩石要夠高，不擋對射）
     if (Math.abs(z) < 10 && x > 70 && x < 330 && y < 40) continue;
-    rocks.push({ x, y, z }); addBox(x, y, z, sz, sz * 0.8, sz, matRock, true);
+    rocks.push({ x, y, z }); addRock(x, y, z, sz + 1);
   }
 }
 // 虛空：很深的暗色雲海（只有視覺，沒有碰撞）
@@ -457,7 +491,7 @@ function addTarget(x, y, z, kind, groundY = 0){
 for (const d of [60, 120, 240, 300]){ const I = byName('外圈 ' + d + '°'); addTarget(I.cx, I.top + 2.5, I.cz, 'static', I.top - 1); }
 addTarget(185, -17, -14, 'static', -20); addTarget(215, -17, 14, 'static', -20);
 addTarget(350, 13, 0, 'moving', 10);
-{ const I = byName('外圈 100°'); addTarget(I.cx, I.top - 14, I.cz, 'air'); }
+{ const I = byName('外圈 100°'); addTarget(I.cx, I.bottom - 6, I.cz, 'air'); }
 
 // ---------- 玩家機體 ----------
 const S = CONFIG.map.spawn;
@@ -851,7 +885,7 @@ function simTick(cmd){
     }
   }
   // 速度上限
-  const sp = _v.length(); if (sp > CONFIG.speedCap) _v.multiplyScalar(CONFIG.speedCap/sp);
+  const capK = CONFIG.speedCap * (opts.speedK || 1), sp = _v.length(); if (sp > capK) _v.multiplyScalar(capK/sp);   // v2.5 最高速度跟著速度區間
   playerBody.setTranslation(_p, true); playerBody.setLinvel(_v, true);
 
   // 出界重生
@@ -1038,7 +1072,7 @@ function worldTick(dt){
   state.weapon.recoil *= Math.exp(-dt / W.recoilTau);
   // 補給平台：站上去補燃料與彈藥
   { const P = state.player, p = playerBody.translation(); P.onPad = false;
-    P.safe = safeZones.some(z => Math.hypot(p.x - z.x, p.y - z.y, p.z - z.z) < z.r);   // 無敵區（日後 PvP：區內不受傷、不能開火）
+    P.safe = safeZones.some(z => p.y > z.y - 0.5 && Math.hypot(p.x - z.x, p.y - z.y, p.z - z.z) < z.r);   // v2.5 只有基地表面上方的半球算保護區；島下方可以開火（例如釘在島底）   // 無敵區（日後 PvP：區內不受傷、不能開火）
     if (P.grounded) for (const pad of supplyPads){ if (Math.hypot(pad.x - p.x, pad.z - p.z) < pad.r && Math.abs(p.y - pad.y) < 4){
       P.onPad = true; P.fuel = Math.min(CONFIG.boost.fuel, P.fuel + CONFIG.boost.regenPad * dt);
       const w = state.weapon; if (w.reloading <= 0) w.ammo = Math.min(W.ammo, w.ammo + CONFIG.supply.ammoPerSec * dt);
@@ -1171,10 +1205,12 @@ const mech = (() => {
   //  模型："Eighty-Six XM2 Reginleif [Undertaker]" by Z7RO（Sketchfab）, CC BY 4.0；已修改：
   //  重組腳部關節做 IK、前後腳拉開（重心偏後）、移除左刀臂、右刀臂加裝 14.5mm 機槍（格鬥臂）、背部加裝碟形鋼索發射器、壓縮貼圖與網格
   // v2.4 塗裝：裝甲顏色（乘在原本的貼圖上）＋點綴色（取代紅色零件，帶一點發光）
-  const PAINTS = { steel: { armor: 0x8f9cab, accent: 0x3de0c8, glow: 0.6 }, white: { armor: 0xffffff, accent: 0xd02020, glow: 0.15 },
-                   desert: { armor: 0xc8b38a, accent: 0xff8a2a, glow: 0.35 }, night: { armor: 0x4a525c, accent: 0x7ff5e0, glow: 0.9 } };
+  // v2.5 整體調暗：塗裝色乘在「所有」裝甲／金屬材質上（不只部分零件），點綴色另外處理
+  const PAINTS = { steel: { armor: 0x5c6774, metal: 0x6a727c, accent: 0x3de0c8, glow: 0.7 }, white: { armor: 0xffffff, metal: 0xffffff, accent: 0xd02020, glow: 0.15 },
+                   desert: { armor: 0x8c7a58, metal: 0x7a7266, accent: 0xff8a2a, glow: 0.45 }, night: { armor: 0x333a43, metal: 0x41474f, accent: 0x7ff5e0, glow: 1.0 } };
   M.applyPaint = name => { const P2 = PAINTS[name] || PAINTS.steel; if (!M.paintMats) return;
     for (const m of M.paintMats.armor){ m.color.setHex(P2.armor); }
+    for (const m of (M.paintMats.metal || [])){ m.color.setHex(P2.metal); }
     for (const m of M.paintMats.accent){ m.color.setHex(P2.accent); if (m.emissive){ m.emissive.setHex(P2.accent); m.emissiveIntensity = P2.glow; } } };
   M.loadModel = async () => {
     const [{ GLTFLoader }, { MeshoptDecoder }, { RoomEnvironment }] = await Promise.all([
@@ -1204,6 +1240,10 @@ const mech = (() => {
       if (/Red/.test(o.name)){ o.material = o.material.clone(); M.paintMats.accent.push(o.material); }
       else if (o.material && /Metal_Iron_3/.test(o.material.name)) M.paintMats.armor.add(o.material);
       else if (/^Cannon(_plates)?_Cannon/.test(o.name)){ o.material = o.material.clone(); M.paintMats.armor.add(o.material); } });   // 砲管也跟著裝甲塗裝
+    // 其他金屬材質（腳、刀臂、樁腳…）也一起調暗，整台色調才一致
+    M.paintMats.metal = new Set(); gltf.scene.traverse(o => { if (!o.isMesh || /Red|Neon/.test(o.name) || M.paintMats.armor.has(o.material)) return; M.paintMats.metal.add(o.material); });
+    // v2.5 結構：右臂拿掉原作的長刀刃，只留臂座當格鬥臂（機槍裝在上面）
+    gltf.scene.traverse(o => { if (o.isMesh && /^Blade_R_(Metal_with_leaks|Stainless)/.test(o.name)) o.visible = false; });
     M.applyPaint(opts.paint);
     // 隱藏基本幾何的過渡零件
     for (const ch of [...M.body.children]) if (ch !== mdl && ch !== M.dish) ch.visible = false;
@@ -1224,6 +1264,26 @@ const mech = (() => {
       const rcv = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.26, 0.9), mat); gun.add(rcv);
       const brl = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 1.4, 10), mat); brl.rotation.x = Math.PI / 2; brl.position.z = -0.45 - 0.7; gun.add(brl);
       const box2 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.3, 0.3), mat); box2.position.set(0.2, -0.05, 0.15); gun.add(box2); }
+    // ---- v2.5 結構大修：直接改模型頂點（計算期間世界座標＝機身座標）----
+    const _wv = new THREE.Vector3();
+    function warpMesh(mesh, fn){
+      const g = mesh.geometry.clone(), pa = g.attributes.position, arr = new Float32Array(pa.count * 3);
+      mesh.updateMatrixWorld(true); const m = mesh.matrixWorld, inv = m.clone().invert();
+      for (let i = 0; i < pa.count; i++){ _wv.fromBufferAttribute(pa, i).applyMatrix4(m); fn(_wv); _wv.applyMatrix4(inv); arr[i*3] = _wv.x; arr[i*3+1] = _wv.y; arr[i*3+2] = _wv.z; }
+      g.setAttribute('position', new THREE.BufferAttribute(arr, 3)); g.computeBoundingBox(); g.computeBoundingSphere(); mesh.geometry = g; }
+    const isLegPart = o => { for (let q = o; q; q = q.parent) if (/^(Joint|Leg|PileDriver)_\d/.test(q.name)) return true; return false; };
+    const skipBody = o => { for (let q = o; q; q = q.parent) if (/^(Cannon|Blade_R)/.test(q.name)) return true; return false; };
+    { const cb = new THREE.Box3().setFromObject(gltf.scene.getObjectByName('Cockpit_Procedural_Scratched_Metal_0') || gltf.scene);
+      const zF = cb.min.z, zB = cb.max.z, zM = (zF + zB) / 2 + 0.3, yc = (cb.min.y + cb.max.y) / 2;
+      // 機身銳利化：前半段往機頭收成楔形（左右收 55%、上下收 35%、往前拉長 0.6m）；後半段肩部略為加寬 → 箭頭狀剪影
+      gltf.scene.traverse(o => { if (!o.isMesh || isLegPart(o) || skipBody(o)) return;
+        warpMesh(o, v => { if (v.z < zM){ const t = clamp((zM - v.z) / (zM - zF), 0, 1.3), e = t * t * (3 - 2 * Math.min(t, 1));
+            v.x *= 1 - 0.55 * Math.min(e, 1); v.y = yc + (v.y - yc) * (1 - 0.35 * Math.min(e, 1)); v.z -= 0.6 * Math.min(t, 1); }
+          else { const t = clamp((v.z - zM) / (zB - zM), 0, 1); v.x *= 1 + 0.14 * t; } }); }); }
+    // 腳變細：沿骨軸（髖→膝、膝→腳底）把粗細縮成 60%
+    function thinAlong(node, a, b, k){ if (!node) return; const ab = new THREE.Vector3().subVectors(b, a), L2 = ab.lengthSq();
+      node.traverse(o => { if (!o.isMesh) return; warpMesh(o, v => { const t = ((v.x - a.x) * ab.x + (v.y - a.y) * ab.y + (v.z - a.z) * ab.z) / L2, px = a.x + ab.x * t, py = a.y + ab.y * t, pz = a.z + ab.z * t;
+        v.set(px + (v.x - px) * k, py + (v.y - py) * k, pz + (v.z - pz) * k); }); }); }
     // 腳：重組成「髖 → 大腿 → 膝 → 樁腳」的關節，之後每幀用 IK 擺
     const legs = [];
     for (let i = 1; i <= 4; i++){
@@ -1236,6 +1296,7 @@ const mech = (() => {
       S.traverse(o => { if (!o.isMesh) return; const pa = o.geometry.attributes.position; for (let k = 0; k < pa.count; k += 3){ v.fromBufferAttribute(pa, k).applyMatrix4(o.matrixWorld); pts.push(v.clone()); if (v.y < minY2) minY2 = v.y; } });
       const footW = new THREE.Vector3(); let nf = 0; for (const p2 of pts) if (p2.y < minY2 + 0.12){ footW.add(p2); nf++; } footW.divideScalar(Math.max(1, nf));
       const hip = M.body.worldToLocal(hipW.clone()), knee = M.body.worldToLocal(kneeW.clone()), foot = M.body.worldToLocal(footW.clone());
+      thinAlong(T, hip, knee, 0.6); thinAlong(S, knee, foot, 0.6); thinAlong(J, hip.clone().add(new THREE.Vector3(0, 0.3, 0)), hip.clone().add(new THREE.Vector3(0, -0.3, 0)), 0.75);   // v2.5 腳變細
       const hipG = new THREE.Group(); hipG.position.copy(hip); M.body.add(hipG); hipG.updateMatrixWorld(true);
       hipG.attach(J); hipG.attach(T);
       const kneeG = new THREE.Group(); kneeG.position.copy(knee).sub(hip); hipG.add(kneeG); kneeG.updateMatrixWorld(true); kneeG.attach(S);
@@ -1437,7 +1498,7 @@ function look(dx, dy, speed = 200){
 //  右：「射擊」大鈕：按住＝開火，按著拖曳＝邊射邊瞄；「右索」鈕：按住＝勾住，按著拖曳＝瞄準；其他地方拖曳＝瞄準
 const btnRoles = { bRopeL: 'ropeL', bRopeR: 'ropeR', bFire: 'fire' };
 function startFire(p){ // 射擊鈕判定為「開火」：開始射擊，之後拖曳＝瞄準（或移動跟手準星）
-  p.firePending = false; setRole('fire', true);
+  p.firePending = false; setRole('fire', true); slotsOpen(false);
   if (opts.follow === 'weapon'){ p.drag = 'aimGun'; aimReturn = false; } else p.drag = 'look';
 }
 function resolveFirePending(){ // 每幀：按住超過 70ms 且沒在往上甩 → 開火；往上滑但 0.25 秒內沒到門檻 → 也開火
@@ -1450,9 +1511,23 @@ function resolveFirePending(){ // 每幀：按住超過 70ms 且沒在往上甩 
   }
 }
 // v2.2 射擊鈕三方向快甩直接選欄位：上＝01 主武、左＝02 副武、右＝03 腿部（必須以該方向為主）
-function flickSlot(p){ const dx = p.x - p.ox, up = p.oy - p.y, F = CONFIG.touch.swapFlick;
-  if (up > F && up > Math.abs(dx)) return 'main'; if (-dx > F && -dx > Math.abs(up)) return 'mg'; if (dx > F && dx > Math.abs(up)) return 'sub'; return null; }
-function swapHint(){ const el = document.getElementById('swapHint'); el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
+function slotAt(dx, up){ const a = Math.atan2(up, dx) / DEG; if (a > 20 && a <= 93) return 'main'; if (a > 93 && a <= 119) return 'mg'; if (a > 119 || a < -160) return 'sub'; return null; }   // 依角度落在哪個扇區
+function flickSlot(p){ const dx = p.x - p.ox, up = p.oy - p.y; return Math.hypot(dx, up) > CONFIG.touch.swapFlick ? slotAt(dx, up) : null; }
+// v2.5 武器圖示（SVG 路徑，viewBox 0 0 30 16）：01 57mm 滑膛炮、02 14.5mm 機槍、03 腿部釘槍
+const WICON = {
+  main: 'M1 6h9v5H1z M10 7.1h16v2.3H10z M25.5 6h3.5v4.5h-3.5z M3 11h5v2.5H3z M4 4h4v2H4z',
+  mg:   'M2 6h11v4.2H2z M13 7.3h11v1.5H13z M22.5 6.4h1.8v3.3h-1.8z M5 10.2h4.2v4H5z M2 4h3.5v2H2z M24.5 7.1h4v1.9h-4z',
+  sub:  'M2 3.5h3.2v9H2z M5.2 7h15v2h-15z M20.2 6.4L28.5 8l-8.3 1.6z M8 5.2h1.4v5.6H8z M12 5.6h1.4v4.8H12z' };
+const iconSVG = k => `<svg viewBox="0 0 30 16" aria-hidden="true"><path d="${WICON[k]}"/></svg>`;
+const WICON2D = {}; for (const k in WICON) WICON2D[k] = new Path2D(WICON[k]);
+const SLOT_ANG = { main: 80, mg: 106, sub: 132 };   // v2.5 三個位置排成扇形，在射擊鈕左上方（右邊是螢幕邊緣、左邊是右索鈕）
+const SLOT_DIR = {}; for (const k in SLOT_ANG){ const a = SLOT_ANG[k] * DEG; SLOT_DIR[k] = [Math.cos(a), -Math.sin(a), k === 'main' ? '01' : k === 'mg' ? '02' : '03']; }
+for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k); el.innerHTML = iconSVG(k) + `<span class="dir">${SLOT_DIR[k][2]}</span>`; }
+function layoutSlots(){ const r = document.getElementById('bFire').getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width * 1.08;
+  for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k), [dx, dy] = SLOT_DIR[k], l = Math.hypot(dx, dy); el.style.left = (cx + dx / l * R) + 'px'; el.style.top = (cy + dy / l * R) + 'px'; } }
+addEventListener('resize', () => setTimeout(layoutSlots, 50)); setTimeout(layoutSlots, 300);
+function slotsOpen(on, hot){ for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k); el.classList.toggle('open', !!on); el.classList.toggle('hot', on && hot === k); } }
+function swapHint(){ setTimeout(() => slotsOpen(false), 160); const el = document.getElementById('swapHint'); el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
 // 跟手準星：武器或鋼索其中一個的準星可以跟著手指走（設定切換）
 const aimOff = { x: 0, y: 0 }, ropeOff = { x: 0, y: 0 }; let ropeAiming = false, aimReturn = false;
 function screenDir(ox, oy){ // 螢幕中心偏移（px）→ 世界方向的 yaw / pitch
@@ -1490,7 +1565,7 @@ touchEl.addEventListener('pointerdown', e => {
       const r = bEl.getBoundingClientRect(); p.ox = r.left + r.width/2; p.oy = r.top + r.height/2; p.drag = 'stick'; p.showStick = false;
       setRole(p.role, true);
     }
-    else if (p.role === 'fire'){ p.drag = null; p.firePending = true; }   // 射擊鈕：先等 70ms 判斷是不是「往上甩＝切換」
+    else if (p.role === 'fire'){ p.drag = null; p.firePending = true; layoutSlots(); slotsOpen(true); }   // 射擊鈕：先等 70ms 判斷是不是「往上甩＝切換」
     else setRole(p.role, true);
     if (p.role === 'ropeL' || p.role === 'fire' || (p.role === 'ropeR' && opts.follow !== 'rope')){}   // 已在上面處理
     else if (p.role === 'swap') p.drag = null;
@@ -1515,6 +1590,7 @@ touchEl.addEventListener('pointermove', e => {
   p.x = e.clientX; p.y = e.clientY; p.moved += dd;
   if (p.firePending){ // 射擊鈕：快速往上甩超過 40px（0.25 秒內）＝切換武器，不開火
     const slot = flickSlot(p);
+    { const dx = p.x - p.ox, up = p.oy - p.y, h = Math.hypot(dx, up); slotsOpen(true, h > 14 ? slotAt(dx, up) : null); }
     if (slot && now - p.t0 < CONFIG.touch.swapWindowMs){ p.firePending = false; p.role = 'swapped'; input.swapTo = slot; buzz(12); swapHint(); }
   } else if (p.role === 'fire' && !p.lateChecked && now - p.t0 < CONFIG.touch.swapWindowMs){
     // 已經開火但還在 0.25 秒內：快速往上甩仍算切換（停火，最多多打 1～2 發）
@@ -1529,6 +1605,7 @@ touchEl.addEventListener('pointermove', e => {
 }, { passive: false });
 function endPointer(e){
   const p = pointers.get(e.pointerId); if (!p) return;
+  if (p.role === 'fire' || p.role === 'swapped') slotsOpen(false);
   if (p.role === 'ropeRAim'){ // 放開＝朝跟手準星射出右索，並保持勾住，直到再按一次右索
     [input.ropeYaw, input.ropePitch] = screenDir(ropeOff.x, ropeOff.y);
     input.hookR = true; input.ropeLatch = true; ropeAiming = false; ropeOff.x = ropeOff.y = 0; elRopeR.classList.remove('on'); buzz(15);
@@ -1579,6 +1656,16 @@ document.getElementById('bSet').addEventListener('click', ()=> setEl.style.displ
 document.getElementById('bReset').addEventListener('click', respawn);
 document.getElementById('optShake').addEventListener('change', e => opts.shake = e.target.checked);
 document.getElementById('optStab').addEventListener('change', e => opts.stab = e.target.checked);
+// v2.5 速度區間（像 86 一樣依駕駛習慣調整）：同時縮放地面速度、地面加速、推進水平上限、撲擊速度、最高速度
+const SPEED_BASE = { ground: CONFIG.ground.speed, accel: CONFIG.ground.accel, hCap: CONFIG.boost.hCap, cap: CONFIG.speedCap, pounce: CONFIG.spider.pounceSpeed };
+function setSpeedK(k){ k = clamp(+k || 1, 0.7, 1.4); opts.speedK = k;
+  CONFIG.ground.speed = SPEED_BASE.ground * k; CONFIG.ground.accel = SPEED_BASE.accel * k; CONFIG.boost.hCap = SPEED_BASE.hCap * k; CONFIG.spider.pounceSpeed = SPEED_BASE.pounce * k;
+  document.getElementById('optSpeedK').value = k; document.getElementById('optSpeedV').textContent = '×' + k.toFixed(2);
+  const sel = document.getElementById('optSpeed'); sel.value = ['0.8', '1', '1.25'].find(v => Math.abs(+v - k) < 0.01) || sel.value;
+  try { localStorage.setItem('wfm.speedK', String(k)); } catch(_){} }
+document.getElementById('optSpeed').addEventListener('change', e => setSpeedK(e.target.value));
+document.getElementById('optSpeedK').addEventListener('input', e => setSpeedK(e.target.value));
+{ let k0 = 1; try { k0 = +(localStorage.getItem('wfm.speedK') || 1); } catch(_){} setSpeedK(k0); }
 document.getElementById('optPaint').addEventListener('change', e => { opts.paint = e.target.value; mech.applyPaint(opts.paint); });
 function setView(on){ opts.view3P = on; document.getElementById('optView3P').checked = on; document.getElementById('bView').textContent = on ? '3P' : '1P'; }
 document.getElementById('optView3P').addEventListener('change', e => setView(e.target.checked));
@@ -1753,9 +1840,11 @@ function drawHUD(dt){
     c.font = `700 ${Math.round(9*sc)}px ui-monospace, Menlo, monospace`;
     const wname = blocked ? 'SAFE ZONE · HOLD FIRE' : sub ? 'NAIL GUN' : isMG ? '14.5mm MG' : '57mm SMOOTHBORE', yB = cy + R0 + 24*sc; // 武器資訊集中在大弧下方（弧上留給敵人方向）
     c.font = `700 ${Math.round(15*sc)}px ui-monospace, Menlo, monospace`; txt(cnt, cx, yB);
-    c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'right'; txt((sub ? '03 ' : isMG ? '02 ' : '01 '), cx - 2*sc, yB + 14*sc);
-    c.font = `600 ${Math.round(9*sc)}px sans-serif`; c.textAlign = 'left'; txt(sub ? '腿部' : isMG ? '副武' : '主武', cx + 2*sc, yB + 14*sc);
-    c.font = `700 ${Math.round(9*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'center'; txt(wname, cx, yB + 27*sc);
+    c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'right'; txt((sub ? '03' : isMG ? '02' : '01'), cx - 2*sc, yB + 18*sc);
+
+    { const key = sub ? 'sub' : isMG ? 'mg' : 'main', k2 = 0.9 * sc; c.save(); c.translate(cx + 4*sc, yB + 6*sc); c.scale(k2, k2); c.shadowBlur = 0;
+      c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,18,26,.75)'; c.stroke(WICON2D[key]); c.fillStyle = wcol; c.fill(WICON2D[key]);
+      if (blocked){ c.strokeStyle = '#ff5050'; c.lineWidth = 2; c.beginPath(); c.moveTo(-2, 15); c.lineTo(32, 1); c.stroke(); } c.restore(); }   // v2.5 用圖示顯示武器
     if (opts.autoFire && !mouseMode){ c.fillStyle = wst2.autoOn ? '#ff7060' : DIM; txt('AUTO', cx, yB + 40*sc); }
     c.restore();
   }
@@ -1786,10 +1875,10 @@ function updateButtons(){
   const w = state.weapon, sub = w.active === 'sub', mg = w.active === 'mg';
   const ft = sub ? (w.nail.reloading > 0 ? '裝填' : w.nail.ammo + '/' + w.nail.reserve) : mg ? (w.reloading > 0 ? '裝填' : String(Math.floor(w.ammo))) : (w.cannon.reloading > 0 ? '裝填' : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
   if (lastUI.f !== ft){ lastUI.f = ft; elSF.textContent = ft; }
-  const fl = w.blocked ? '禁火' : sub ? '釘槍' : mg ? '機槍' : '主砲';
-  if (lastUI.fl !== fl){ lastUI.fl = fl; document.getElementById('lFire').textContent = fl; elFire.classList.toggle('none', !!w.blocked); }
+  const fl = (w.blocked ? 'x' : '') + (sub ? 'sub' : mg ? 'mg' : 'main');
+  if (lastUI.fl !== fl){ lastUI.fl = fl; document.getElementById('lFire').innerHTML = iconSVG(w.active); elFire.classList.toggle('none', !!w.blocked); }
   const sw = sub ? '腿部' : mg ? '副武' : '主武';
-  if (lastUI.sw !== sw){ lastUI.sw = sw; document.getElementById('swapCur').textContent = sw; document.querySelectorAll('#swapHint span[data-s]').forEach(e => e.classList.toggle('cur', e.dataset.s === w.active)); }
+  if (lastUI.sw !== sw){ lastUI.sw = sw; document.getElementById('swapCur').textContent = sw; for (const k of ['main', 'mg', 'sub']) document.getElementById('ws_' + k).classList.toggle('cur', k === w.active); }
 }
 function buzz(ms){ try { navigator.vibrate && navigator.vibrate(ms); } catch(_){} } // Android 有效，iOS 不支援會略過
 
