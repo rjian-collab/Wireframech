@@ -83,12 +83,30 @@
   #topbar { position:fixed; top:calc(8px + var(--st)); left:calc(var(--pad) + var(--sl)); display:flex; gap:8px; z-index:5; }
   .small { pointer-events:auto; width:40px; height:40px; border-radius:50%; background:rgba(15,30,45,.6); border:1px solid rgba(140,220,255,.5);
     color:#cfefff; font-size:18px; padding:0; }
-  #settings { position:fixed; top:calc(56px + var(--st)); left:calc(var(--pad) + var(--sl)); max-width:min(420px, 86vw); max-height:calc(100dvh - 80px);
-    overflow:auto; background:rgba(8,16,24,.94); border:1px solid rgba(140,220,255,.5); border-radius:12px; padding:10px 14px;
-    display:none; z-index:6; font-size:15px; touch-action:pan-y; }
-  #settings label { display:flex; align-items:center; gap:10px; min-height:44px; }
-  #settings input[type=checkbox] { width:22px; height:22px; }
-  #settings input[type=range] { flex:1; }
+  /* v2.9 設定面板：置中視窗＋左側分頁＋開關樣式 */
+  #settings { position:fixed; inset:0; z-index:6; display:none; align-items:center; justify-content:center; background:rgba(2,6,10,.55);
+    padding:calc(8px + var(--st)) calc(8px + var(--sl)); font-size:15px; }
+  #settings.open { display:flex; }
+  #settings .panel { width:min(720px, 96vw); height:min(440px, calc(100dvh - 24px)); display:grid; grid-template-columns:118px 1fr; grid-template-rows:auto 1fr;
+    background:rgba(8,16,24,.97); border:1px solid rgba(140,220,255,.45); border-radius:14px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+  #settings .sh { grid-column:1 / 3; display:flex; align-items:center; justify-content:space-between; padding:8px 10px 8px 16px;
+    border-bottom:1px solid rgba(140,220,255,.2); font-weight:700; letter-spacing:.15em; color:#bfeaff; }
+  #settings .sh button { width:40px; height:40px; border-radius:10px; border:1px solid rgba(140,220,255,.35); background:rgba(140,220,255,.08); color:#dff; font-size:18px; }
+  #settings .tabs { display:flex; flex-direction:column; gap:4px; padding:8px; border-right:1px solid rgba(140,220,255,.15); overflow:auto; }
+  #settings .tabs button { min-height:44px; border:0; border-radius:10px; background:transparent; color:#8fb4c8; font-size:15px; text-align:left; padding:0 12px; }
+  #settings .tabs button.on { background:rgba(80,200,255,.16); color:#e8fbff; box-shadow:inset 3px 0 0 #5fd4ff; }
+  #settings .pages { overflow:auto; touch-action:pan-y; padding:4px 14px 12px; }
+  #settings section { display:none; } #settings section.on { display:block; }
+  #settings .row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:52px; padding:6px 0; border-bottom:1px solid rgba(140,220,255,.08); }
+  #settings .tx { display:flex; flex-direction:column; min-width:0; } #settings .tx b { font-weight:600; color:#e6f6ff; }
+  #settings .tx i { font-style:normal; font-size:12px; color:#7f9fb2; line-height:1.3; } #settings .tx i:empty { display:none; }
+  #settings .ctl { display:flex; align-items:center; gap:8px; flex:0 0 46%; } #settings input[type=range] { flex:1; min-width:0; accent-color:#5fd4ff; }
+  #settings .val { width:46px; text-align:right; color:#9fe4ff; font-variant-numeric:tabular-nums; }
+  #settings select { flex:0 0 auto; max-width:46%; min-height:38px; font-size:14px; color:#e6f6ff; background:#0f2230; border:1px solid rgba(140,220,255,.35); border-radius:8px; padding:0 8px; }
+  #settings input.sw { appearance:none; -webkit-appearance:none; flex:0 0 auto; width:50px; height:30px; border-radius:15px; background:#2a3a46; position:relative; transition:background .15s; margin:0; }
+  #settings input.sw::after { content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#cfdbe2; transition:transform .15s; }
+  #settings input.sw:checked { background:#2fb6e8; } #settings input.sw:checked::after { transform:translateX(20px); background:#fff; }
+  #gyroStatus { font-size:12px; color:#9fc3dd; min-height:16px; padding-top:8px; }
   #start, #rotate { position:fixed; inset:0; background:rgba(5,10,16,.94); display:flex; flex-direction:column; align-items:center;
     justify-content:center; z-index:10; text-align:center; padding:calc(12px + var(--st)) 16px 12px; box-sizing:border-box; overflow:auto; touch-action:pan-y; }
   #start h1 { margin:0 0 6px; font-size:clamp(18px, 5.5vmin, 26px); letter-spacing:1px; }
@@ -153,25 +171,43 @@
   <button class="small" id="bFS" aria-label="回到全螢幕" style="display:none;width:auto;padding:0 12px;border-radius:20px;font-size:14px">⛶ 全螢幕</button>
 </div>
 <div id="settings">
-  <label>跟手準星 <select id="optFollow" style="font-size:15px"><option value="none">無（都用畫面中央）</option><option value="weapon">武器（按住射擊拖曳＝移動準星）</option><option value="rope">鋼索（按住右索拖曳瞄準、放開射出）</option></select></label>
-  <label><input type="checkbox" id="optAutoFire"> 自動開火（準星對到敵人就射，子彈自動補正；57mm 與機槍）</label>
-  <label>速度區間 <select id="optSpeed" style="font-size:15px"><option value="0.75">穩定（×0.75，好控制）</option><option value="1" selected>標準</option><option value="1.3">快（×1.3）</option><option value="1.7">極速（×1.7，容易掉下去）</option></select>
-    <input type="range" id="optSpeedK" min="0.5" max="2" step="0.05" value="1" style="width:120px;vertical-align:middle"> <span id="optSpeedV">×1.00</span></label>
-  <label>機體塗裝 <select id="optPaint" style="font-size:15px"><option value="steel">鋼灰＋青綠（預設）</option><option value="night">夜戰深灰＋發光</option><option value="desert">沙漠＋橘</option><option value="white">原色白＋紅</option></select></label>
-  <label><input type="checkbox" id="optView3P" checked> 第三人稱視角（看得到機體；左上角 3P／1P 也能切換）</label>
-  <label><input type="checkbox" id="optStab" checked> 鏡頭鎖定地形（擺盪時自動補正，準星停在地形上）</label>
-  <label><input type="checkbox" id="optLockEnemy" checked> 鎖定敵人視角（放手時準星附近有敵人，擺盪中視角一直看著它）</label>
-  <label><input type="checkbox" id="optRopeBuffer" checked> 按住等勾點（沒勾點時按住鋼索，勾點一出現就自動勾上，最多 1 秒）</label>
-  <label><input type="checkbox" id="optAutoLevel" checked> 上下角度回正（沒勾鋼索、1 秒沒操作，視角慢慢回到往上 10°）</label>
-  <label><input type="checkbox" id="optRoll"> 鏡頭側傾</label>
-  <label><input type="checkbox" id="optShake" checked> 鏡頭震動</label>
-  <label>拖曳靈敏度 <input type="range" id="optSens" min="0.1" max="0.6" step="0.05" value="0.25"></label>
-  <label>按鈕大小 <input type="range" id="optSize" min="0.8" max="1.3" step="0.05" value="1"></label>
-  <label><input type="checkbox" id="optGyro"> 陀螺儀瞄準（轉動手機來轉視角）</label>
-  <label>陀螺儀靈敏度 <input type="range" id="optGyroSens" min="0.5" max="4" step="0.1" value="1.0"></label>
-  <label><input type="checkbox" id="optGyroInvY"> 陀螺儀上下反轉</label>
-  <label><input type="checkbox" id="optGyroInvX"> 陀螺儀左右反轉</label>
-  <div id="gyroStatus" style="font-size:12px;color:#9fc3dd;min-height:16px"></div>
+  <div class="panel">
+    <div class="sh"><span>設定</span><button id="setClose" aria-label="關閉">✕</button></div>
+    <nav class="tabs">
+      <button data-tab="ctl" class="on">操作</button><button data-tab="cam">鏡頭</button><button data-tab="aid">新手輔助</button><button data-tab="gyro">陀螺儀</button><button data-tab="look">外觀</button>
+    </nav>
+    <div class="pages">
+    <section data-page="ctl" class="on">
+      <label class="row"><span class="tx"><b>速度區間</b><i>越快越刺激，也越容易掉下去</i></span><select id="optSpeed"><option value="0.75">穩定 ×0.75</option><option value="1" selected>標準</option><option value="1.3">快 ×1.3</option><option value="1.7">極速 ×1.7</option></select></label>
+      <label class="row"><span class="tx"><b>微調倍率</b><i>0.5 ～ 2.0 自由調整</i></span><span class="ctl"><input type="range" id="optSpeedK" min="0.5" max="2" step="0.05" value="1"> <span id="optSpeedV" class="val">×1.00</span></span></label>
+      <label class="row"><span class="tx"><b>跟手準星</b><i>按住按鈕拖曳時，準星跟著手指走</i></span><select id="optFollow"><option value="none">關（畫面中央）</option><option value="weapon">武器</option><option value="rope">鋼索</option></select></label>
+      <label class="row"><span class="tx"><b>自動開火</b><i>準星對到敵人就射（57mm、機槍）</i></span><input type="checkbox" class="sw" id="optAutoFire"></label>
+      <label class="row"><span class="tx"><b>拖曳靈敏度</b><i>滑動畫面轉視角的速度</i></span><span class="ctl"><input type="range" id="optSens" min="0.1" max="0.6" step="0.05" value="0.25"></span></label>
+      <label class="row"><span class="tx"><b>按鈕大小</b><i>手大或平板可以調大</i></span><span class="ctl"><input type="range" id="optSize" min="0.8" max="1.3" step="0.05" value="1"></span></label>
+    </section>
+    <section data-page="cam">
+      <label class="row"><span class="tx"><b>第三人稱</b><i>看得到機體；左上 3P／1P 也能切換</i></span><input type="checkbox" class="sw" id="optView3P" checked></label>
+      <label class="row"><span class="tx"><b>鏡頭鎖定地形</b><i>擺盪時自動補正，準星穩定</i></span><input type="checkbox" class="sw" id="optStab" checked></label>
+      <label class="row"><span class="tx"><b>鏡頭側傾</b><i>轉彎時畫面跟著傾斜</i></span><input type="checkbox" class="sw" id="optRoll"></label>
+      <label class="row"><span class="tx"><b>鏡頭震動</b><i>開砲、撞擊時畫面震動</i></span><input type="checkbox" class="sw" id="optShake" checked></label>
+    </section>
+    <section data-page="aid">
+      <label class="row"><span class="tx"><b>鎖定敵人</b><i>放手時準星附近有敵人，擺盪中視角一直看著它</i></span><input type="checkbox" class="sw" id="optLockEnemy" checked></label>
+      <label class="row"><span class="tx"><b>按住等勾點</b><i>沒勾點時按住鋼索，勾點出現就自動勾上（最多 1 秒）</i></span><input type="checkbox" class="sw" id="optRopeBuffer" checked></label>
+      <label class="row"><span class="tx"><b>視角回正</b><i>沒勾鋼索、1 秒沒操作，視角慢慢回到水平</i></span><input type="checkbox" class="sw" id="optAutoLevel" checked></label>
+    </section>
+    <section data-page="gyro">
+      <label class="row"><span class="tx"><b>陀螺儀瞄準</b><i>轉動手機來轉視角</i></span><input type="checkbox" class="sw" id="optGyro"></label>
+      <label class="row"><span class="tx"><b>靈敏度</b><i>轉一點手機、視角轉多少</i></span><span class="ctl"><input type="range" id="optGyroSens" min="0.5" max="4" step="0.1" value="1.0"></span></label>
+      <label class="row"><span class="tx"><b>上下反轉</b><i></i></span><input type="checkbox" class="sw" id="optGyroInvY"></label>
+      <label class="row"><span class="tx"><b>左右反轉</b><i></i></span><input type="checkbox" class="sw" id="optGyroInvX"></label>
+      <div id="gyroStatus"></div>
+    </section>
+    <section data-page="look">
+      <label class="row"><span class="tx"><b>機體塗裝</b><i></i></span><select id="optPaint"><option value="steel" selected>鋼灰＋青綠</option><option value="night">夜戰深灰</option><option value="desert">沙漠＋橘</option><option value="white">原色白＋紅</option></select></label>
+    </section>
+    </div>
+  </div>
 </div>
 <div id="rotate">
   <div class="ph">📱</div>
@@ -213,7 +249,7 @@ import RAPIER from 'rapier';
 const CONFIG = Object.freeze({
   physics: { dt: 1/120, maxTicksPerFrame: 8, gravity: -20 },
   body: { mass: 3000, radius: 1.2, halfHeight: 0.9, linDamping: 0.05 },
-  ground: { speed: 9, accel: 40, friction: 30, slideFriction: 8, slideAbove: 12, jump: 10 },
+  ground: { speed: 33, accel: 90, friction: 60, slideFriction: 8, slideAbove: 12, jump: 10 },   // v2.9 平地全速 33 m/s ≈ 120 km/h
   air: { control: 2 },
   boost: { accel: 40, fuel: 6, horizontal: 0.75, lift: 0.8, fallBrake: 2.5, hCap: 24, regenGround: 0.6, regenPad: 4 },
   supply: { ammoPerSec: 200 },
@@ -233,7 +269,7 @@ const CONFIG = Object.freeze({
     bottomWindowDeg: 15, bottomBonus: 1.15, apexHang: 0.35, apexGravityCut: 10, predictPoints: 24, predictTime: 0.8,
     coneH: 12, coneUp: 25, coneDown: 10, groundMinUp: -1e9,   /* v2.8 地面也可以勾（原本只勾頭上 5m 以上） */ minDist: 6, upBias: 6, switchHysteresis: 2 },
   stickJump: { windowMs: 250, dist: 0.8, tapMs: 200, tapMove: 14 },   // v2.8 放開時判定：輕點＝原地跳、快滑放開＝方向跳
-  spider: { maxSlopeDeg: 70, slopePress: 4, snapDown: 1.5, pounceSpeed: 17, pounceUp: 7, pounceWallPush: 5, cooldown: 0.35 },   // v1.8 蜘蛛腳：70° 內可站、貼地、撲擊
+  spider: { maxSlopeDeg: 70, slopePress: 4, snapDown: 1.5, pounceSpeed: 24, pounceUp: 7, powMin: 0.6, powMax: 1.8, flickV0: 6.5, pounceWallPush: 5, cooldown: 0.35 },   // v1.8 蜘蛛腳：70° 內可站、貼地、撲擊
   assist: { ropeBufferS: 1.0, lockEnemyDeg: 15, lockEnemyRange: 250, levelIdleMs: 1000, levelPitchDeg: 10, levelRate: 45, quickTurnS: 0.25, doubleTapMs: 300 },
   tp: { dist: 15, height: 5.5, minDist: 2.2, hideBelow: 2.6, bodyYawTau: 0.12 },   // v2.1 第三人稱鏡頭
   camera: { stabHoldMs: 150, stabMinSpeed: 4, stabMinDist: 8, stabMaxRate: 300, stabGyroInput: 25, shakeScale: 0.4, eye: 1.1, fovBase: 70, fovAt40: 85, fovMax: 90, fovTau: 0.3, rollMaxDeg: 8, pitchLimit: 85,
@@ -241,7 +277,7 @@ const CONFIG = Object.freeze({
   render: { dprMax: 1.5, dprFallback: 1.0, fallbackFps: 50, fpsWindow: 2 },
   // v1.9 主武：57mm 滑膛炮（實體彈道：有飛行時間與彈道下墜、落點爆炸範圍傷害）
   cannon: { rpm: 75, speed: 700, range: 600, damage: 700, splash: 350, splashR: 4, mag: 6, reserve: 24, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
-  nail: { crawlSpeed: 5, crawlPerNail: 2.5, damage: 1000, mag: 6, reserve: 18, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6 },   // 副武：釘槍（5×2 發）
+  nail: { crawlSpeed: 5, crawlPerNail: 6, damage: 1000, mag: 6, reserve: 18, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6, brake: 0.3 },   // 副武：釘槍（5×2 發）
   safeZone: { radius: 18 },
   weapon: { rpm: 600, range: 500, damage: 200, ammo: 1000, reload: 3,   // v1.9 起為副武：14.5mm 機槍（格鬥臂）
     spread: { base: 0.3, moving: 0.5, swinging: 1.0, swingSpeed: 12, max: 2.0, bloomPerShot: 0.08, recover: 0.3 },
@@ -569,10 +605,10 @@ function buildCommand(){
     fire: input.fire || input.fireTap || k.has('Mouse0'), hookL: input.hookL || k.has('KeyQ'), hookR: input.hookR || k.has('KeyE'),
     hookMain: input.hookMain || k.has('KeyF'), smart: opts.smart && !mouseMode, autoFire: opts.autoFire && !mouseMode,
     swap: input.swapQueued, swapTo: input.swapTo || null, gunYaw: input.gunYaw, gunPitch: input.gunPitch, ropeYaw: input.ropeYaw, ropePitch: input.ropePitch,
-    jump: input.jumpQueued, jumpX: input.jumpX || 0, jumpZ: input.jumpZ == null ? 0 : input.jumpZ, boost: input.boost || k.has('ShiftLeft') || k.has('ShiftRight') || k.has('Space'), thrust: input.thrust, reload: input.reloadQueued };
+    jump: input.jumpQueued, jumpPow: input.jumpPow || 1, jumpX: input.jumpX || 0, jumpZ: input.jumpZ == null ? 0 : input.jumpZ, boost: input.boost || k.has('ShiftLeft') || k.has('ShiftRight') || k.has('Space'), thrust: input.thrust, reload: input.reloadQueued };
   // v2.1 第三人稱：鏡頭在機體後上方，從鏡頭中心射線打到的點反推槍口方向，子彈才會打在準星上
   { const a3 = aim3P(); if (a3){ cmd.aimYaw = a3[0]; cmd.aimPitch = a3[1]; if (cmd.gunYaw == null){ cmd.gunYaw = a3[0]; cmd.gunPitch = a3[1]; } } }
-  input.jumpQueued = false; input.jumpX = 0; input.jumpZ = 0; input.reloadQueued = false; input.swapQueued = false; input.swapTo = null; input.fireTap = false;
+  input.jumpQueued = false; input.jumpPow = 1; input.jumpX = 0; input.jumpZ = 0; input.reloadQueued = false; input.swapQueued = false; input.swapTo = null; input.fireTap = false;
   if (input.ropeLatch && !state.ropes[1].hooked && state.ropes[1].wasHeld){ input.ropeLatch = false; input.hookR = false; }   // 右索自己脫鉤／沒勾到 → 解除鎖定
   else if (input.ropeLatch) input.hookR = true;
   if (state.ropes[1].hooked){ input.ropeYaw = null; input.ropePitch = null; }
@@ -742,13 +778,14 @@ function simTick(cmd){
     else if (P.grounded){ n = P.groundN; ok = true; }
     else for (let k = 0; k < 8; k++){ const a2 = k / 8 * Math.PI * 2; const wh = castRay(_p, { x: Math.cos(a2), y: 0, z: Math.sin(a2) }, CONFIG.body.radius + 0.6); if (wh){ n = wh.normal; ok = true; break; } }
     if (ok && !cmd.jumpX && !cmd.jumpZ){   // v2.8 輕點搖桿＝原地往上跳（從牆面跳時順便推離）
-      _v.y = Math.max(_v.y, 0) + CONFIG.ground.jump; if (n && n.y < 0.9){ _v.x += n.x * SP.pounceWallPush; _v.z += n.z * SP.pounceWallPush; }
+      _v.y = Math.max(_v.y, 0) + CONFIG.ground.jump * (cmd.jumpPow || 1); if (n && n.y < 0.9){ _v.x += n.x * SP.pounceWallPush; _v.z += n.z * SP.pounceWallPush; }
       P.pounceCD = SP.cooldown; P.jumpT = 0.3; P.grounded = false; events.push({ type: 'fling' });
     } else if (ok){
       _d.set(_fwd.x * cmd.jumpZ + _right.x * cmd.jumpX, 0, _fwd.z * cmd.jumpZ + _right.z * cmd.jumpX);
       if (_d.lengthSq() < 1e-4) _d.copy(_fwd); _d.normalize();
-      const along = _v.x * _d.x + _v.z * _d.z, add = Math.max(0, SP.pounceSpeed - along);
-      _v.x += _d.x * add; _v.z += _d.z * add; _v.y = Math.max(_v.y, 0) + SP.pounceUp;
+      const pw = cmd.jumpPow || 1;   // v2.9 滑越快 → 撲越遠、越高
+      const along = _v.x * _d.x + _v.z * _d.z, add = Math.max(0, SP.pounceSpeed * pw - along);
+      _v.x += _d.x * add; _v.z += _d.z * add; _v.y = Math.max(_v.y, 0) + SP.pounceUp * pw;
       if (n && n.y < 0.9){ _v.x += n.x * SP.pounceWallPush; _v.z += n.z * SP.pounceWallPush; }   // 從牆／陡坡撲出：順便推離表面
       P.pounceCD = SP.cooldown; P.jumpT = 0.3; P.grounded = false; events.push({ type: 'fling' });
     }
@@ -772,7 +809,7 @@ function simTick(cmd){
     const hs = Math.hypot(_v.x, _v.z);
     const hasIn = Math.abs(moveF) + Math.abs(strafeIn) > 0.05;
     let rate = hasIn ? CONFIG.ground.accel : CONFIG.ground.friction;
-    if (hs > CONFIG.ground.slideAbove) rate = CONFIG.ground.slideFriction; // 高速落地會滑行
+    if (hs > Math.max(CONFIG.ground.slideAbove, CONFIG.ground.speed + 2)) rate = CONFIG.ground.slideFriction; // 落地速度超過跑速才會滑行
     const dx = tx - _v.x, dz = tz - _v.z, dl = Math.hypot(dx, dz), step = rate*dt;
     if (dl <= step){ _v.x = tx; _v.z = tz; } else { _v.x += dx/dl*step; _v.z += dz/dl*step; }
   } else {
@@ -1105,6 +1142,12 @@ function nailTick(cmd, dt, fireEdge){
       P.pinned = { pos, normal: V(best.normal.x, best.normal.y, best.normal.z) };
       for (const r of state.ropes) if (r.hooked){ r.hooked = false; events.push({ type: 'release', side: r.side }); }   // 釘上去時自動收回兩條鋼索
       events.push({ type: 'pin', at: best.point.clone() });
+    } else if (!P.grounded && !P.pinned){
+      // v2.9 空中煞車：附近沒牆可釘時，釘槍往下方空打一發當制動錨，水平速度大幅削減、止住下墜（甩過頭時用）
+      const lv = playerBody.linvel(), B = N.brake;
+      playerBody.setLinvel({ x: lv.x * B, y: Math.max(Math.min(lv.y, 4), -2), z: lv.z * B }, true);
+      for (const r of state.ropes) if (r.hooked){ r.hooked = false; events.push({ type: 'release', side: r.side }); }
+      events.push({ type: 'nailBrake', from: origin.clone(), speed: Math.hypot(lv.x, lv.z) });
     }
   }
   events.push({ type: 'shot', from: origin, to: end, hit: !!hit, hitTarget, normal: hit ? hit.normal : null, tracer: true, nail: true });
@@ -1197,6 +1240,7 @@ const mech = (() => {
       return M.body.localToWorld(out.copy(L.cur).lerp(L.hip, 0.15)); }
     return null; };
   M.dishTip = (i, out) => { M.claws[i].children[1].getWorldPosition(out); return out; };
+  M.recoil = () => { M.rc = 1; };
   M.update = (dt, pos, P, ropes) => {
     M.root.position.copy(pos);
     // 機身朝向：左右跟視角（平滑），站在坡上時貼齊坡面
@@ -1206,7 +1250,10 @@ const mech = (() => {
     // 炮塔與砲管跟著準星；機槍臂也指向準星
     M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9); if (M.mgArm) M.mgArm.rotation.x = clamp(P.pitch, -0.4, 0.7);   // 機槍跟準星上下
     if (M.arm2){ const want = state.weapon.active === 'mg' ? 1 : 0; M.arm2.k += (want - M.arm2.k) * Math.min(1, dt * 8);   // 選 02 副武時展開成 L，其他時候收成 V
-      const k = M.arm2.k; M.arm2.S.rotation.x = 0.45 * (1 - k) + 0.0 * k; M.arm2.E.rotation.x = 2.75 * (1 - k) + (Math.PI / 2) * k; }
+      const k = M.arm2.k; M.arm2.S.rotation.x = 0.75 * (1 - k) + 0.6 * k; M.arm2.E.rotation.x = 1.6 * (1 - k) + 1.02 * k; }   // v2.9 收：V 字開口朝前（前臂斜向前上、不進機鼻）；展：上臂斜前下＋前臂水平
+    // v2.9 滑膛炮後座：機身往後一頓、機首微抬，腳固定在地上吸收（IK 自動彎膝）
+    M.rc = Math.max(0, (M.rc || 0) - dt / 0.28); const rk = M.rc * M.rc * (3 - 2 * M.rc);
+    M.body.position.set(0, -0.12 * rk, 0.42 * rk); M.body.rotation.x = 0.09 * rk;
     // 碟形發射器轉向勾住的錨點（沒勾就朝前）
     const hk = ropes.find(r => r.hooked);
     if (hk){ M.dish.worldToLocal(_k.copy(hk.anchor)); const t = Math.atan2(-_k.x, -_k.z); M.dish.rotation.y += Math.atan2(Math.sin(t), Math.cos(t)) * Math.min(1, dt * 10); }
@@ -1216,6 +1263,7 @@ const mech = (() => {
     //  對角兩腳一組交替；落點用射線貼齊地形；膝蓋高高拱在身體上方。空中收腳、鋼索擺盪時張開
     const hs = Math.hypot(P.vel.x, P.vel.z), air = !P.grounded && !P.pinned, swing = ropes.some(r => r.hooked);
     const planted = !air && !swing, stepDur = clamp(0.16 - hs * 0.004, 0.08, 0.16), thresh = 0.7 + hs * 0.06;
+    M.runPh = ((M.runPh || 0) + dt * hs / 5.5 * Math.PI * 2) % (Math.PI * 2);
     M.root.updateMatrixWorld(true);
     for (const L of M.legs){
       if (L.ik){   // v2.3 模型腳：休息位置來自模型本身（前後腳拉開）；空中收腳、擺盪時張開
@@ -1225,6 +1273,10 @@ const mech = (() => {
         _b.set(Math.sin(L.a) * reach, drop, -Math.cos(L.a) * reach);           // 本機座標的「休息位置」
       }
       if (!planted){ L.w = null; L.step = null; L.cur.lerp(_b, 1 - Math.exp(-dt / (air ? 0.12 : 0.07))); continue; }
+      if (hs > 15){   // v2.9 高速奔跑：腳步追不上 → 改成對角兩組交替的奔跑循環
+        L.w = null; L.step = null; const ph = M.runPh + L.grp * Math.PI;
+        _k.copy(_b); _k.z -= Math.cos(ph) * 1.1; _k.y += Math.max(0, Math.sin(ph)) * 0.9;
+        L.cur.lerp(_k, 1 - Math.exp(-dt / 0.03)); continue; }
       const rest = M.body.localToWorld(_b.clone());
       if (!L.w){ L.w = snapFoot(rest); }
       if (L.step){
@@ -1323,7 +1375,7 @@ const mech = (() => {
       const core = new THREE.Box3().setFromObject(gltf.scene.getObjectByName('Cockpit_Procedural_Scratched_Metal_0') || gltf.scene);
       // 格鬥臂：肩關節在機頭下方
       const S = new THREE.Group(); S.position.set((core.min.x + core.max.x) / 2, core.min.y + 0.25, core.min.z + 0.5); M.body.add(S); S.add(joint(0.45, matD));
-      const L1 = 2.4, L2 = 2.7;
+      const L1 = 1.4, L2 = 2.3;   // v2.9 縮短：避免手肘戳進地面、前臂插進機鼻
       const up = blade(L1, 0.55, 0.38, 0.45, matF); S.add(up);
       const E = new THREE.Group(); E.position.y = -L1; S.add(E); E.add(joint(0.34, matD));
       const fo = blade(L2, 0.42, 0.05, 0.4, matF); E.add(fo);                                  // 前臂收尖（刃狀）
@@ -1694,8 +1746,11 @@ function endPointer(e){
   else if (btnRoles[p.role] || p.role === 'ropeL' || p.role === 'ropeR' || p.role === 'fire') setRole(p.role, false);
   // v2.8 移動搖桿放開時的手勢：輕點＝原地跳；快速往任一方向滑出並放開（0.25 秒內）＝往那個方向跳
   if (p.role === 'stick'){ const dt0 = performance.now() - p.t0, dx = p.x - p.ox, dy = p.y - p.oy, d = Math.hypot(dx, dy), J = CONFIG.stickJump;
-    if (dt0 < J.tapMs && d < J.tapMove){ input.jumpQueued = true; input.jumpX = 0; input.jumpZ = 0; buzz(12); }
-    else if (dt0 < J.windowMs && d > R_STICK * J.dist){ input.jumpQueued = true; input.jumpX = dx / d; input.jumpZ = -dy / d; buzz(12); } }
+    const SPc = CONFIG.spider;
+    if (dt0 < J.tapMs && d < J.tapMove){ input.jumpQueued = true; input.jumpPow = 1; input.jumpX = 0; input.jumpZ = 0; buzz(12); }
+    else if (dt0 < J.windowMs && d > R_STICK * J.dist){   // v2.9 甩動速度（半徑／秒）決定跳躍力道
+      const v = (d / R_STICK) / Math.max(0.03, dt0 / 1000);
+      input.jumpQueued = true; input.jumpPow = clamp(v / SPc.flickV0, SPc.powMin, SPc.powMax); input.jumpX = dx / d; input.jumpZ = -dy / d; buzz(8 + Math.round(input.jumpPow * 8)); } }
   if (p.drag === 'stick'){ input.stickX = 0; input.stickZ = 0; }
   if (p.role === 'ropeR'){ stickBase2.style.display = stickKnob2.style.display = 'none'; }
   pointers.delete(e.pointerId); updateThrust(); stickBase.classList.remove('thrust');
@@ -1731,7 +1786,11 @@ touchEl.addEventListener('click', e => { if (mouseMode && !document.pointerLockE
 
 // 設定 / 重生
 const setEl = document.getElementById('settings');
-document.getElementById('bSet').addEventListener('click', ()=> setEl.style.display = setEl.style.display === 'block' ? 'none' : 'block');
+document.getElementById('bSet').addEventListener('click', ()=> setEl.classList.toggle('open'));
+document.getElementById('setClose').addEventListener('click', ()=> setEl.classList.remove('open'));
+setEl.addEventListener('click', e => { if (e.target === setEl) setEl.classList.remove('open'); });   // 點面板外的暗處也能關
+for (const t of setEl.querySelectorAll('.tabs button')) t.addEventListener('click', ()=>{
+  for (const o of setEl.querySelectorAll('.tabs button, section')) o.classList.toggle('on', o.dataset.tab === t.dataset.tab || o.dataset.page === t.dataset.tab); });
 document.getElementById('bReset').addEventListener('click', respawn);
 document.getElementById('optShake').addEventListener('change', e => opts.shake = e.target.checked);
 document.getElementById('optStab').addEventListener('change', e => opts.stab = e.target.checked);
@@ -2005,7 +2064,7 @@ function frame(now){
       case 'break': sfx('miss'); break;
       case 'cannon': { const mz = opts.view3P ? mech.muzzle('cannon', V()) : null, shl = state.weapon.shells[state.weapon.shells.length - 1];
         if (mz){ spawnSparks(mz, null); spawnSparks(mz, null); if (shl && !shl.voff){ shl.voff = mz.clone().sub(shl.p); shl.vt = 0.2; } } }   // v2.6 砲彈外觀從砲口出發，0.2 秒內併回實際彈道
-        sfx('cannon'); if (opts.shake){ shakeT = CONFIG.camera.shakeDur * 0.6; shakeAmp = 0.25 * CONFIG.camera.shakeScale; } buzz(25); break;
+        mech.recoil(); sfx('cannon'); if (opts.shake){ shakeT = CONFIG.camera.shakeDur * 0.6; shakeAmp = 0.25 * CONFIG.camera.shakeScale; } buzz(25); break;
       case 'boom': sfx('boom', ev.hitTarget ? 1 : 0.6); spawnBoom(ev.at, ev.normal); if (ev.hitTarget){ hitMarkT = 0.18; sfx('hit'); } break;
       case 'shot': { sfx('shot'); const mz = opts.view3P ? mech.muzzle(ev.nail ? 'nail' : 'mg', V()) : null; const from = mz || ev.from; if (mz) spawnSparks(mz, null); if (ev.tracer) spawnTracer(from, ev.to); } if (ev.hit) spawnSparks(ev.to, ev.normal); if (ev.hitTarget){ hitMarkT = 0.12; sfx('hit'); } break;
       case 'kill': sfx('clank', 0.6); break;
@@ -2013,6 +2072,7 @@ function frame(now){
       case 'pin': sfx('clank', 0.8); buzz(25); flashT = 0.05; break;
       case 'unpin': sfx('miss'); break;
       case 'nailOut': toast('釘子用完了！', 1500); break;
+      case 'nailBrake': sfx('clank', 1); buzz(35); if (opts.shake){ shakeT = CONFIG.camera.shakeDur * 0.5; shakeAmp = 0.18 * CONFIG.camera.shakeScale; } break;
       case 'void': toast('墜入虛空！已傳送回基地 A', 2000); flashT = 0.08; break;
     }
   }
