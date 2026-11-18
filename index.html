@@ -269,7 +269,7 @@ const CONFIG = Object.freeze({
     bottomWindowDeg: 15, bottomBonus: 1.15, apexHang: 0.35, apexGravityCut: 10, predictPoints: 24, predictTime: 0.8,
     coneH: 12, coneUp: 25, coneDown: 10, groundMinUp: -1e9,   /* v2.8 地面也可以勾（原本只勾頭上 5m 以上） */ minDist: 6, upBias: 6, switchHysteresis: 2 },
   stickJump: { windowMs: 250, dist: 0.8, tapMs: 200, tapMove: 14 },   // v2.8 放開時判定：輕點＝原地跳、快滑放開＝方向跳
-  spider: { maxSlopeDeg: 70, slopePress: 4, snapDown: 1.5, pounceSpeed: 24, pounceUp: 7, powMin: 0.6, powMax: 1.8, flickV0: 6.5, pounceWallPush: 5, cooldown: 0.35 },   // v1.8 蜘蛛腳：70° 內可站、貼地、撲擊
+  spider: { maxSlopeDeg: 70, slopePress: 4, snapDown: 1.5, pounceSpeed: 13, pounceUp: 6, powMin: 0.7, powMax: 1.35, flickV0: 9, pounceWallPush: 5, cooldown: 0.35 },   // v1.8 蜘蛛腳：70° 內可站、貼地、撲擊
   assist: { ropeBufferS: 1.0, lockEnemyDeg: 15, lockEnemyRange: 250, levelIdleMs: 1000, levelPitchDeg: 10, levelRate: 45, quickTurnS: 0.25, doubleTapMs: 300 },
   tp: { dist: 15, height: 5.5, minDist: 2.2, hideBelow: 2.6, bodyYawTau: 0.12 },   // v2.1 第三人稱鏡頭
   camera: { stabHoldMs: 150, stabMinSpeed: 4, stabMinDist: 8, stabMaxRate: 300, stabGyroInput: 25, shakeScale: 0.4, eye: 1.1, fovBase: 70, fovAt40: 85, fovMax: 90, fovTau: 0.3, rollMaxDeg: 8, pitchLimit: 85,
@@ -277,7 +277,7 @@ const CONFIG = Object.freeze({
   render: { dprMax: 1.5, dprFallback: 1.0, fallbackFps: 50, fpsWindow: 2 },
   // v1.9 主武：57mm 滑膛炮（實體彈道：有飛行時間與彈道下墜、落點爆炸範圍傷害）
   cannon: { rpm: 75, speed: 700, range: 600, damage: 700, splash: 350, splashR: 4, mag: 6, reserve: 24, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
-  nail: { crawlSpeed: 5, crawlPerNail: 6, damage: 1000, mag: 6, reserve: 18, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6, brake: 0.3 },   // 副武：釘槍（5×2 發）
+  nail: { crawlSpeed: 5, crawlPerNail: 6, damage: 1000, mag: 6, reserve: 18, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6 },   // 副武：釘槍（5×2 發）
   safeZone: { radius: 18 },
   weapon: { rpm: 600, range: 500, damage: 200, ammo: 1000, reload: 3,   // v1.9 起為副武：14.5mm 機槍（格鬥臂）
     spread: { base: 0.3, moving: 0.5, swinging: 1.0, swingSpeed: 12, max: 2.0, bloomPerShot: 0.08, recover: 0.3 },
@@ -873,6 +873,7 @@ function simTick(cmd){
   }
 
   // v2.8 釘住時用搖桿沿表面爬行：每爬 2.5m 消耗一根釘子，釘子用完就掉下來；爬到能站的緩坡就改成站立
+  if (P.pinned && P.pinned.ground && Math.abs(cmd.moveX) + Math.abs(cmd.moveZ) > 0.08){ P.pinned = null; events.push({ type: 'unpin' }); }   // 地面急停：一推搖桿就拔釘繼續跑
   if (P.pinned && P.pinned.normal && Math.abs(cmd.moveX) + Math.abs(cmd.moveZ) > 0.08){
     const n = P.pinned.normal, wUp = V(0, 1, 0).addScaledVector(n, -n.y); if (wUp.lengthSq() < 1e-3) wUp.copy(_fwd).addScaledVector(n, -_fwd.dot(n)); wUp.normalize();
     const wR = V().copy(_right).addScaledVector(n, -_right.dot(n)).normalize();
@@ -1131,7 +1132,7 @@ function nailTick(cmd, dt, fireEdge){
   // v1.2 釘牆判定放寬：只要身邊 6m 內有牆（8 個水平方向＋準星方向），就釘到最近的那面牆；沒打中靶時才判定
   if (!hitTarget){
     let best = null; const cand = [];
-    for (let k = 0; k < 8; k++){ const a = k / 8 * Math.PI * 2; cand.push([V(Math.cos(a), 0, Math.sin(a)), N.nearWall]); }
+    if (!P.grounded) for (let k = 0; k < 8; k++){ const a = k / 8 * Math.PI * 2; cand.push([V(Math.cos(a), 0, Math.sin(a)), N.nearWall]); }   // 站在地上時只看準星方向（刻意瞄牆才釘牆）
     cand.push([dir.clone(), N.pinRange]);
     for (const [dv, maxd] of cand){
       const h = castRay(origin, dv, maxd);
@@ -1142,10 +1143,10 @@ function nailTick(cmd, dt, fireEdge){
       P.pinned = { pos, normal: V(best.normal.x, best.normal.y, best.normal.z) };
       for (const r of state.ropes) if (r.hooked){ r.hooked = false; events.push({ type: 'release', side: r.side }); }   // 釘上去時自動收回兩條鋼索
       events.push({ type: 'pin', at: best.point.clone() });
-    } else if (!P.grounded && !P.pinned){
-      // v2.9 空中煞車：附近沒牆可釘時，釘槍往下方空打一發當制動錨，水平速度大幅削減、止住下墜（甩過頭時用）
-      const lv = playerBody.linvel(), B = N.brake;
-      playerBody.setLinvel({ x: lv.x * B, y: Math.max(Math.min(lv.y, 4), -2), z: lv.z * B }, true);
+    } else if (P.grounded && !P.pinned){
+      // v2.9b 釘槍急停：地面衝刺中開釘槍 → 腳釘進地面、當場停住（推搖桿或跳就脫離）
+      const tp = playerBody.translation(), lv = playerBody.linvel();
+      P.pinned = { pos: V(tp.x, tp.y, tp.z), normal: P.groundN ? P.groundN.clone() : V(0, 1, 0), ground: true };
       for (const r of state.ropes) if (r.hooked){ r.hooked = false; events.push({ type: 'release', side: r.side }); }
       events.push({ type: 'nailBrake', from: origin.clone(), speed: Math.hypot(lv.x, lv.z) });
     }
