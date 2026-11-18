@@ -181,16 +181,16 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.7</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.8</div>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
     <li style="opacity:.75;font-size:12px">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）</li>
     <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），左上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
-    <li><b>藍色搖桿</b>：移動；<b>按住後往任一方向快速一滑＝往那邊撲擊</b>（在地上、坡上、貼牆或釘在牆上時）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
+    <li><b>藍色搖桿</b>：移動；<b>輕點＝原地跳；快速往任一方向滑出並放開＝往那邊跳</b>；推得越遠走越快（在地上、坡上、貼牆或釘在牆上時都能跳）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
     <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">按住會在旁邊彈出三個武器圖示，往圖示方向一甩就切換：上＝01 主武 57mm、左上＝02 副武機槍、更左＝03 腿部釘槍</b></li>
     <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、欄位（01 主武／02 副武／03 腿部）、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
-    <li><b>腿部釘槍</b>（不佔手臂）：身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器打敵人。</li>
+    <li><b>腿部釘槍</b>（不佔手臂，共 24 根）：釘在牆上時用搖桿可以沿牆爬行，每 2.5m 用掉一根，用完就掉下來；身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器打敵人。</li>
     <li><b>57mm 滑膛炮</b>：每 0.8 秒一發、6 發一匣，砲彈有飛行時間與下墜，落點 4m 內有爆炸傷害；空中開砲會被後座力往後推</li>
     <li>兩邊基地有<b style="color:#40ffb0">出生保護區</b>：不會受傷，也不能開火；設定裡可選「跟手準星」</li>
     <li>擺盪時鏡頭會<b>鎖住準星下的地形</b>，不會亂晃；放手時準星附近有敵人，就<b>一直看著那個敵人</b>；一轉視角就解除</li>
@@ -218,7 +218,7 @@ const CONFIG = Object.freeze({
   boost: { accel: 40, fuel: 6, horizontal: 0.75, lift: 0.8, fallBrake: 2.5, hCap: 24, regenGround: 0.6, regenPad: 4 },
   supply: { ammoPerSec: 200 },
   fireControl: { coneDeg: 2.0 },
-  speedCap: 60,   // v2.6 最高速度 45 → 60 m/s
+  speedCap: 120,   // v2.8 最高速度 60 → 120 m/s（速度區間 ×0.5～×2.0 → 60～240）
   grapple: {
     range: 60, minLength: 3, aimOffsetDeg: 8, assistConeDeg: 3,
     iterations: 3, payout: 30, winchAccel: 32 /* 96000N / 3000kg：大於重力 20，單索就能拉起機體 */, reelMax: 18,
@@ -231,8 +231,8 @@ const CONFIG = Object.freeze({
     dragSlowK: 0.7, dragFastK: 1.6, dragSlowAt: 40, dragFastAt: 400 },
   rope: { swingAccel: 6, swingDeadzone: 0.2, reelOn: 0.3, payoutOn: 0.3, payoutSpeed: 8, groundDetach: 0.5, groundDetachSpeed: 3,
     bottomWindowDeg: 15, bottomBonus: 1.15, apexHang: 0.35, apexGravityCut: 10, predictPoints: 24, predictTime: 0.8,
-    coneH: 12, coneUp: 25, coneDown: 10, groundMinUp: 5, minDist: 6, upBias: 6, switchHysteresis: 2 },
-  stickJump: { windowMs: 220, dist: 1.25 },
+    coneH: 12, coneUp: 25, coneDown: 10, groundMinUp: -1e9,   /* v2.8 地面也可以勾（原本只勾頭上 5m 以上） */ minDist: 6, upBias: 6, switchHysteresis: 2 },
+  stickJump: { windowMs: 250, dist: 0.8, tapMs: 200, tapMove: 14 },   // v2.8 放開時判定：輕點＝原地跳、快滑放開＝方向跳
   spider: { maxSlopeDeg: 70, slopePress: 4, snapDown: 1.5, pounceSpeed: 17, pounceUp: 7, pounceWallPush: 5, cooldown: 0.35 },   // v1.8 蜘蛛腳：70° 內可站、貼地、撲擊
   assist: { ropeBufferS: 1.0, lockEnemyDeg: 15, lockEnemyRange: 250, levelIdleMs: 1000, levelPitchDeg: 10, levelRate: 45, quickTurnS: 0.25, doubleTapMs: 300 },
   tp: { dist: 15, height: 5.5, minDist: 2.2, hideBelow: 2.6, bodyYawTau: 0.12 },   // v2.1 第三人稱鏡頭
@@ -241,7 +241,7 @@ const CONFIG = Object.freeze({
   render: { dprMax: 1.5, dprFallback: 1.0, fallbackFps: 50, fpsWindow: 2 },
   // v1.9 主武：57mm 滑膛炮（實體彈道：有飛行時間與彈道下墜、落點爆炸範圍傷害）
   cannon: { rpm: 75, speed: 700, range: 600, damage: 700, splash: 350, splashR: 4, mag: 6, reserve: 24, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
-  nail: { damage: 1000, mag: 5, reserve: 5, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6 },   // 副武：釘槍（5×2 發）
+  nail: { crawlSpeed: 5, crawlPerNail: 2.5, damage: 1000, mag: 6, reserve: 18, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6 },   // 副武：釘槍（5×2 發）
   safeZone: { radius: 18 },
   weapon: { rpm: 600, range: 500, damage: 200, ammo: 1000, reload: 3,   // v1.9 起為副武：14.5mm 機槍（格鬥臂）
     spread: { base: 0.3, moving: 0.5, swinging: 1.0, swingSpeed: 12, max: 2.0, bloomPerShot: 0.08, recover: 0.3 },
@@ -569,10 +569,10 @@ function buildCommand(){
     fire: input.fire || input.fireTap || k.has('Mouse0'), hookL: input.hookL || k.has('KeyQ'), hookR: input.hookR || k.has('KeyE'),
     hookMain: input.hookMain || k.has('KeyF'), smart: opts.smart && !mouseMode, autoFire: opts.autoFire && !mouseMode,
     swap: input.swapQueued, swapTo: input.swapTo || null, gunYaw: input.gunYaw, gunPitch: input.gunPitch, ropeYaw: input.ropeYaw, ropePitch: input.ropePitch,
-    jump: input.jumpQueued, jumpX: input.jumpX || 0, jumpZ: input.jumpZ == null ? 1 : input.jumpZ, boost: input.boost || k.has('ShiftLeft') || k.has('ShiftRight') || k.has('Space'), thrust: input.thrust, reload: input.reloadQueued };
+    jump: input.jumpQueued, jumpX: input.jumpX || 0, jumpZ: input.jumpZ == null ? 0 : input.jumpZ, boost: input.boost || k.has('ShiftLeft') || k.has('ShiftRight') || k.has('Space'), thrust: input.thrust, reload: input.reloadQueued };
   // v2.1 第三人稱：鏡頭在機體後上方，從鏡頭中心射線打到的點反推槍口方向，子彈才會打在準星上
   { const a3 = aim3P(); if (a3){ cmd.aimYaw = a3[0]; cmd.aimPitch = a3[1]; if (cmd.gunYaw == null){ cmd.gunYaw = a3[0]; cmd.gunPitch = a3[1]; } } }
-  input.jumpQueued = false; input.reloadQueued = false; input.swapQueued = false; input.swapTo = null; input.fireTap = false;
+  input.jumpQueued = false; input.jumpX = 0; input.jumpZ = 0; input.reloadQueued = false; input.swapQueued = false; input.swapTo = null; input.fireTap = false;
   if (input.ropeLatch && !state.ropes[1].hooked && state.ropes[1].wasHeld){ input.ropeLatch = false; input.hookR = false; }   // 右索自己脫鉤／沒勾到 → 解除鎖定
   else if (input.ropeLatch) input.hookR = true;
   if (state.ropes[1].hooked){ input.ropeYaw = null; input.ropePitch = null; }
@@ -741,7 +741,10 @@ function simTick(cmd){
     if (P.pinned){ n = P.pinned.normal || null; P.pinned = null; ok = true; events.push({ type: 'unpin' }); }
     else if (P.grounded){ n = P.groundN; ok = true; }
     else for (let k = 0; k < 8; k++){ const a2 = k / 8 * Math.PI * 2; const wh = castRay(_p, { x: Math.cos(a2), y: 0, z: Math.sin(a2) }, CONFIG.body.radius + 0.6); if (wh){ n = wh.normal; ok = true; break; } }
-    if (ok){
+    if (ok && !cmd.jumpX && !cmd.jumpZ){   // v2.8 輕點搖桿＝原地往上跳（從牆面跳時順便推離）
+      _v.y = Math.max(_v.y, 0) + CONFIG.ground.jump; if (n && n.y < 0.9){ _v.x += n.x * SP.pounceWallPush; _v.z += n.z * SP.pounceWallPush; }
+      P.pounceCD = SP.cooldown; P.jumpT = 0.3; P.grounded = false; events.push({ type: 'fling' });
+    } else if (ok){
       _d.set(_fwd.x * cmd.jumpZ + _right.x * cmd.jumpX, 0, _fwd.z * cmd.jumpZ + _right.z * cmd.jumpX);
       if (_d.lengthSq() < 1e-4) _d.copy(_fwd); _d.normalize();
       const along = _v.x * _d.x + _v.z * _d.z, add = Math.max(0, SP.pounceSpeed - along);
@@ -832,6 +835,20 @@ function simTick(cmd){
     if (r.smart && P.grounded && !r.reeling && speedNow < RC.groundDetachSpeed){ r.groundT = (r.groundT || 0) + dt; if (r.groundT > RC.groundDetach){ r.hooked = false; events.push({ type: 'release', side: r.side }); } } else r.groundT = 0;
   }
 
+  // v2.8 釘住時用搖桿沿表面爬行：每爬 2.5m 消耗一根釘子，釘子用完就掉下來；爬到能站的緩坡就改成站立
+  if (P.pinned && P.pinned.normal && Math.abs(cmd.moveX) + Math.abs(cmd.moveZ) > 0.08){
+    const n = P.pinned.normal, wUp = V(0, 1, 0).addScaledVector(n, -n.y); if (wUp.lengthSq() < 1e-3) wUp.copy(_fwd).addScaledVector(n, -_fwd.dot(n)); wUp.normalize();
+    const wR = V().copy(_right).addScaledVector(n, -_right.dot(n)).normalize();
+    const NC = CONFIG.nail, step = V().addScaledVector(wR, cmd.moveX).addScaledVector(wUp, cmd.moveZ); if (step.length() > 1) step.normalize(); step.multiplyScalar(NC.crawlSpeed * dt);
+    const np = P.pinned.pos.clone().add(step), h = castRay(np.clone().addScaledVector(n, 1.5), { x: -n.x, y: -n.y, z: -n.z }, CONFIG.body.radius + 4);
+    if (!h){ P.pinned = null; events.push({ type: 'unpin' }); }
+    else { const hn = V(h.normal.x, h.normal.y, h.normal.z);
+      P.pinned.pos.copy(h.point).addScaledVector(hn, CONFIG.body.radius + 0.25); P.pinned.normal = hn;
+      P.pinned.crawl = (P.pinned.crawl || 0) + step.length();
+      const nw = state.weapon.nail;
+      while (P.pinned && P.pinned.crawl >= NC.crawlPerNail){ P.pinned.crawl -= NC.crawlPerNail;
+        if (nw.ammo > 0) nw.ammo--; else if (nw.reserve > 0) nw.reserve--; else { P.pinned = null; events.push({ type: 'unpin' }); events.push({ type: 'nailOut' }); } }
+      if (P.pinned && hn.y > Math.cos(CONFIG.spider.maxSlopeDeg * DEG)){ P.pinned = null; events.push({ type: 'unpin' }); } } }
   if (P.pinned){ _v.set(0, 0, 0); playerBody.setTranslation(P.pinned.pos, true); P.fuel = Math.min(CONFIG.boost.fuel, P.fuel + CONFIG.boost.regenGround * dt); }
   playerBody.setLinearDamping(anyHooked ? 0 : CONFIG.body.linDamping);   // 勾住時不減速：鉤索勾著就能一直擺盪回來
   playerBody.setLinvel(_v, true);
@@ -1458,9 +1475,8 @@ function setStick(p){
   // v1.2：兩個鋼索鈕都是小搖桿——按住＝射出鋼索，圈內拖曳＝收放／擺盪，拖出外圈＝推進（往拖曳方向）
   if (isRope){ p.thrust = l > R_STICK * CONFIG.touch.thrustOvershoot; updateThrust(); }
   // v1.8 撲擊：按住移動搖桿後 220ms 內往任一方向快速滑出 1.25 倍半徑＝往那個方向撲
-  if (p.role === 'stick' && !p.jumped){ const rdx = p.x - p.ox, rdy = p.y - p.oy, rl = Math.hypot(rdx, rdy), J = CONFIG.stickJump;
-    if (performance.now() - p.t0 < J.windowMs && rl > R_STICK * J.dist){ p.jumped = true; input.jumpQueued = true; input.jumpX = rdx / rl; input.jumpZ = -rdy / rl; buzz(12); } }
-  if (p.role === 'stick'){ const dz = CONFIG.touch.moveDeadzone; if (m < dz){ nx = 0; nz = 0; } else { const k = (m-dz)/(1-dz)/m; nx*=k; nz*=k; } }
+  // v2.8 推搖桿的力道（推出去的距離）決定速度：死區後用 1.6 次方曲線，輕推可以慢慢走，推滿才全速
+  if (p.role === 'stick'){ const dz = CONFIG.touch.moveDeadzone; if (m < dz){ nx = 0; nz = 0; } else { const t = (m-dz)/(1-dz), k = Math.pow(t, 1.6) / m; nx*=k; nz*=k; } }
   input.stickX = nx; input.stickZ = nz; // 鋼索搖桿給原始值，門檻在模擬裡判斷
   if (p.showStick){
     const [base, knob] = p.role === 'ropeR' ? [stickBase2, stickKnob2] : [stickBase, stickKnob];
@@ -1671,6 +1687,10 @@ function endPointer(e){
   if (p.drag === 'aimGun') aimReturn = true;
   if (p.role === 'ropeL' && e.type === 'pointercancel'){ ropeGraceTimer = setTimeout(() => setRole('ropeL', false), CONFIG.touch.edgeGraceMs); }
   else if (btnRoles[p.role] || p.role === 'ropeL' || p.role === 'ropeR' || p.role === 'fire') setRole(p.role, false);
+  // v2.8 移動搖桿放開時的手勢：輕點＝原地跳；快速往任一方向滑出並放開（0.25 秒內）＝往那個方向跳
+  if (p.role === 'stick'){ const dt0 = performance.now() - p.t0, dx = p.x - p.ox, dy = p.y - p.oy, d = Math.hypot(dx, dy), J = CONFIG.stickJump;
+    if (dt0 < J.tapMs && d < J.tapMove){ input.jumpQueued = true; input.jumpX = 0; input.jumpZ = 0; buzz(12); }
+    else if (dt0 < J.windowMs && d > R_STICK * J.dist){ input.jumpQueued = true; input.jumpX = dx / d; input.jumpZ = -dy / d; buzz(12); } }
   if (p.drag === 'stick'){ input.stickX = 0; input.stickZ = 0; }
   if (p.role === 'ropeR'){ stickBase2.style.display = stickKnob2.style.display = 'none'; }
   pointers.delete(e.pointerId); updateThrust(); stickBase.classList.remove('thrust');
@@ -1987,6 +2007,7 @@ function frame(now){
       case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '01 主武：57mm 滑膛炮' : state.weapon.active === 'mg' ? '02 副武：14.5mm 機槍' : '03 腿部：釘槍（靠牆開槍＝釘住；也能當武器）', 1200); break;
       case 'pin': sfx('clank', 0.8); buzz(25); flashT = 0.05; break;
       case 'unpin': sfx('miss'); break;
+      case 'nailOut': toast('釘子用完了！', 1500); break;
       case 'void': toast('墜入虛空！已傳送回基地 A', 2000); flashT = 0.08; break;
     }
   }
