@@ -136,6 +136,7 @@
 <div id="topbar">
   <button class="small" id="bReset" aria-label="重生">↺</button>
   <button class="small" id="bSet" aria-label="設定">⚙</button>
+  <button class="small" id="bFS" aria-label="回到全螢幕" style="display:none;width:auto;padding:0 12px;border-radius:20px;font-size:14px">⛶ 全螢幕</button>
 </div>
 <div id="settings">
   <label>跟手準星 <select id="optFollow" style="font-size:15px"><option value="none">無（都用畫面中央）</option><option value="weapon">武器（按住射擊拖曳＝移動準星）</option><option value="rope">鋼索（按住右索拖曳瞄準、放開射出）</option></select></label>
@@ -1043,13 +1044,16 @@ addEventListener('devicemotion', onMotion);
 let aimSlow = 1; // 準星靠近敵人時的減速（只減速、不拉扯）
 const toastEl = document.getElementById('toast'); let toastTimer = 0;
 function toast(msg, ms=4000){ toastEl.textContent = msg; toastEl.style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(()=> toastEl.style.display = 'none', ms); }
+let motionGranted = false; // iOS：同一次載入只要求一次權限（每次要求都會跳對話框並打斷全螢幕）
+const needsMotionPerm = () => typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function';
 async function enableGyro(on){
   const st = document.getElementById('gyroStatus');
   gyro.on = false; document.getElementById('optGyro').checked = false;
   if (!on){ st.textContent = ''; return; }
   try {
-    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
+    if (needsMotionPerm() && !motionGranted){
       const r = await DeviceMotionEvent.requestPermission(); // iOS：必須在點擊裡呼叫
+      if (r === 'granted') motionGranted = true;
       if (r !== 'granted'){ st.textContent = '沒有取得動作感測器權限'; toast('陀螺儀權限被拒絕：到 Safari 設定允許「動作與方向」後重新整理'); return; }
     }
   } catch(err){ st.textContent = '無法要求感測器權限'; toast('這個頁面無法使用陀螺儀（Claude 內嵌頁面會擋住感測器），請用獨立網址開啟'); return; }
@@ -1537,13 +1541,28 @@ requestAnimationFrame(frame);
 // 開始畫面
 const goBtn = document.getElementById('goBtn');
 goBtn.disabled = false; goBtn.textContent = '開始';
-goBtn.addEventListener('click', e => {
+// v1.3.1：iPad 的陀螺儀權限對話框會讓全螢幕跳掉（對話框不能和進入全螢幕同時發生）
+//  → 第一下只要求權限，第二下才進全螢幕並開始；遊戲中掉出全螢幕時顯示「⛶ 全螢幕」鈕
+const canFS = () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+const isFS = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+function goFS(){ const el = document.documentElement; try { (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el)?.catch?.(()=>{}); } catch(_){} }
+function updateFSBtn(){ document.getElementById('bFS').style.display = (running && canFS() && !isFS() && matchMedia('(pointer:coarse)').matches) ? 'inline-block' : 'none'; }
+document.getElementById('bFS').addEventListener('click', e => { e.stopPropagation(); goFS(); });
+for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => { setTimeout(() => { resize(); calcStick(); idleStick(); updateFSBtn(); }, 50); });
+addEventListener('resize', updateFSBtn);
+goBtn.addEventListener('click', async e => {
   unlockAudio();
-  if (matchMedia('(pointer:coarse)').matches && document.getElementById('gyroStart').checked) enableGyro(true);
+  const wantGyro = matchMedia('(pointer:coarse)').matches && document.getElementById('gyroStart').checked;
+  if (wantGyro && needsMotionPerm() && !motionGranted && !goBtn.dataset.asked){
+    goBtn.dataset.asked = '1'; goBtn.disabled = true; goBtn.textContent = '等待陀螺儀權限…';
+    await enableGyro(true);
+    goBtn.disabled = false; goBtn.textContent = '進入戰場（全螢幕）';
+    return; // 第二下才進全螢幕
+  }
+  if (wantGyro && !gyro.on) enableGyro(true);
   document.getElementById('start').style.display = 'none';
-  const el = document.documentElement;
-  try { (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el)?.catch?.(()=>{}); } catch(_){}
-  last = performance.now(); running = true; idleStick();
+  goFS();
+  last = performance.now(); running = true; idleStick(); setTimeout(updateFSBtn, 400);
 });
 
 // 測試用介面（自動化驗收用，不影響遊戲）
