@@ -163,14 +163,15 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.8</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.9</div>
   <ul>
     <li>空島戰場：<b>掉到最下面就是虛空</b>；發光平台是補給島，站上去補燃料和彈藥</li>
     <li><b>藍色搖桿</b>：移動；<b>按住後往任一方向快速一滑＝往那邊撲擊</b>（在地上、坡上、貼牆或釘在牆上時）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
-    <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">往上一甩＝切換主武／腿部釘槍</b></li>
-    <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、01 主武／03 腿部、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
-    <li><b>腿部釘槍</b>（不佔手臂）：身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器打敵人。手臂副武器欄位（02）目前空著</li>
+    <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">往上一甩＝輪流切換 01 主武 57mm 滑膛炮 → 02 副武 14.5mm 機槍 → 03 腿部釘槍</b></li>
+    <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、欄位（01 主武／02 副武／03 腿部）、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
+    <li><b>腿部釘槍</b>（不佔手臂）：身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器打敵人。</li>
+    <li><b>57mm 滑膛炮</b>：每 0.8 秒一發、6 發一匣，砲彈有飛行時間與下墜，落點 4m 內有爆炸傷害；空中開砲會被後座力往後推</li>
     <li>地圖中央的補給站有<b style="color:#40ffb0">無敵區</b>：不會受傷，也不能開火；設定裡可選「跟手準星」</li>
     <li>擺盪時鏡頭會<b>鎖住準星下的地形</b>，不會亂晃；放手時準星附近有敵人，就<b>一直看著那個敵人</b>；一轉視角就解除</li>
     <li>新手輔助：沒有勾點時<b>先按住鋼索</b>，勾點一出現就自動勾上（中心小圓閃爍＝在等）；沒勾鋼索時 1 秒不操作，視角會回到往上看；<b>空白處點兩下＝180° 迴轉</b></li>
@@ -217,9 +218,11 @@ const CONFIG = Object.freeze({
   camera: { stabHoldMs: 150, stabMinSpeed: 4, stabMinDist: 8, stabMaxRate: 300, stabGyroInput: 25, shakeScale: 0.4, eye: 1.1, fovBase: 70, fovAt40: 85, fovMax: 90, fovTau: 0.3, rollMaxDeg: 8, pitchLimit: 85,
     shakeDur: 0.5, speedLinesMin: 25, speedLinesMax: 60 },
   render: { dprMax: 1.5, dprFallback: 1.0, fallbackFps: 50, fpsWindow: 2 },
+  // v1.9 主武：57mm 滑膛炮（實體彈道：有飛行時間與彈道下墜、落點爆炸範圍傷害）
+  cannon: { rpm: 75, speed: 700, range: 600, damage: 700, splash: 350, splashR: 4, mag: 6, reserve: 24, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
   nail: { damage: 1000, mag: 5, reserve: 5, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6 },   // 副武：釘槍（5×2 發）
   safeZone: { radius: 22 },
-  weapon: { rpm: 600, range: 500, damage: 200, ammo: 1000, reload: 3,
+  weapon: { rpm: 600, range: 500, damage: 200, ammo: 1000, reload: 3,   // v1.9 起為副武：14.5mm 機槍（格鬥臂）
     spread: { base: 0.3, moving: 0.5, swinging: 1.0, swingSpeed: 12, max: 2.0, bloomPerShot: 0.08, recover: 0.3 },
     recoilDeg: 0.3, recoilTau: 0.15, tracerEvery: 5 },
   target: { hp: 1000, respawn: 3 },
@@ -439,7 +442,7 @@ const state = {
     { side: 'L', hooked: false, anchor: V(), L: 0, tension: 0, reeling: false },
     { side: 'R', hooked: false, anchor: V(), L: 0, tension: 0, reeling: false },
   ],
-  weapon: { active: 'main', nail: { ammo: 5, reserve: 5, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0 },
+  weapon: { active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: 5, reserve: 5, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0 },
 };
 const events = []; // {type, ...} 給 render/hud/audio 用
 const opts = { assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true, autoLevel: true };
@@ -847,10 +850,13 @@ function smartReel(r, sp){
 const W = CONFIG.weapon;
 function weaponTick(cmd, dt){
   const w = state.weapon, P = state.player;
-  if (cmd.swap){ w.active = w.active === 'main' ? 'sub' : 'main'; events.push({ type: 'swap' }); }
+  // v1.9 三個欄位：01 主武 57mm（'main'）→ 02 副武 14.5mm 機槍（'mg'）→ 03 腿部釘槍（'sub'）
+  if (cmd.swap){ w.active = w.active === 'main' ? 'mg' : w.active === 'mg' ? 'sub' : 'main'; events.push({ type: 'swap' }); }
   const fireEdge = cmd.fire && !w.prevFire; w.prevFire = cmd.fire;
   w.blocked = !!P.safe;
+  shellsTick(dt);
   if (w.active === 'sub'){ nailTick(cmd, dt, fireEdge); return; }
+  if (w.active === 'main'){ cannonTick(cmd, dt); return; }
   if (w.blocked && cmd.fire) return;
   w.cooldown = Math.max(0, w.cooldown - dt);
   w.bloom = Math.max(0, w.bloom - dt * (W.spread.max / W.spread.recover));
@@ -888,6 +894,46 @@ function weaponTick(cmd, dt){
     if (t && !t.dead){ t.hp -= W.damage; hitTarget = true; w.hits++; if (t.hp <= 0){ t.dead = CONFIG.target.respawn; t.col.setEnabled(false); t.mesh.visible = false; events.push({ type: 'kill' }); } }
   }
   events.push({ type: 'shot', from: origin, to: end, hit: !!hit, hitTarget, normal: hit ? hit.normal : null, tracer: w.shots % W.tracerEvery === 0 });
+}
+// v1.9 主武：57mm 滑膛炮。按住會以 0.8 秒間隔連續射擊；砲彈是實體彈道（700 m/s、受重力）
+const CN = CONFIG.cannon;
+function cannonTick(cmd, dt){
+  const w = state.weapon, c = w.cannon, P = state.player;
+  c.cool = Math.max(0, c.cool - dt); w.autoOn = false;
+  if (c.reloading > 0){ c.reloading -= dt; if (c.reloading <= 0){ const n = Math.min(CN.mag - c.ammo, Math.floor(c.reserve)); c.ammo += n; c.reserve -= n; c.reloading = 0; events.push({ type: 'reloaded' }); } return; }
+  if (((cmd.reload && c.ammo < CN.mag) || c.ammo <= 0) && c.reserve >= 1){ c.reloading = CN.reload; events.push({ type: 'reload' }); return; }
+  if (w.blocked || !cmd.fire || c.cool > 0 || c.ammo <= 0) return;
+  c.cool = 60 / CN.rpm; c.ammo--; w.shots++; w.fired++;
+  const gy = cmd.gunYaw ?? P.yaw, gp = cmd.gunPitch ?? P.pitch;
+  const dir = dirFromYawPitch(gy, gp, V());
+  const tr = playerBody.translation(), origin = eyePos(V(tr.x, tr.y, tr.z));
+  // 射控輔助：彈道 2° 內有活靶 → 修正到靶上，並自動補上彈道下墜（抬高槍口）
+  { let best = null, bestA = CONFIG.fireControl.coneDeg * DEG;
+    for (const t of targets){ if (t.dead) continue; const to = V().subVectors(t.mesh.position, origin), d = to.length(); if (d > CN.range) continue;
+      const ang = dir.angleTo(to); if (ang < bestA){ bestA = ang; best = t; } }
+    if (best){ const to = V().subVectors(best.mesh.position, origin), d = to.length(), tf = d / CN.speed; to.y += 0.5 * -CONFIG.physics.gravity * tf * tf; dir.copy(to.normalize()); w.assisted = (w.assisted || 0) + 1; } }
+  w.shells.push({ p: origin.clone().addScaledVector(dir, 1.5), v: dir.clone().multiplyScalar(CN.speed), life: CN.range / CN.speed + 0.5, id: w.shots });
+  w.recoil += CN.recoilDeg;
+  if (!P.grounded && !P.pinned){ const lv = playerBody.linvel(); playerBody.setLinvel({ x: lv.x - dir.x * CN.knockback, y: lv.y - dir.y * CN.knockback, z: lv.z - dir.z * CN.knockback }, true); }   // 空中開砲會被後座力往後推
+  events.push({ type: 'cannon', from: origin });
+}
+function damageTarget(t, dmg){ if (!t || t.dead) return false; t.hp -= dmg; if (t.hp <= 0){ t.dead = CONFIG.target.respawn; t.col.setEnabled(false); t.mesh.visible = false; events.push({ type: 'kill' }); } return true; }
+function shellsTick(dt){
+  const w = state.weapon;
+  for (let i = w.shells.length - 1; i >= 0; i--){
+    const sh = w.shells[i]; sh.life -= dt;
+    const step = sh.v.length() * dt, dir = sh.v.clone().divideScalar(sh.v.length());
+    const hit = castRay(sh.p, dir, step);
+    if (hit || sh.life <= 0){
+      const at = hit ? hit.point.clone() : sh.p.clone(); let direct = null, hitT = false;
+      if (hit){ direct = targetsByCollider.get(hit.handle); if (damageTarget(direct, CN.damage)) hitT = true; }
+      for (const t of targets){ if (t === direct || t.dead) continue; const d = t.mesh.position.distanceTo(at); if (d < CN.splashR){ if (damageTarget(t, CN.splash * (1 - d / CN.splashR * 0.5))) hitT = true; } }
+      if (hitT) w.hits++;
+      if (hit) events.push({ type: 'boom', at, normal: hit.normal, hitTarget: hitT });
+      w.shells.splice(i, 1); continue;
+    }
+    sh.p.addScaledVector(sh.v, dt); sh.v.y += CONFIG.physics.gravity * dt;
+  }
 }
 // 腿部武裝：釘槍（v1.8 從手臂副武移到腿部，內部仍沿用 'sub' 欄位）。單發；打中靶 1000 傷害；打中 15m 內的牆面（近乎垂直）就把自己釘上去
 function nailTick(cmd, dt, fireEdge){
@@ -949,7 +995,8 @@ function worldTick(dt){
     if (P.grounded) for (const pad of supplyPads){ if (Math.hypot(pad.x - p.x, pad.z - p.z) < pad.r && Math.abs(p.y - pad.y) < 4){
       P.onPad = true; P.fuel = Math.min(CONFIG.boost.fuel, P.fuel + CONFIG.boost.regenPad * dt);
       const w = state.weapon; if (w.reloading <= 0) w.ammo = Math.min(W.ammo, w.ammo + CONFIG.supply.ammoPerSec * dt);
-      w.nail.reserve = CONFIG.nail.reserve; if (!w.nail.reloading) w.nail.ammo = CONFIG.nail.mag; } } }
+      w.nail.reserve = CONFIG.nail.reserve; if (!w.nail.reloading) w.nail.ammo = CONFIG.nail.mag;
+      w.cannon.reserve = Math.min(CN.reserve, w.cannon.reserve + CN.ammoPerSec * dt); } } }
   for (const t of targets){
     if (t.kind === 'moving'){
       t.phase += dt;
@@ -980,6 +1027,23 @@ const sparks = []; const sparkGeo = new THREE.BoxGeometry(0.15,0.15,0.15), spark
 for (let i=0;i<60;i++){ const m = new THREE.Mesh(sparkGeo, sparkMat); m.visible=false; scene.add(m); sparks.push({ m, v: V(), life: 0 }); }
 let tracerIdx = 0, sparkIdx = 0;
 function spawnTracer(from, to){ const t = tracers[tracerIdx++ % tracers.length]; const pos = t.m.geometry.attributes.position; pos.setXYZ(0, from.x, from.y-0.4, from.z); pos.setXYZ(1, to.x, to.y, to.z); pos.needsUpdate = true; t.life = 0.3; t.m.visible = true; }
+// v1.9 砲彈與爆炸的外觀
+const shellMeshes = []; { const g = new THREE.SphereGeometry(0.22, 8, 6), m = new THREE.MeshBasicMaterial({ color: 0xffe08a });
+  for (let i = 0; i < 12; i++){ const me = new THREE.Mesh(g, m); me.visible = false; scene.add(me);
+    const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+    const tl = new THREE.Line(tg, new THREE.LineBasicMaterial({ color: 0xffc860, transparent: true, opacity: 0.8 })); tl.frustumCulled = false; tl.visible = false; scene.add(tl);
+    shellMeshes.push({ me, tl }); } }
+const booms = []; { const g = new THREE.SphereGeometry(1, 12, 8);
+  for (let i = 0; i < 6; i++){ const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.8, depthWrite: false })); m.visible = false; scene.add(m); booms.push({ m, life: 0 }); } }
+let boomIdx = 0;
+function spawnBoom(p, n){ const b = booms[boomIdx++ % booms.length]; b.m.position.copy(p); b.life = 0.35; b.m.visible = true; for (let k = 0; k < 3; k++) spawnSparks(p, n); }
+function drawShells(dt){
+  const sh = state.weapon.shells;
+  shellMeshes.forEach((o, i) => { const s2 = sh[i]; o.me.visible = o.tl.visible = !!s2; if (!s2) return;
+    o.me.position.copy(s2.p); const a = o.tl.geometry.attributes.position, L = 6 / s2.v.length();
+    a.setXYZ(0, s2.p.x, s2.p.y, s2.p.z); a.setXYZ(1, s2.p.x - s2.v.x * L, s2.p.y - s2.v.y * L, s2.p.z - s2.v.z * L); a.needsUpdate = true; });
+  for (const b of booms) if (b.life > 0){ b.life -= dt; const k = 1 - b.life / 0.35; b.m.scale.setScalar(0.5 + k * CONFIG.cannon.splashR); b.m.material.opacity = 0.8 * (1 - k); if (b.life <= 0) b.m.visible = false; }
+}
 function spawnSparks(p, n){ for (let i=0;i<6;i++){ const s = sparks[sparkIdx++ % sparks.length]; s.m.position.copy(p); s.v.set((Math.random()-.5)*8, Math.random()*6, (Math.random()-.5)*8); if (n) s.v.addScaledVector(n, 4); s.life = 0.3; s.m.visible = true; } }
 
 // =====================================================================
@@ -1005,6 +1069,9 @@ function sfx(type, strength=1){
   } else if (type === 'clank' || type === 'hook'){
     const o = actx.createOscillator(); o.type = 'square'; o.frequency.setValueAtTime(type==='hook'?900:420, t); o.frequency.exponentialRampToValueAtTime(type==='hook'?500:120, t+0.12);
     o.connect(g); g.gain.setValueAtTime(0.12*strength+0.04, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.15); o.start(t); o.stop(t+0.16);
+  } else if (type === 'cannon' || type === 'boom'){
+    const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type='lowpass'; f.frequency.value = type === 'cannon' ? 700 : 420;
+    s.connect(f).connect(g); g.gain.setValueAtTime(type === 'cannon' ? 0.45 : 0.3*strength, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.35); s.start(t); s.stop(t+0.36);
   } else if (type === 'hit'){
     const o = actx.createOscillator(); o.type='sine'; o.frequency.value = 1500; o.connect(g); g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.05); o.start(t); o.stop(t+0.06);
   } else if (type === 'miss'){
@@ -1351,7 +1418,7 @@ function drawHUD(dt){
     c.strokeStyle = col; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 14, 0, Math.PI*2); c.stroke();
     c.beginPath(); c.moveTo(x-22, y); c.lineTo(x-8, y); c.moveTo(x+8, y); c.lineTo(x+22, y); c.moveTo(x, y-22); c.lineTo(x, y-8); c.moveTo(x, y+8); c.lineTo(x, y+22); c.stroke();
     c.fillStyle = col; c.font = '600 11px sans-serif'; c.textAlign = 'center'; c.fillText(label, x, y + 36); };
-  if (opts.follow === 'weapon' && !mouseMode && (aimOff.x || aimOff.y)) drawReticle(aimOff.x, aimOff.y, '#ff6a50', state.weapon.active === 'main' ? '14.5mm' : '釘槍');
+  if (opts.follow === 'weapon' && !mouseMode && (aimOff.x || aimOff.y)) drawReticle(aimOff.x, aimOff.y, '#ff6a50', state.weapon.active === 'main' ? '57mm' : state.weapon.active === 'mg' ? '14.5mm' : '釘槍');
   if (ropeAiming) drawReticle(ropeOff.x, ropeOff.y, '#3de0ff', '放開＝射出右索');
   // 狀態橫幅：無敵區／釘在牆上
   { const msgs = []; if (P.safe) msgs.push(['無敵區：不會受傷，也不能開火', '#40ffb0']); if (P.pinned) msgs.push(['釘在牆上：勾索或推進就會脫離', '#ffc94a']);
@@ -1377,18 +1444,18 @@ function drawHUD(dt){
     }
     // 兩側梯狀刻度：左＝推進燃料、右＝彈量（由下往上點亮）
     const nL = 9, gapL = 0.3 * R0, top = cy - (nL - 1) / 2 * gapL;
-    const fuelFr = P.fuel / CONFIG.boost.fuel, ammoFr = sub ? wst2.nail.ammo / CONFIG.nail.mag : wst2.ammo / W.ammo;
+    const fuelFr = P.fuel / CONFIG.boost.fuel, isMG = wst2.active === 'mg', ammoFr = sub ? wst2.nail.ammo / CONFIG.nail.mag : isMG ? wst2.ammo / W.ammo : wst2.cannon.ammo / CONFIG.cannon.mag;
     const lowFuel = fuelFr < 0.25, blink = Math.floor(performance.now() / 250) % 2;
     for (let i = 0; i < nL; i++){
       const y = top + i * gapL; if (Math.abs(y - yL) < gapL * 0.5) continue;
       const lit = (nL - 1 - i) / (nL - 1);
       line([[cx - 2.9*R0, y], [cx - 2.35*R0, y]], lit < fuelFr ? (lowFuel ? (blink ? '#ff6050' : '#ffa080') : (P.thrusting ? '#ffd060' : '#ffb040')) : DIM, 1.6);
-      line([[cx + 2.35*R0, y], [cx + 2.9*R0, y]], lit < ammoFr ? (blocked ? '#8a96a2' : sub ? '#ffc94a' : '#ff7a5c') : DIM, 1.6);
+      line([[cx + 2.35*R0, y], [cx + 2.9*R0, y]], lit < ammoFr ? (blocked ? '#8a96a2' : sub ? '#ffc94a' : isMG ? '#ffa860' : '#ff7a5c') : DIM, 1.6);
     }
     c.shadowBlur = 0; c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`;
     c.fillStyle = lowFuel ? '#ff8070' : '#ffcf8a'; c.textAlign = 'center';
     txt(P.onPad ? 'SUPPLY' : 'BST ' + Math.round(fuelFr * 100) + '%', cx - 2.62*R0, top - 8*sc);
-    c.fillStyle = sub ? '#ffd770' : '#ffa08a'; txt(sub ? 'NAIL' : 'AMMO', cx + 2.62*R0, top - 8*sc);
+    c.fillStyle = sub ? '#ffd770' : '#ffa08a'; txt(sub ? 'NAIL' : isMG ? 'MG' : '57mm', cx + 2.62*R0, top - 8*sc);
     // 讀數：左尖峰＝高度、右尖峰＝速度
     c.font = `700 ${Math.round(12*sc)}px ui-monospace, Menlo, monospace`; c.fillStyle = MINT;
     const alt = state.player.currPos.y;
@@ -1434,15 +1501,15 @@ function drawHUD(dt){
     if (hitMarkT > 0){ for (const [a2,b2] of [[-1,-1],[1,-1],[-1,1],[1,1]]) line([[cx+a2*7*sc, cy+b2*7*sc], [cx+a2*13*sc, cy+b2*13*sc]], '#ff5050', 2); }
     // 彈種資訊（準星附近）：弧頂＝彈量、弧頂上方＝彈種；準星下方＝武器欄位
     c.shadowBlur = 4;
-    const cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : (wst2.reloading > 0 ? 'RLD' : String(Math.floor(wst2.ammo)).padStart(4, '0'));
-    const wcol = blocked ? '#9aa6b2' : sub ? '#ffd770' : MINT;
+    const cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : isMG ? (wst2.reloading > 0 ? 'RLD' : String(Math.floor(wst2.ammo)).padStart(4, '0')) : (wst2.cannon.reloading > 0 ? 'RLD' : wst2.cannon.ammo + '/' + Math.floor(wst2.cannon.reserve));
+    const wcol = blocked ? '#9aa6b2' : sub ? '#ffd770' : isMG ? '#ffc890' : MINT;
     c.font = `700 ${Math.round(13*sc)}px ui-monospace, Menlo, monospace`; c.fillStyle = wcol; c.textAlign = 'center';
     
     c.font = `700 ${Math.round(9*sc)}px ui-monospace, Menlo, monospace`;
-    const wname = blocked ? 'SAFE ZONE · HOLD FIRE' : sub ? 'NAIL GUN' : '14.5mm MG', yB = cy + R0 + 24*sc; // 武器資訊集中在大弧下方（弧上留給敵人方向）
+    const wname = blocked ? 'SAFE ZONE · HOLD FIRE' : sub ? 'NAIL GUN' : isMG ? '14.5mm MG' : '57mm SMOOTHBORE', yB = cy + R0 + 24*sc; // 武器資訊集中在大弧下方（弧上留給敵人方向）
     c.font = `700 ${Math.round(15*sc)}px ui-monospace, Menlo, monospace`; txt(cnt, cx, yB);
-    c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'right'; txt((sub ? '03 ' : '01 '), cx - 2*sc, yB + 14*sc);
-    c.font = `600 ${Math.round(9*sc)}px sans-serif`; c.textAlign = 'left'; txt(sub ? '腿部' : '主武', cx + 2*sc, yB + 14*sc);
+    c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'right'; txt((sub ? '03 ' : isMG ? '02 ' : '01 '), cx - 2*sc, yB + 14*sc);
+    c.font = `600 ${Math.round(9*sc)}px sans-serif`; c.textAlign = 'left'; txt(sub ? '腿部' : isMG ? '副武' : '主武', cx + 2*sc, yB + 14*sc);
     c.font = `700 ${Math.round(9*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'center'; txt(wname, cx, yB + 27*sc);
     if (opts.autoFire && !mouseMode){ c.fillStyle = wst2.autoOn ? '#ff7060' : DIM; txt('AUTO', cx, yB + 40*sc); }
     c.restore();
@@ -1471,12 +1538,12 @@ function updateButtons(){
     if (lastUI['t'+i] !== txt){ lastUI['t'+i] = txt; sub.textContent = txt; }
     if (lastUI['c'+i] !== cls){ lastUI['c'+i] = cls; el.classList.toggle('hooked', cls === 'hooked'); el.classList.toggle('none', cls === 'none'); el.classList.toggle('thrustmode', cls === 'thrustmode'); }
   });
-  const w = state.weapon, sub = w.active === 'sub';
-  const ft = sub ? (w.nail.reloading > 0 ? '裝填' : w.nail.ammo + '/' + w.nail.reserve) : (w.reloading > 0 ? '裝填' : String(Math.floor(w.ammo)));
+  const w = state.weapon, sub = w.active === 'sub', mg = w.active === 'mg';
+  const ft = sub ? (w.nail.reloading > 0 ? '裝填' : w.nail.ammo + '/' + w.nail.reserve) : mg ? (w.reloading > 0 ? '裝填' : String(Math.floor(w.ammo))) : (w.cannon.reloading > 0 ? '裝填' : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
   if (lastUI.f !== ft){ lastUI.f = ft; elSF.textContent = ft; }
-  const fl = w.blocked ? '禁火' : sub ? '釘槍' : '射擊';
+  const fl = w.blocked ? '禁火' : sub ? '釘槍' : mg ? '機槍' : '主砲';
   if (lastUI.fl !== fl){ lastUI.fl = fl; document.getElementById('lFire').textContent = fl; elFire.classList.toggle('none', !!w.blocked); }
-  const sw = sub ? '腿部' : '主武';
+  const sw = sub ? '腿部' : mg ? '副武' : '主武';
   if (lastUI.sw !== sw){ lastUI.sw = sw; document.getElementById('swapCur').textContent = sw; }
 }
 function buzz(ms){ try { navigator.vibrate && navigator.vibrate(ms); } catch(_){} } // Android 有效，iOS 不支援會略過
@@ -1522,9 +1589,11 @@ function frame(now){
       case 'snap': sfx('clank', ev.strength); if (opts.shake){ shakeT = CONFIG.camera.shakeDur; shakeAmp = (0.15 + 0.35*ev.strength) * CONFIG.camera.shakeScale; } flashT = 0.08; crossPulse = 1; buzz(30); break;
       case 'land': sfx('clank', ev.strength); if (opts.shake){ shakeT = CONFIG.camera.shakeDur; shakeAmp = (0.2 + 0.4*ev.strength) * CONFIG.camera.shakeScale; } break;
       case 'break': sfx('miss'); break;
+      case 'cannon': sfx('cannon'); if (opts.shake){ shakeT = CONFIG.camera.shakeDur * 0.6; shakeAmp = 0.25 * CONFIG.camera.shakeScale; } buzz(25); break;
+      case 'boom': sfx('boom', ev.hitTarget ? 1 : 0.6); spawnBoom(ev.at, ev.normal); if (ev.hitTarget){ hitMarkT = 0.18; sfx('hit'); } break;
       case 'shot': sfx('shot'); if (ev.tracer) spawnTracer(ev.from, ev.to); if (ev.hit) spawnSparks(ev.to, ev.normal); if (ev.hitTarget){ hitMarkT = 0.12; sfx('hit'); } break;
       case 'kill': sfx('clank', 0.6); break;
-      case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '主武：14.5mm 機槍' : '腿部：釘槍（靠牆開槍＝釘住；也能當武器）', 1200); break;
+      case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '01 主武：57mm 滑膛炮' : state.weapon.active === 'mg' ? '02 副武：14.5mm 機槍' : '03 腿部：釘槍（靠牆開槍＝釘住；也能當武器）', 1200); break;
       case 'pin': sfx('clank', 0.8); buzz(25); flashT = 0.05; break;
       case 'unpin': sfx('miss'); break;
       case 'void': toast('墜入虛空！已傳送回最近的補給島', 2000); flashT = 0.08; break;
@@ -1628,6 +1697,7 @@ function frame(now){
   }
   // 特效
   for (const t of tracers) if (t.life > 0){ t.life -= dt; t.m.material.opacity = Math.max(0, t.life/0.3); if (t.life <= 0) t.m.visible = false; }
+  drawShells(dt);
   for (const s of sparks) if (s.life > 0){ s.life -= dt; s.v.y -= 20*dt; s.m.position.addScaledVector(s.v, dt); if (s.life <= 0) s.m.visible = false; }
   if (flashT > 0){ flashT -= dt; flashEl.style.opacity = Math.max(0, flashT/0.08) * 0.35; } else flashEl.style.opacity = 0;
   hitMarkT = Math.max(0, hitMarkT - dt); crossPulse = Math.max(0, crossPulse - dt*5);
