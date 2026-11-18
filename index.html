@@ -142,6 +142,9 @@
   <label>跟手準星 <select id="optFollow" style="font-size:15px"><option value="none">無（都用畫面中央）</option><option value="weapon">武器（按住射擊拖曳＝移動準星）</option><option value="rope">鋼索（按住右索拖曳瞄準、放開射出）</option></select></label>
   <label><input type="checkbox" id="optAutoFire"> 自動開火（準星對到敵人就射，只限機槍）</label>
   <label><input type="checkbox" id="optStab" checked> 鏡頭鎖定地形（擺盪時自動補正，準星停在地形上）</label>
+  <label><input type="checkbox" id="optLockEnemy" checked> 鎖定敵人視角（放手時準星附近有敵人，擺盪中視角一直看著它）</label>
+  <label><input type="checkbox" id="optRopeBuffer" checked> 按住等勾點（沒勾點時按住鋼索，勾點一出現就自動勾上，最多 1 秒）</label>
+  <label><input type="checkbox" id="optAutoLevel" checked> 上下角度回正（沒勾鋼索、1 秒沒操作，視角慢慢回到往上 10°）</label>
   <label><input type="checkbox" id="optRoll"> 鏡頭側傾</label>
   <label><input type="checkbox" id="optShake" checked> 鏡頭震動</label>
   <label>拖曳靈敏度 <input type="range" id="optSens" min="0.1" max="0.6" step="0.05" value="0.25"></label>
@@ -160,16 +163,17 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.4</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.5</div>
   <ul>
     <li>空島戰場：<b>掉到最下面就是虛空</b>；發光平台是補給島，站上去補燃料和彈藥</li>
     <li><b>藍色搖桿</b>：移動</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
     <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">往上一甩＝切換主武／副武</b></li>
-    <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；弧頂＝彈量與彈種；下方 01／02＝主武／副武；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
+    <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、01／02 主武／副武、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
     <li>副武是釘槍：身邊 6m 內有牆時開槍＝釘在最近的牆上（自動收回鋼索；推進或勾索就脫離）</li>
     <li>地圖中央的補給站有<b style="color:#40ffb0">無敵區</b>：不會受傷，也不能開火；設定裡可選「跟手準星」</li>
-    <li>擺盪時鏡頭會<b>鎖住準星下的地形</b>，不會亂晃；一轉視角就解除</li>
+    <li>擺盪時鏡頭會<b>鎖住準星下的地形</b>，不會亂晃；放手時準星附近有敵人，就<b>一直看著那個敵人</b>；一轉視角就解除</li>
+    <li>新手輔助：沒有勾點時<b>先按住鋼索</b>，勾點一出現就自動勾上（中心小圓閃爍＝在等）；沒勾鋼索時 1 秒不操作，視角會回到往上看；<b>空白處點兩下＝180° 迴轉</b></li>
     <li>擺到最低點（預測線變<b style="color:#7f7">綠</b>）放手速度 ×1.15；放手後的最高點有短暫懸停</li>
   </ul>
   <p class="kb">鍵盤：X 切換主副武　WASD　F 智慧鋼索（勾住時 W/S 收放、A/D 擺盪）　Q E 左右索　Space／Shift 推進　R 裝填　滑鼠瞄準、左鍵射擊</p>
@@ -207,6 +211,7 @@ const CONFIG = Object.freeze({
   rope: { swingAccel: 6, swingDeadzone: 0.2, reelOn: 0.3, payoutOn: 0.3, payoutSpeed: 8, groundDetach: 0.5, groundDetachSpeed: 3,
     bottomWindowDeg: 15, bottomBonus: 1.15, apexHang: 0.35, apexGravityCut: 10, predictPoints: 24, predictTime: 0.8,
     coneH: 12, coneUp: 25, coneDown: 10, groundMinUp: 5, minDist: 6, upBias: 6, switchHysteresis: 2 },
+  assist: { ropeBufferS: 1.0, lockEnemyDeg: 15, lockEnemyRange: 250, levelIdleMs: 1000, levelPitchDeg: 10, levelRate: 45, quickTurnS: 0.25, doubleTapMs: 300 },
   camera: { stabHoldMs: 150, stabMinSpeed: 4, stabMinDist: 8, stabMaxRate: 300, stabGyroInput: 25, shakeScale: 0.4, eye: 1.1, fovBase: 70, fovAt40: 85, fovMax: 90, fovTau: 0.3, rollMaxDeg: 8, pitchLimit: 85,
     shakeDur: 0.5, speedLinesMin: 25, speedLinesMax: 60 },
   render: { dprMax: 1.5, dprFallback: 1.0, fallbackFps: 50, fpsWindow: 2 },
@@ -337,8 +342,8 @@ addIsland('高島',      265,  42,   55,  32, 32,  8, { chains: 2 });
 addIsland('低島',      265, -12,  -55,  32, 32,  8, { chains: 1 });
 addIsland('補給島 C',  300,  22,    0,  26, 26,  6, { supply: true });
 addIsland('遠島',      380,  16,    0,  44, 44, 10, { dense: 6, chains: 2 });
-addIsland('中央補給站', 200,  46,    0,  30, 30,  6, { supply: true });   // 地圖中央、密集島正上方；周圍是無敵區
-const safeZone = { x: 200, y: 46, z: 0, r: CONFIG.safeZone.radius };
+addIsland('中央補給站', 200,  70,    0,  30, 30,  6, { supply: true });   // 地圖中央、密集島正上方；周圍是無敵區
+const safeZone = { x: 200, y: 70, z: 0, r: CONFIG.safeZone.radius };
 { const dome = new THREE.Mesh(new THREE.SphereGeometry(safeZone.r, 24, 12, 0, Math.PI*2, 0, Math.PI/2),
     new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.10, depthWrite: false, side: THREE.DoubleSide }));
   dome.position.set(safeZone.x, safeZone.y, safeZone.z); scene.add(dome);
@@ -346,9 +351,13 @@ const safeZone = { x: 200, y: 46, z: 0, r: CONFIG.safeZone.radius };
   ring.rotation.x = Math.PI/2; ring.position.set(safeZone.x, safeZone.y + 0.3, safeZone.z); scene.add(ring); }
 // 島與島之間的浮游岩（鋼索中繼點），每條航線 1~2 顆，比兩端高 25~35m
 const byName = n => islands.find(i => i.name === n);
-const routes = [['起點島','補給島 A'],['起點島','補給島 B'],['起點島','密集島'],['補給島 A','密集島'],['補給島 B','密集島'],
-  ['密集島','高島'],['密集島','低島'],['密集島','補給島 C'],['補給島 C','遠島'],['高島','遠島'],['低島','遠島'],['高島','補給島 C'],
-  ['補給島 A','中央補給站'],['補給島 B','中央補給站'],['中央補給站','補給島 C'],['中央補給站','高島'],['起點島','中央補給站']];
+// v1.5：航線從 17 條減到 12 條、浮游岩彼此至少相距 30m、中央補給站抬高到 70m，讓密集島上空與島間的空域保持暢通
+const routes = [['起點島','補給島 A'],['起點島','補給島 B'],['起點島','密集島'],
+  ['密集島','高島'],['密集島','低島'],['密集島','補給島 C'],['補給島 C','遠島'],['高島','遠島'],['低島','遠島'],
+  ['補給島 A','中央補給站'],['補給島 B','中央補給站'],['中央補給站','補給島 C']];
+const rocks = [];
+// 出生點正前方保證有一顆（新手平視就勾得到），航線上的岩石會自動避開它
+{ const S0 = CONFIG.map.spawn; const fx = S0.x + 36, fy = S0.y + 24; rocks.push({ x: fx, y: fy, z: 0 }); addBox(fx, fy, 0, 6, 4.8, 6, matRock, true); }
 for (const [a, b] of routes){
   const A = byName(a), B = byName(b), dist = Math.hypot(B.cx - A.cx, B.cz - A.cz);
   const nRocks = Math.max(1, Math.ceil(dist / 32) - 1);   // 約每 32m 一顆，鋼索 60m 一定搆得到
@@ -356,7 +365,8 @@ for (const [a, b] of routes){
     const f = k / (nRocks + 1);
     const x = A.cx + (B.cx - A.cx) * f + (mrng() - 0.5) * 8, z = A.cz + (B.cz - A.cz) * f + (mrng() - 0.5) * 8;
     const y = A.top + (B.top - A.top) * f + 20 + mrng() * 10, sz = 4 + mrng() * 3;
-    addBox(x, y, z, sz, sz * 0.8, sz, matRock, true);
+    if (rocks.some(q => Math.hypot(q.x - x, q.y - y, q.z - z) < 30)) continue;   // 太靠近既有的浮游岩就不放
+    rocks.push({ x, y, z }); addBox(x, y, z, sz, sz * 0.8, sz, matRock, true);
   }
 }
 // 虛空：很深的暗色雲海（只有視覺，沒有碰撞）
@@ -418,7 +428,7 @@ const state = {
   weapon: { active: 'main', nail: { ammo: 5, reserve: 5, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0 },
 };
 const events = []; // {type, ...} 給 render/hud/audio 用
-const opts = { assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none' };
+const opts = { assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true, autoLevel: true };
 
 // =====================================================================
 // INPUT → command
@@ -542,14 +552,20 @@ function simTick(cmd){
   for (const r of state.ropes){
     const viaMain = (r.side === 'L' && cmd.hookMain) || (r.side === 'R' && cmd.smart && cmd.hookR);
     const held = r.side === 'L' ? (cmd.hookL || cmd.hookMain) : cmd.hookR;
-    if (held && !r.hooked && !r.wasHeld){
+    // v1.5 按住等勾點：按下時沒有勾點，按住期間（最多 1 秒）持續每 1/20 秒重找，一出現就勾上
+    if (!held) r.bufT = 0;
+    const press = held && !r.hooked && !r.wasHeld;
+    if (press) r.bufT = opts.ropeBuffer ? CONFIG.assist.ropeBufferS : 0;
+    const retry = held && !r.hooked && r.wasHeld && r.bufT > 0 && ((r.bufTick = (r.bufTick || 0) + 1) % 6 === 0);
+    if (held && !r.hooked && r.wasHeld && r.bufT > 0) r.bufT -= dt;
+    if (press || retry){
       // 觸控：兩條索都用準星選點；另一條已勾住時避開同一點（相距 <3m 改找次佳）
       const other = state.ropes[r.side === 'L' ? 1 : 0];
       const ay = (r.side === 'R' && cmd.ropeYaw != null) ? cmd.ropeYaw : P.yaw, ap = (r.side === 'R' && cmd.ropePitch != null) ? cmd.ropePitch : P.pitch;   // 跟手準星（鋼索）
       const hit = viaMain ? findSmartHook(ay, ap, eye, other.hooked ? other.anchor : null) : findHook(r.side, ay, ap, eye);
       r.smart = viaMain;
-      if (hit){ r.hooked = true; r.anchor.copy(hit.point); r.L = clamp(_p.distanceTo(hit.point), G.minLength, G.range); events.push({ type: 'hook', side: r.side }); }
-      else events.push({ type: 'hookMiss', side: r.side });
+      if (hit){ r.hooked = true; r.bufT = 0; r.anchor.copy(hit.point); r.L = clamp(_p.distanceTo(hit.point), G.minLength, G.range); events.push({ type: 'hook', side: r.side }); }
+      else if (press && !(r.bufT > 0)) events.push({ type: 'hookMiss', side: r.side });
     }
     if (!held && r.hooked){
       r.hooked = false; events.push({ type: 'release', side: r.side });
@@ -1130,7 +1146,9 @@ touchEl.addEventListener('pointerdown', e => {
     }
     else p.drag = 'look';
   } else if (e.clientX < innerWidth/2){ p.role = 'stick'; p.drag = 'stick'; p.showStick = true; setStick(p); }
-  else { p.role = 'look'; p.drag = 'look'; }
+  else { p.role = 'look'; p.drag = 'look';
+    if (now - lastLookTap.t < CONFIG.assist.doubleTapMs && Math.hypot(e.clientX - lastLookTap.x, e.clientY - lastLookTap.y) < 60){
+      quickTurn = { left: Math.PI, t: CONFIG.assist.quickTurnS }; lastLookTap.t = -1e9; stab.point = null; stab.target = null; buzz(12); } }
   pointers.set(e.pointerId, p);
   try { touchEl.setPointerCapture(e.pointerId); } catch(_){}
 }, { passive: false });
@@ -1162,6 +1180,7 @@ function endPointer(e){
   }
   if (p.role === 'ropeRDone' || p.role === 'swapped'){ pointers.delete(e.pointerId); return; }
   if (p.role === 'fire' && p.firePending){ p.firePending = false; input.fireTap = true; pointers.delete(e.pointerId); return; }   // 輕點＝開一槍
+  if (p.role === 'look' && performance.now() - p.t0 < 220 && Math.hypot(p.x - p.ox, p.y - p.oy) < 12) lastLookTap = { t: performance.now(), x: p.x, y: p.y };
   if (p.drag === 'aimGun') aimReturn = true;
   if (p.role === 'ropeL' && e.type === 'pointercancel'){ ropeGraceTimer = setTimeout(() => setRole('ropeL', false), CONFIG.touch.edgeGraceMs); }
   else if (btnRoles[p.role] || p.role === 'ropeL' || p.role === 'ropeR' || p.role === 'fire') setRole(p.role, false);
@@ -1203,6 +1222,9 @@ document.getElementById('bSet').addEventListener('click', ()=> setEl.style.displ
 document.getElementById('bReset').addEventListener('click', respawn);
 document.getElementById('optShake').addEventListener('change', e => opts.shake = e.target.checked);
 document.getElementById('optStab').addEventListener('change', e => opts.stab = e.target.checked);
+document.getElementById('optLockEnemy').addEventListener('change', e => opts.lockEnemy = e.target.checked);
+document.getElementById('optRopeBuffer').addEventListener('change', e => opts.ropeBuffer = e.target.checked);
+document.getElementById('optAutoLevel').addEventListener('change', e => opts.autoLevel = e.target.checked);
 document.getElementById('optRoll').addEventListener('change', e => opts.roll = e.target.checked);
 document.getElementById('optSens').addEventListener('input', e => opts.sens = parseFloat(e.target.value));
 document.getElementById('optFollow').addEventListener('change', e => { opts.follow = e.target.value; aimOff.x = aimOff.y = 0; input.ropeLatch = false; });
@@ -1355,7 +1377,8 @@ function drawHUD(dt){
     const g0 = 9*sc, g1 = 19*sc;
     line([[cx - g1 - 4*sc, cy], [cx - g0 - 2*sc, cy]], hot, 2); line([[cx + g0 + 2*sc, cy], [cx + g1 + 4*sc, cy]], hot, 2);
     line([[cx, cy - g1 - 6*sc], [cx, cy - g0 - 4*sc]], hot, 2); line([[cx, cy + g0 + 4*sc], [cx, cy + g1 + 6*sc]], hot, 2);
-    const anyH = state.ropes[0].hooked || state.ropes[1].hooked, canH = !!hookPreview[0];
+    const anyH = state.ropes[0].hooked || state.ropes[1].hooked, waitH = state.ropes[0].bufT > 0 || state.ropes[1].bufT > 0;
+    const canH = !!hookPreview[0] || (waitH && Math.floor(performance.now() / 90) % 2 === 0);   // 按住等勾點時閃爍
     const ccol = hitMarkT > 0 ? '#ff5050' : anyH ? '#3de0ff' : canH ? '#ffe14a' : MINT; // 中心小圓：黃＝按下去會勾到、青＝已勾住
     c.strokeStyle = ccol; c.lineWidth = (anyH || canH) ? 2.4 : 1.6; c.beginPath(); c.arc(cx, cy, (canH && !anyH ? 5.5 : 4.5)*sc, 0, Math.PI*2); c.stroke();
     if (anyH){ c.fillStyle = 'rgba(61,224,255,.35)'; c.fill(); }
@@ -1414,7 +1437,7 @@ function buzz(ms){ try { navigator.vibrate && navigator.vibrate(ms); } catch(_){
 // =====================================================================
 let acc = 0, last = performance.now(), running = false;
 let fpsFrames = 0, fpsTime = 0, dprLowered = false;
-const _eye = V(), _cam = V(); const stab = { point: null, fast: 0 }; let stabActive = false;
+const _eye = V(), _cam = V(); const stab = { point: null, fast: 0, target: null }; let stabActive = false; let quickTurn = null, lastLookTap = { t: -1e9, x: 0, y: 0 };
 
 function frame(now){
   requestAnimationFrame(frame);
@@ -1474,23 +1497,41 @@ function frame(now){
   _cam.copy(_eye);
   if (shakeT > 0){ shakeT -= dt; const k = shakeT / CONFIG.camera.shakeDur * shakeAmp; _cam.x += (Math.random()-.5)*k; _cam.y += (Math.random()-.5)*k; _cam.z += (Math.random()-.5)*k; }
   camera.position.copy(_cam);
+  // v1.5 上下角度回正：沒勾鋼索、超過 1 秒沒有任何視角輸入 → 上下角度慢慢回到往上 10°（只調上下，不動左右）
+  const anyHookedNow = state.ropes[0].hooked || state.ropes[1].hooked, idleMs = performance.now() - lastLookT;
+  const levelOwnsPitch = opts.autoLevel && !mouseMode && !anyHookedNow && idleMs > CONFIG.assist.levelIdleMs && !quickTurn;
+  if (levelOwnsPitch && !stab.target){ const tgt = CONFIG.assist.levelPitchDeg * DEG, d = tgt - P.pitch, mx = CONFIG.assist.levelRate * DEG * dt;
+    P.pitch += clamp(d * Math.min(1, dt * 3), -mx, mx); }
+  // v1.5 雙擊空白處＝180° 迴轉（0.25 秒平滑轉過去）
+  if (quickTurn){ const k = Math.min(1, dt / Math.max(quickTurn.t, dt)); const step = quickTurn.left * k; P.yaw += step; quickTurn.left -= step; quickTurn.t -= dt;
+    lastLookT = performance.now(); if (quickTurn.t <= 0 || Math.abs(quickTurn.left) < 1e-4){ P.yaw += quickTurn.left; quickTurn = null; } }
   // v0.8 鏡頭鎖定地形：沒在轉視角時，鎖住準星下的地形點，機體怎麼擺盪準星都停在那個點上
   if (opts.stab && !mouseMode && performance.now() - lastLookT > CONFIG.camera.stabHoldMs && sp > CONFIG.camera.stabMinSpeed){
+    if (stab.target && (stab.target.dead || !opts.lockEnemy)){ stab.target = null; stab.point = null; }
     if (!stab.point){
-      const dv = dirFromYawPitch(P.yaw, P.pitch, V()); const hit = castRay(_eye, dv, 250);
-      stab.point = hit ? hit.point.clone() : _eye.clone().addScaledVector(dv, 250); stab.fast = 0;
+      const dv = dirFromYawPitch(P.yaw, P.pitch, V());
+      // v1.5 鎖定敵人：放手那一刻準星附近 15° 內有敵人 → 改鎖那個敵人（只鎖視角，不鎖準星），擺盪中一直看著它
+      stab.target = null;
+      if (opts.lockEnemy){ let best = Math.cos(CONFIG.assist.lockEnemyDeg * DEG);
+        for (const t of targets){ if (t.dead) continue; const to2 = V().subVectors(t.mesh.position, _eye), d2 = to2.length(); if (d2 > CONFIG.assist.lockEnemyRange) continue;
+          const dot = to2.divideScalar(d2).dot(dv); if (dot > best){ best = dot; stab.target = t; } } }
+      if (stab.target) stab.point = stab.target.mesh.position.clone();
+      else { const hit = castRay(_eye, dv, 250); stab.point = hit ? hit.point.clone() : _eye.clone().addScaledVector(dv, 250); }
+      stab.fast = 0;
     }
+    if (stab.target) stab.point.copy(stab.target.mesh.position);
     const to = V().subVectors(stab.point, _eye), dist = to.length();
     if (dist < CONFIG.camera.stabMinDist){ stab.point = null; }
     else {
       const dyaw = Math.atan2(Math.sin(Math.atan2(-to.x, -to.z) - P.yaw), Math.cos(Math.atan2(-to.x, -to.z) - P.yaw));
       const dpit = Math.asin(clamp(to.y / dist, -1, 1)) - P.pitch;
       const maxStep = CONFIG.camera.stabMaxRate * DEG * dt;
-      if (Math.abs(dyaw) > maxStep || Math.abs(dpit) > maxStep) stab.fast += dt; else stab.fast = 0;
+      const pitFree = levelOwnsPitch && !stab.target;
+      if (Math.abs(dyaw) > maxStep || (!pitFree && Math.abs(dpit) > maxStep)) stab.fast += dt; else stab.fast = 0;
       if (stab.fast > 0.25) stab.point = null;   // 地形點掠過太快 → 放開，下一幀重新鎖
       else {
         P.yaw += clamp(dyaw, -maxStep, maxStep);
-        P.pitch = clamp(P.pitch + clamp(dpit, -maxStep, maxStep), -CONFIG.camera.pitchLimit*DEG, CONFIG.camera.pitchLimit*DEG);
+        if (!levelOwnsPitch || stab.target) P.pitch = clamp(P.pitch + clamp(dpit, -maxStep, maxStep), -CONFIG.camera.pitchLimit*DEG, CONFIG.camera.pitchLimit*DEG);
       }
     }
   } else stab.point = null;
@@ -1580,7 +1621,7 @@ goBtn.addEventListener('click', async e => {
 
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
-window.__game = { state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
+window.__game = { rocks, islands, targets, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
 </script>
 </body>
 </html>
