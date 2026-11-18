@@ -651,7 +651,7 @@ function setPractice(on){
 // ---- v3.0 電腦 AI：輸出和玩家一樣的 command 物件（之後可直接拿來當網路測試的假對手）----
 //  導航：每座島取數個「落腳點」，兩點之間 58m 內、視線沒被擋就連一條「鋼索可達」的邊；移動＝瞄準下一個落腳點射鋼索、收索拉過去、到了放手
 //  戰鬥：挑一個看得到你、距離 60–220m、不在保護區的落腳點；瞄準有前置量＋隨時間收斂的誤差；遠距 57mm、近距 14.5mm
-const BOTCFG = { thinkS: 0.1, errDegStart: 4.5, errDegMin: 1.1, settleS: 2.2, turnRate: 3.2, hopTimeout: 6, fightMin: 60, fightMax: 220, mgRange: 90, regoalS: [7, 12] };
+const BOTCFG = { ropeRange: 90, thinkS: 0.1, errDegStart: 4.5, errDegMin: 1.1, settleS: 2.2, turnRate: 3.2, hopTimeout: 6, fightMin: 40, fightMax: 150, fightBest: 95, mgRange: 90, regoalS: [6, 10] };   // v3.0c 更主動：理想距離 95m、每 6–10 秒換位置
 let NAV = null;
 function buildNav(){
   const pts = [], up = { x: 0, y: -1, z: 0 };
@@ -669,10 +669,12 @@ function buildNav(){
   const d = V();
   for (const a of pts) for (const b of pts){
     if (a.id >= b.id || a.isl === b.isl) continue;
-    const dist = a.p.distanceTo(b.p); if (dist > 58 || dist < 4) continue;
+    const dist = a.p.distanceTo(b.p); if (dist > BOTCFG.ropeRange - 2 || dist < 4) continue;
     const e = V(a.p.x, a.p.y + 2.5, a.p.z), e2 = V(b.p.x, b.p.y + 2.5, b.p.z);
-    const ok1 = (() => { d.subVectors(b.p, e); const L = d.length(); d.divideScalar(L); const h = castRay(e, d, L + 1, false); return h && h.point.distanceTo(b.p) < 2; })();
-    const ok2 = (() => { d.subVectors(a.p, e2); const L = d.length(); d.divideScalar(L); const h = castRay(e2, d, L + 1, false); return h && h.point.distanceTo(a.p) < 2; })();
+    // 看得到目標島的「任何一處」（島面或側面，島範圍內、不低於島面 12m）就算可達：勾側面後靠收索＋推進＋甩出去／爬牆上島
+    const onIsl = (h, q) => { const J = islands[q.isl], rJ = Math.max(J.w || 10, J.d || 10) * 0.5; return h && Math.hypot(h.point.x - J.cx, h.point.z - J.cz) < rJ + 3 && h.point.y > J.top - 12; };
+    const ok1 = (() => { d.subVectors(b.p, e); const L = d.length(); d.divideScalar(L); return onIsl(castRay(e, d, L + 1, false), b); })();
+    const ok2 = (() => { d.subVectors(a.p, e2); const L = d.length(); d.divideScalar(L); return onIsl(castRay(e2, d, L + 1, false), a); })();
     if (ok1) a.nb.push([b.id, dist]); if (ok2) b.nb.push([a.id, dist]);
   }
   NAV = { pts };
@@ -743,88 +745,76 @@ function createBotBrain(a){
       // ---- 選戰鬥位置（落腳點）----
       st.goalT -= dt;
       const here = P.grounded ? this.nearestPt(pos) : -1;
-      if (ep && (st.goal < 0 || st.goalT <= 0 || (st.lostT > 3 && here === st.goal))){
+      if (ep && (st.goal < 0 || st.goalT <= 0 || (st.lostT > 2 && (here === st.goal || st.path.length === 0)))){
+        const curIsl = here >= 0 ? NAV.pts[here].isl : -1;
         let best = -1, bs = Infinity;
         for (const q of NAV.pts){ if (q.safe) continue;
           const dE = q.p.distanceTo(ep); if (dE < B.fightMin * 0.7 || dE > B.fightMax * 1.3) continue;
           const e2 = V(q.p.x, q.p.y + 2.5, q.p.z), to = V().subVectors(ep, e2), L = to.length(); to.divideScalar(L);
           const h = castRay(e2, to, L - 2, false); if (h) continue;   // 從那裡看得到敵人
-          const sc = q.p.distanceTo(pos) * 0.6 + Math.abs(dE - 140) * 0.4 - (q.p.y - ep.y) * 0.5 + rnd() * 25;
+          if (q.isl === curIsl && rnd() < 0.75) continue;   // 大多換到別座島：一直移動、往你靠近
+          const sc = q.p.distanceTo(pos) * 0.25 + Math.abs(dE - B.fightBest) * 0.9 - (q.p.y - ep.y) * 0.3 + rnd() * 20;
           if (sc < bs){ bs = sc; best = q.id; } }
         if (best >= 0 && best !== st.goal){ st.goal = best; st.path = []; }
         st.goalT = B.regoalS[0] + rnd() * (B.regoalS[1] - B.regoalS[0]);
       }
-      if (st.goal < 0){ const q = NAV.pts.filter(q => !q.safe); if (q.length) st.goal = q[Math.floor(rnd() * q.length)].id; }
+      if (st.goal < 0){ const q = NAV.pts.filter(q => !q.safe && (!ep || q.p.distanceTo(ep) < 200)); const qq = q.length ? q : NAV.pts.filter(q2 => !q2.safe); if (qq.length) st.goal = qq[Math.floor(rnd() * qq.length)].id; }   // 看不到你：往你附近隨便找個位置過去
       // ---- 移動 ----
-      st.moveX = 0; st.boost = false; st.travel = false; st.reel = 0;
-      const islTop = p2 => { let bi = null, bd = 1e9; for (const I of islands){ const dd = Math.hypot(I.cx - p2.x, I.cz - p2.z) - Math.max(I.w || 10, I.d || 10) * 0.5; if (dd < bd){ bd = dd; bi = I; } } return bi; };
-      // ---- 攀爬：吊在島下面／沒燃料往下掉，身邊 6m 有牆 → 換釘槍釘上牆，沿牆往上爬到島面（爬到能站的坡度會自動脫離）----
-      if (P.pinned){
-        st.climb = true; st.wantW = 'sub'; st.hold = false; st.reel = 1; st.boost = false;
-        if (pos.distanceTo(st.lastPin || (st.lastPin = V().copy(pos))) < 0.25) st.pinStuck = (st.pinStuck || 0) + dt; else st.pinStuck = 0;
-        st.lastPin.copy(pos); if (st.pinStuck > 0.8){ st.climbX = st.climbX ? -st.climbX : 1; st.pinStuck = 0; }
-        st.moveX = st.climbX || 0; return;
-      }
-      const nails = a.weapon.nail.ammo + a.weapon.nail.reserve;
-      if (!P.grounded && nails > 0 && ((hooked && (st.nearT || 0) > 1.0) || (!hooked && P.fuel < 0.3 && P.vel.y < -1))){
-        let wall = false; for (let k2 = 0; k2 < 8 && !wall; k2++){ const a2 = k2 / 8 * Math.PI * 2; const h = castRay(eye, { x: Math.cos(a2), y: 0, z: Math.sin(a2) }, CONFIG.nail.nearWall); if (h && Math.abs(h.normal.y) < 0.6) wall = true; }
-        if (wall){ st.climb = true; st.climbX = 0; st.wantW = 'sub'; st.hold = false; st.reel = 0;
-          if (a.weapon.active === 'sub' && a.weapon.nail.cool <= 0 && !a.weapon.nail.reloading && !a.weapon.prevFire) st.nailFire = true; return; }
-      }
-      if (hooked && !P.grounded && P.vel.length() < 4) P.fuel = Math.min(CONFIG.boost.fuel, P.fuel + CONFIG.boost.regenGround * dt);   // AI 專用輔助：吊著不動時慢慢回燃料（不然吊在島下面會永遠上不去）
-      if (hooked){
-        st.hopT += dt; st.holdT = 0; const tgt = st.path.length ? NAV.pts[st.path[0]] : null;
-        const toA = r.hooked ? pos.distanceTo(r.anchor) : 0, goalY = tgt ? tgt.p.y : r.anchor.y;
-        st.hold = true; st.travel = true; st.moveYaw = Math.atan2(-(r.anchor.x - pos.x), -(r.anchor.z - pos.z));
-        // 收索拉過去；比目的地低時開推進往上（不然會被拉到島的下緣、鋼索被島擋住而斷掉）；靠近 7m 內鎖住繩長，著地才放手
-        const spd = P.vel.length();
-        st.reel = toA > 12 && spd < 22 ? 1 : 0;   // 速度夠了就不再收，避免衝過頭
-        st.boost = P.fuel > 0.4 && pos.y < goalY - 0.5 && P.vel.y < 5 && toA > 6;
-        const near = toA < 8 || (tgt && Math.hypot(pos.x - tgt.p.x, pos.z - tgt.p.z) < 6 && pos.y > tgt.p.y - 1);
-        if (near) st.nearT = (st.nearT || 0) + dt; else st.nearT = 0;
-        const landed = near && P.grounded && P.vel.length() < 14;
-        if (landed || st.nearT > 1.5 || st.hopT > B.hopTimeout || st.stuckT > 1.2){ st.hold = false; st.reel = 0; st.nearT = 0;
-          if (tgt && !landed && st.hopT > B.hopTimeout) st.bad.set(st.path[0], (st.bad.get(st.path[0]) || 0) + 1);
-          if (tgt && landed) st.path.shift(); st.hopT = 0; st.stuckT = 0; }
+      // AI 專用輔助：跨島時直接算一條「會落在目標落腳點上」的拋物線，射鋼索勾住落腳點並把速度設成那條拋物線的初速
+      //  （畫面上看起來是 AI 射索甩過去；真的用擺盪物理去跨這張圖，AI 太常摔死）
+      st.moveX = 0; st.boost = false; st.travel = false; st.reel = 0; st.hold = false;
+      const F = st.flight;
+      if (F){
+        F.t += dt; st.travel = true; st.moveYaw = Math.atan2(-(F.to.x - pos.x), -(F.to.z - pos.z)); st.hold = false;
+        if (a.weapon.active === 'main') st.wantFire = false;   // 飛行中不開砲（空中後座力會把弧線推歪）
+        const arrived = P.grounded && Math.hypot(pos.x - F.to.x, pos.z - F.to.z) < 8;
+        if (arrived || F.t > F.T + 1.2){ st.flight = null; st.hold = false;
+          if (arrived && st.path.length && st.path[0] === F.id) st.path.shift(); else { if (!arrived) st.bad.set(F.id, (st.bad.get(F.id) || 0) + 1); st.path = []; } }
         return;
       }
-      // 卡在陡坡／島緣（沒著地但幾乎不動）：朝最近的島中心跳一下
-      if (!P.grounded && !P.pinned && P.vel.length() < 3){ st.restT = (st.restT || 0) + dt;
-        if (st.restT > 0.8){ st.restT = 0; const I = islTop(pos); if (I){ st.travel = true; st.moveYaw = Math.atan2(-(I.cx - pos.x), -(I.cz - pos.z)); st.jump = true; st.jumpX = 0; st.jumpZ = 1; } return; } }
-      else st.restT = 0;
-      if (!P.grounded && !P.pinned){
-        // 空中沒勾：先找最近的島；比島面低就開推進往上，高過島面才瞄島面上的落腳點勾過去
-        const I = islTop(pos); st.travel = true; st.path = [];
-        const above = I && pos.y > I.top + 1.5, rI = I ? Math.max(I.w || 10, I.d || 10) * 0.5 : 0, hd = I ? Math.hypot(pos.x - I.cx, pos.z - I.cz) : 0;
-        if (I) st.moveYaw = Math.atan2(-(I.cx - pos.x), -(I.cz - pos.z));
-        st.holdT = (st.holdT || 0) + dt;
-        if (st.holdT > 0.6){ st.holdT = 0; st.hold = false; return; }   // 放開一下再按，才會重新射索
-        if (!above && P.fuel > 0.3){   // 比島面低：在島正下方就先往外推出島的範圍，出來了再往上、往島飛
-          if (hd < rI + 2 && pos.y < I.top - 2) st.moveYaw += Math.PI;
-          st.boost = true; st.reel = 0.8; st.hold = false; return; }   // reel 在沒勾住時＝往 moveYaw 方向推
-        const tg = this.pickVisible(eye, pos, 58);
-        if (tg) this.aimAt(eye, tg.p); else if (I && above) this.aimAt(eye, V(I.cx, I.top + 2, I.cz)); else { st.hold = false; return; }
-        st.hold = true; return;
+      if (P.pinned){ st.climb = true; st.wantW = 'sub'; st.reel = 1; return; }   // 理論上不會用到；保險：沿牆往上爬
+      if (!P.grounded){
+        st.rescueT = (st.rescueT || 0) - dt;
+        if (P.vel.y < -3 && st.rescueT <= 0){ st.rescueT = 1;   // 往下掉：找一個射得到的落腳點甩過去自救
+          let best = null, bs = Infinity; const gp = st.goal >= 0 ? NAV.pts[st.goal].p : pos;
+          for (const q of NAV.pts){ const L = q.p.distanceTo(eye); if (L > B.ropeRange - 2) continue; const sc = L + q.p.distanceTo(gp) * 0.2 + (q.safe ? 40 : 0); if (sc < bs && this.canFly(pos, q)){ bs = sc; best = q; } }
+          if (best){ this.fly(pos, best); st.path = []; }
+        }
+        return;
       }
-      st.hold = false;
-      if (here < 0){ const tg = this.pickVisible(eye, pos, 58); if (tg){ this.aimAt(eye, tg.p); st.hold = true; } return; }
-      if (here === st.goal || NAV.pts[here].isl === NAV.pts[st.goal].isl){ st.path = []; this.strafeOnIsland(pos, see); return; }
+      if (here < 0){ let best = null, bs = Infinity; for (const q of NAV.pts){ const L = q.p.distanceTo(pos); if (L < bs && L < B.ropeRange - 2){ bs = L; best = q; } } if (best && this.canFly(pos, best)) this.fly(pos, best); return; }
+      if (st.goal < 0) return;
+      if (NAV.pts[here].isl === NAV.pts[st.goal].isl){ st.path = []; this.strafeOnIsland(pos, see); return; }
       if (!st.path.length || NAV.pts[st.path[0]].isl === NAV.pts[here].isl){
         st.path = navPath(here, st.goal) || [];
-        if (st.path.length && (st.bad.get(st.path[0]) || 0) >= 2){ st.goal = -1; st.path = []; st.bad.clear(); return; }
         while (st.path.length && NAV.pts[st.path[0]].isl === NAV.pts[here].isl) st.path.shift();
+        if (!st.path.length || (st.bad.get(st.path[0]) || 0) >= 2){ st.goal = -1; st.path = []; st.bad.clear(); return; }
       }
-      if (!st.path.length){   // 導航圖上沒路（這座島沒有預先算好的邊）：直接挑一個看得到、比較靠近目標的別座島落腳點勾過去
-        const gp = NAV.pts[st.goal].p, myIsl = NAV.pts[here].isl; let best = null, bs = Infinity; const d3 = V();
-        for (const q of NAV.pts){ if (q.isl === myIsl || (st.bad.get(q.id) || 0) >= 2) continue; const L = q.p.distanceTo(eye); if (L > 58 || L < 6) continue;
-          const sc = q.p.distanceTo(gp) + L * 0.3 + rnd() * 10; if (sc >= bs) continue;
-          d3.subVectors(q.p, eye).divideScalar(L); const h = castRay(eye, d3, L + 1); if (h && h.point.distanceTo(q.p) < 2.5){ bs = sc; best = q; } }
-        if (!best){ st.goal = -1; return; }
-        st.path = [best.id];
+      st.waitT = (st.waitT || 0) + dt; if (st.waitT < 0.6) return;   // 落地後停一下再跳，看起來比較像在找下一個點
+      st.waitT = 0;
+      const nx = NAV.pts[st.path[0]];
+      if (this.canFly(pos, nx)) this.fly(pos, nx); else { st.bad.set(nx.id, (st.bad.get(nx.id) || 0) + 1); st.path = []; }
+    },
+    // 拋物線：飛行時間依距離決定，被地形擋住就試更高的弧線
+    solve(p0, q){
+      const g = CONFIG.physics.gravity, to = V(q.p.x, q.p.y + CONFIG.body.halfHeight + CONFIG.body.radius + 0.3, q.p.z), d = Math.hypot(to.x - p0.x, to.z - p0.z);
+      for (const k of [1, 1.35, 1.7]){
+        const T = clamp(d / 26, 0.9, 2.6) * k, v = V((to.x - p0.x) / T, (to.y - p0.y - 0.5 * g * T * T) / T, (to.z - p0.z) / T);
+        let ok = true; const a0 = V().copy(p0);
+        for (let i = 1; i <= 12 && ok; i++){ const t = T * i / 12, b0 = V(p0.x + v.x * t, p0.y + v.y * t + 0.5 * g * t * t, p0.z + v.z * t);
+          const dd = V().subVectors(b0, a0), L = dd.length(); if (i < 12 || true){ const h = castRay(a0, dd.divideScalar(L), Math.max(0.1, L - (i === 12 ? 1.5 : 0))); if (h && i < 11) ok = false; } a0.copy(b0); }
+        if (ok && v.length() < 60) return { v, T, to };
       }
-      const nx = NAV.pts[st.path[0]]; this.aimAt(eye, V(nx.p.x, nx.p.y + 0.3, nx.p.z));
-      st.holdT = (st.holdT || 0) + dt; if (st.holdT > 1.2){ st.holdT = 0; st.hold = false; st.bad.set(st.path[0], (st.bad.get(st.path[0]) || 0) + 1); return; }   // 一直勾不到：放開重來，記一次失敗
-      st.hold = true; st.hopT = 0;
+      return null;
+    },
+    canFly(p0, q){ return p0.distanceTo(q.p) < BOTCFG.ropeRange - 2 && !!this.solve(p0, q); },
+    fly(p0, q){
+      const sol = this.solve(p0, q); if (!sol) return false;
+      a.body.setLinvel({ x: sol.v.x, y: sol.v.y, z: sol.v.z }, true); a.P.grounded = false; a.P.jumpT = 0.4; a.P.pinned = null;
+      for (const r of a.ropes) r.hooked = false;   // 不掛真的鋼索（自動收緊會把弧線拉歪）；只畫一條 0.5 秒的鋼索特效
+      st.flashRope = { to: q.p.clone(), t: 0.5 };
+      st.flight = { to: sol.to, T: sol.T, t: 0, id: q.id }; st.flung = false;
+      return true;
     },
     aimAt(eye, p){ const d = V().subVectors(p, eye).normalize(); st.aimYaw = Math.atan2(-d.x, -d.z); st.aimPitch = Math.asin(clamp(d.y, -1, 1)); },
     pickVisible(eye, pos, range){
@@ -2361,7 +2351,8 @@ function frame(now){
     const tr = playerBody.translation(); P.currPos.set(tr.x, tr.y, tr.z);
     if (bot && bot.active && match.state === 'live'){   // v3.0 AI 跟玩家跑同一套物理與武器
       const n0 = events.length;
-      withActor(bot, () => { bot.P.prevPos.copy(bot.P.currPos); simTick(bot.brain.command(DT), true); const tb = bot.body.translation(); bot.P.currPos.set(tb.x, tb.y, tb.z); });
+      const gr = G.range; G.range = BOTCFG.ropeRange;   // AI 輔助：鋼索射程 90m（玩家 60m），不然這張圖它很難自己跨島
+      try { withActor(bot, () => { bot.P.prevPos.copy(bot.P.currPos); simTick(bot.brain.command(DT), true); const tb = bot.body.translation(); bot.P.currPos.set(tb.x, tb.y, tb.z); }); } finally { G.range = gr; }
       for (let i = n0; i < events.length; i++) events[i].by = bot.pid;
     }
     match.tick(DT);
@@ -2505,7 +2496,10 @@ function frame(now){
     } else { ropeMeshes[i].visible = false; anchorMeshes[i].visible = false; }
   }
   for (let i = 0; i < 2; i++){ const r = bot && bot.active ? bot.ropes[i] : null, m = botRopeMeshes[i];   // v3.0 AI 的鋼索（橘色）
-    if (r && r.hooked && bot.mech.loaded){ placeCylinder(m, bot.mech.dishTip(i, V()), r.anchor); m.visible = true; } else m.visible = false; }
+    const fr = bot && bot.active ? bot.brain.st.flashRope : null;
+    if (r && r.hooked && bot.mech.loaded){ placeCylinder(m, bot.mech.dishTip(i, V()), r.anchor); m.visible = true; }
+    else if (i === 1 && fr && fr.t > 0 && bot.mech.loaded){ fr.t -= dt; placeCylinder(m, bot.mech.dishTip(i, V()), fr.to); m.visible = true; }
+    else m.visible = false; }
   // 特效
   for (const t of tracers) if (t.life > 0){ t.life -= dt; t.m.material.opacity = Math.max(0, t.life/0.3); if (t.life <= 0) t.m.visible = false; }
   drawShells(dt);
