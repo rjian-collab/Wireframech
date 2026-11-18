@@ -249,12 +249,12 @@ import RAPIER from 'rapier';
 const CONFIG = Object.freeze({
   physics: { dt: 1/120, maxTicksPerFrame: 8, gravity: -20 },
   body: { mass: 3000, radius: 1.2, halfHeight: 0.9, linDamping: 0.05 },
-  ground: { speed: 33, accel: 90, friction: 60, slideFriction: 8, slideAbove: 12, jump: 10 },   // v2.9 平地全速 33 m/s ≈ 120 km/h
+  ground: { speed: 20, accel: 54, friction: 50, slideFriction: 8, slideAbove: 12, jump: 10 },   // v2.9c 平地全速 20 m/s ≈ 72 km/h（120 km/h 太快瞄不到）
   air: { control: 2 },
   boost: { accel: 40, fuel: 6, horizontal: 0.75, lift: 0.8, fallBrake: 2.5, hCap: 24, regenGround: 0.6, regenPad: 4 },
   supply: { ammoPerSec: 200 },
   fireControl: { coneDeg: 2.0 },
-  speedCap: 120,   // v2.8 最高速度 60 → 120 m/s（速度區間 ×0.5～×2.0 → 60～240）
+  speedCap: 72,   // v2.9c 最高速度 120 → 72 m/s（速度區間 ×0.5～×2.0 → 36～144）
   grapple: {
     range: 60, minLength: 3, aimOffsetDeg: 8, assistConeDeg: 3,
     iterations: 3, payout: 30, winchAccel: 32 /* 96000N / 3000kg：大於重力 20，單索就能拉起機體 */, reelMax: 18,
