@@ -154,7 +154,7 @@
 </div>
 <div id="settings">
   <label>跟手準星 <select id="optFollow" style="font-size:15px"><option value="none">無（都用畫面中央）</option><option value="weapon">武器（按住射擊拖曳＝移動準星）</option><option value="rope">鋼索（按住右索拖曳瞄準、放開射出）</option></select></label>
-  <label><input type="checkbox" id="optAutoFire"> 自動開火（準星對到敵人就射，只限機槍）</label>
+  <label><input type="checkbox" id="optAutoFire"> 自動開火（準星對到敵人就射，子彈自動補正；57mm 與機槍）</label>
   <label>速度區間 <select id="optSpeed" style="font-size:15px"><option value="0.8">穩定（×0.8，好控制）</option><option value="1" selected>標準</option><option value="1.25">高速（×1.25）</option></select>
     <input type="range" id="optSpeedK" min="0.7" max="1.4" step="0.05" value="1" style="width:120px;vertical-align:middle"> <span id="optSpeedV">×1.00</span></label>
   <label>機體塗裝 <select id="optPaint" style="font-size:15px"><option value="steel">鋼灰＋青綠（預設）</option><option value="night">夜戰深灰＋發光</option><option value="desert">沙漠＋橘</option><option value="white">原色白＋紅</option></select></label>
@@ -181,7 +181,7 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.5</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.6</div>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
     <li style="opacity:.75;font-size:12px">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）</li>
@@ -218,7 +218,7 @@ const CONFIG = Object.freeze({
   boost: { accel: 40, fuel: 6, horizontal: 0.75, lift: 0.8, fallBrake: 2.5, hCap: 24, regenGround: 0.6, regenPad: 4 },
   supply: { ammoPerSec: 200 },
   fireControl: { coneDeg: 2.0 },
-  speedCap: 45,
+  speedCap: 60,   // v2.6 最高速度 45 → 60 m/s
   grapple: {
     range: 60, minLength: 3, aimOffsetDeg: 8, assistConeDeg: 3,
     iterations: 3, payout: 30, winchAccel: 32 /* 96000N / 3000kg：大於重力 20，單索就能拉起機體 */, reelMax: 18,
@@ -337,16 +337,31 @@ const islands = [], supplyPads = [];
 const matIslandV = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
 const matRockF = new THREE.MeshLambertMaterial({ color: 0x6f6a64, flatShading: true });
 const _c1 = new THREE.Color(), _c2 = new THREE.Color();
-function islandShape(rx, rz, th, depth){
-  const N = 26, s1 = mrng() * 6.28, s2 = mrng() * 6.28, rr = [];
-  for (let i = 0; i < N; i++){ const a = i / N * Math.PI * 2; rr.push(1 + 0.09 * Math.sin(3 * a + s1) + 0.06 * Math.sin(5 * a + s2) + (mrng() - 0.5) * 0.06); }
+// v2.6 島型：round 圓島、mesa 平頂台地（陡壁、淺底）、spire 尖錐（深長的尖底）、shard 裂片（稜角多邊形）、twin 雙瓣、lobed 多瓣
+const ISLAND_STYLES = {
+  round:  { N: 26, wav: [[3, 0.09], [5, 0.06]], jit: 0.06, rings: [[1, 0], [0.97, 0.05], [0.72, 0.16], [0.4, 0.22]], dep: [0.35, 0.7, 1] },
+  mesa:   { N: 22, wav: [[2, 0.05], [7, 0.04]], jit: 0.04, rings: [[1, 0], [1.0, 0.04], [0.93, 0.08], [0.62, 0.2]], dep: [0.55, 0.85, 1.05] },
+  spire:  { N: 20, wav: [[3, 0.07], [4, 0.05]], jit: 0.08, rings: [[1, 0], [0.9, 0.08], [0.5, 0.15], [0.2, 0.2]], dep: [0.3, 0.75, 1.7] },
+  shard:  { N: 8,  wav: [[2, 0.12]], jit: 0.28, rings: [[1, 0], [0.95, 0.12], [0.6, 0.3], [0.3, 0.35]], dep: [0.35, 0.75, 1.2] },
+  twin:   { N: 30, wav: [[2, 0.24], [5, 0.05]], jit: 0.05, rings: [[1, 0], [0.96, 0.06], [0.66, 0.18], [0.36, 0.25]], dep: [0.35, 0.7, 1.1] },
+  lobed:  { N: 32, wav: [[4, 0.15], [7, 0.06]], jit: 0.07, rings: [[1, 0], [0.96, 0.07], [0.7, 0.2], [0.38, 0.28]], dep: [0.35, 0.7, 1] } };
+const PALETTES = [
+  { grass: [0x5f8a4f, 0x6f9a5a], lip: 0x7a6a52, rock: [0x6d6255, 0x574e45] },   // 草原
+  { grass: [0x7a8a48, 0x8a9a55], lip: 0x80704f, rock: [0x7a6c5a, 0x5f5446] },   // 乾草
+  { grass: [0x4f7a5f, 0x5a8a68], lip: 0x5f6a62, rock: [0x5c6168, 0x464b52] },   // 苔原（偏冷灰岩）
+  { grass: [0x6a7f4a, 0x74895a], lip: 0x8a6a4a, rock: [0x8a5f45, 0x6a4636] } ]; // 紅岩
+function islandShape(rx, rz, th, depth, style = 'round', pal = 0){
+  const ST = ISLAND_STYLES[style] || ISLAND_STYLES.round, PL = PALETTES[pal % PALETTES.length];
+  const N = ST.N, ph = ST.wav.map(() => mrng() * 6.28), rr = [];
+  for (let i = 0; i < N; i++){ const a = i / N * Math.PI * 2; let r = 1; ST.wav.forEach(([f, amp], k) => r += amp * Math.sin(f * a + ph[k])); rr.push(r + (mrng() - 0.5) * ST.jit); }
   const ring = (y, k, jit) => rr.map((r, i) => { const a = i / N * Math.PI * 2, kk = k * (1 + (mrng() - 0.5) * jit); return new THREE.Vector3(Math.cos(a) * rx * r * kk, y, Math.sin(a) * rz * r * kk); });
   const tx = (mrng() - 0.5) * rx * 0.2, tz = (mrng() - 0.5) * rz * 0.2;
-  const R = [ring(0, 1, 0), ring(-0.7, 1.03, 0.02), ring(-th, 0.97, 0.05), ring(-th - depth * 0.35, 0.72, 0.16), ring(-th - depth * 0.7, 0.4, 0.22)];
-  const tip = new THREE.Vector3(tx, -th - depth, tz);
+  const RG = ST.rings, DP = ST.dep;
+  const R = [ring(0, 1, 0), ring(-0.7, 1.03, 0.02), ring(-th, RG[1][0], RG[1][1]), ring(-th - depth * DP[0], RG[2][0], RG[2][1]), ring(-th - depth * DP[1], RG[3][0], RG[3][1])];
+  const tip = new THREE.Vector3(tx, -th - depth * DP[2], tz);
   const pos = [], col = [];
   const tri = (a, b, c, color) => { pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z); for (let k = 0; k < 3; k++) col.push(color.r, color.g, color.b); };
-  const grass = new THREE.Color(0x5f8a4f), grass2 = new THREE.Color(0x6f9a5a), lip = new THREE.Color(0x7a6a52), rock = new THREE.Color(0x6d6255), rock2 = new THREE.Color(0x574e45);
+  const grass = new THREE.Color(PL.grass[0]), grass2 = new THREE.Color(PL.grass[1]), lip = new THREE.Color(PL.lip), rock = new THREE.Color(PL.rock[0]), rock2 = new THREE.Color(PL.rock[1]);
   const ctr = new THREE.Vector3(0, 0, 0);
   for (let i = 0; i < N; i++){ const j = (i + 1) % N; tri(ctr, R[0][j], R[0][i], i % 2 ? grass : grass2); }
   const bands = [grass, lip, rock, rock2];
@@ -355,7 +370,7 @@ function islandShape(rx, rz, th, depth){
   for (let i = 0; i < N; i++){ const j = (i + 1) % N; _c2.copy(rock2).offsetHSL(0, 0, (mrng() - 0.5) * 0.06); tri(R[4][i], R[4][j], tip, _c2); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
   const flat = arr => { const f = new Float32Array(arr.length * 3); arr.forEach((v, i) => { f[i*3] = v.x; f[i*3+1] = v.y; f[i*3+2] = v.z; }); return f; };
-  return { geo: g, hullTop: flat([...R[0], ...R[2]]), hullBot: flat([...R[2], ...R[3], ...R[4], tip]), bottomY: -th - depth, R };
+  return { geo: g, hullTop: flat([...R[0], ...R[2]]), hullBot: flat([...R[2], ...R[3], ...R[4], tip]), bottomY: -th - depth * DP[2], R };
 }
 function addHullBody(pos, q, hulls){ const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(pos.x, pos.y, pos.z).setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }));
   for (const h of hulls){ const d = RAPIER.ColliderDesc.convexHull(h); if (d){ const c = world.createCollider(d.setFriction(0), body); hookable.add(c.handle); } } }
@@ -371,8 +386,11 @@ function addStalactites(cx, top, cz, rx, rz, depthY, n, q){   // 島底垂下的
     const g = new THREE.ConeGeometry(1.1 + mrng() * 0.6, len, 6); g.rotateX(Math.PI); g.translate(Math.cos(a) * rx * r, depthY * 0.7 - len / 2 + 2, Math.sin(a) * rz * r);
     const m = new THREE.Mesh(g, matRockF); const grp = new THREE.Group(); grp.position.set(cx, top, cz); if (q) grp.quaternion.copy(q); grp.add(m); scene.add(grp);
     const pa = g.attributes.position, pts = new Float32Array(pa.array.length); pts.set(pa.array); addHullBody(new THREE.Vector3(cx, top, cz), q || new THREE.Quaternion(), [pts]); } }
+function addOutcrops(cx, top, cz, w, d, n, q){   // 島緣的岩塊（造型＋小掩體），放在邊緣不擋中間
+  for (let i = 0; i < n; i++){ const a = mrng() * 6.28, r = 0.72 + mrng() * 0.18, sz = 1.8 + mrng() * 2.2;
+    const p = new THREE.Vector3(Math.cos(a) * w / 2 * r, sz * 0.25, Math.sin(a) * d / 2 * r); if (q) p.applyQuaternion(q); addRock(cx + p.x, top + p.y, cz + p.z, sz, q); } }
 function addIsland(name, cx, top, cz, w, d, th, opt = {}){
-  const sh = islandShape(w / 2, d / 2, th, th * 1.6 + Math.min(w, d) * 0.25), q = new THREE.Quaternion();
+  const sh = islandShape(w / 2, d / 2, th, th * 1.6 + Math.min(w, d) * 0.25, opt.style, opt.pal || 0), q = new THREE.Quaternion();
   const m = new THREE.Mesh(sh.geo, matIslandV); m.position.set(cx, top, cz); scene.add(m);
   addHullBody(new THREE.Vector3(cx, top, cz), q, [sh.hullTop, sh.hullBot]);
   islands.push({ name, cx, top, cz, w, d });
@@ -385,6 +403,7 @@ function addIsland(name, cx, top, cz, w, d, th, opt = {}){
   if (opt.boulders) for (let i = 0; i < opt.boulders; i++){ const a = i / opt.boulders * 6.28 + mrng() * 0.6, r = 0.55 + mrng() * 0.28, sz = 3 + mrng() * 2.5;   // 只放在外側，中間（補給台、靶）保持淨空
     addRock(cx + Math.cos(a) * w / 2 * r, top + sz * 0.3, cz + Math.sin(a) * d / 2 * r, sz); }   // v2.5 只留幾顆石頭當掩體
   if (opt.chains) addStalactites(cx, top, cz, w / 2, d / 2, sh.bottomY, opt.chains, null);
+  addOutcrops(cx, top, cz, w, d, opt.outcrops || 0, null);
 }
 // v1.8 坡道（蜘蛛腳測試用）：從 (x0, y0, z) 往 +x 方向以 deg 角度往上斜，長 len、寬 wid
 function addRamp(x0, y0, z, len, wid, deg, mat = matClutter){
@@ -403,15 +422,16 @@ const MAPC = CONFIG.map, MC = MAPC.center;
 function addTiltIsland(name, cx, top, cz, w, d, th, tiltDeg, opt = {}){
   const yaw = Math.atan2(MC.x - cx, MC.z - cz);   // 局部 +z 指向環中心
   const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(tiltDeg * DEG, yaw, 0, 'YXZ'));
-  const sh = islandShape(w / 2, d / 2, th, th * 1.4 + Math.min(w, d) * 0.3);
+  const sh = islandShape(w / 2, d / 2, th, th * 1.4 + Math.min(w, d) * 0.3, opt.style, opt.pal || 0);
   const m = new THREE.Mesh(sh.geo, matIslandV); m.position.set(cx, top, cz); m.quaternion.copy(q); scene.add(m);
   addHullBody(new THREE.Vector3(cx, top, cz), q, [sh.hullTop, sh.hullBot]);
   if (opt.chains) addStalactites(cx, top, cz, w / 2, d / 2, sh.bottomY, opt.chains, q);
+  addOutcrops(cx, top, cz, w, d, opt.outcrops || 0, q);
   islands.push({ name, cx, top, cz, w, d, tilt: tiltDeg, bottom: top + sh.bottomY });
 }
 // 兩邊基地（平的、有補給、有出生保護區）
-addIsland('基地 A', 50, 10, 0, 40, 40, 10, { supply: true, chains: 2 });
-addIsland('基地 B', 350, 10, 0, 40, 40, 10, { supply: true, chains: 2 });
+addIsland('基地 A', 50, 10, 0, 40, 40, 10, { supply: true, chains: 2, style: 'mesa', pal: 2, outcrops: 3 });
+addIsland('基地 B', 350, 10, 0, 40, 40, 10, { supply: true, chains: 2, style: 'mesa', pal: 2, outcrops: 3 });
 // 外圈：每 20° 一座，高度依「離最近基地的角度」一階一階往上
 const ring = [];
 for (let deg = MAPC.ringStepDeg; deg < 360; deg += MAPC.ringStepDeg){
@@ -419,10 +439,12 @@ for (let deg = MAPC.ringStepDeg; deg < 360; deg += MAPC.ringStepDeg){
   const th = deg * DEG, x = MC.x + Math.cos(th) * MAPC.ringR, z = MC.z + Math.sin(th) * MAPC.ringR;   // 180°＝基地 A（x=50）、0°＝基地 B（x=350）
   const fromBase = Math.min(Math.abs(((deg % 360) + 360) % 360), 360 - deg, Math.abs(deg - 180));
   const top = MAPC.ringBase + (MAPC.ringPeak - MAPC.ringBase) * Math.round(fromBase / MAPC.ringStepDeg) / (90 / MAPC.ringStepDeg);
-  const name = '外圈 ' + deg + '°'; addTiltIsland(name, x, top, z, 26, 22, 6, MAPC.ringTiltDeg, { chains: 1 }); ring.push(name);
+  const step = Math.round(fromBase / MAPC.ringStepDeg), side = deg < 180 ? 0 : 1;   // 左右鏡像的位置用同一種島型（公平），大小也有變化
+  const style = ['shard', 'twin', 'mesa', 'spire'][step - 1] || 'round', pal = [1, 0, 3, 2][step - 1] || 0, sz = [[24, 20], [30, 22], [28, 26], [22, 22]][step - 1] || [26, 22];
+  const name = '外圈 ' + deg + '°'; addTiltIsland(name, x, top, z, sz[0], sz[1], 6, MAPC.ringTiltDeg, { chains: 1, style, pal, outcrops: step === 3 ? 2 : 1 }); ring.push(name);
 }
 // 中央大平台：全場最低、平的，有掩體與補給
-addIsland('中央平台', MC.x, -20, MC.z, 110, 60, 12, { supply: true, boulders: 5, chains: 3 });   // v2.5 中央淨空，只留 5 顆石頭
+addIsland('中央平台', MC.x, -20, MC.z, 110, 60, 12, { supply: true, boulders: 5, chains: 3, style: 'lobed', pal: 0 });   // v2.5 中央淨空，只留 5 顆石頭
 // 出生保護區（兩邊基地各一）：區內不能開火，日後 PvP 區內不受傷
 const safeZones = [{ x: 50, y: 10, z: 0, r: CONFIG.safeZone.radius }, { x: 350, y: 10, z: 0, r: CONFIG.safeZone.radius }];
 for (const sz of safeZones){
@@ -936,21 +958,14 @@ function weaponTick(cmd, dt){
   const fireEdge = cmd.fire && !w.prevFire; w.prevFire = cmd.fire;
   w.blocked = !!P.safe;
   shellsTick(dt);
-  if (w.active === 'sub'){ nailTick(cmd, dt, fireEdge); return; }
+  if (w.active === 'sub'){ w.autoOn = false; nailTick(cmd, dt, fireEdge); return; }   // 釘槍不自動開火（避免誤釘）
   if (w.active === 'main'){ cannonTick(cmd, dt); return; }
   if (w.blocked && cmd.fire) return;
   w.cooldown = Math.max(0, w.cooldown - dt);
   w.bloom = Math.max(0, w.bloom - dt * (W.spread.max / W.spread.recover));
   if (w.reloading > 0){ w.reloading -= dt; if (w.reloading <= 0){ w.reloading = 0; w.ammo = W.ammo; events.push({ type: 'reloaded' }); } return; }
   if ((cmd.reload && w.ammo < W.ammo) || w.ammo <= 0){ w.reloading = W.reload; events.push({ type: 'reload' }); return; }
-  if (cmd.autoFire && (state.tick % 6) === 0){ // 每 6 tick 檢查一次準星是否對到活著的靶
-    const tr0 = playerBody.translation(); const o = eyePos(V(tr0.x, tr0.y, tr0.z));
-    const h0 = castRay(o, dirFromYawPitch(P.yaw, P.pitch, V()), W.range);
-    const t0 = h0 && targetsByCollider.get(h0.handle);
-    w.autoAcc = (t0 && !t0.dead) ? (w.autoAcc || 0) + 6 * dt : 0;
-    w.autoOn = w.autoAcc >= 0.1;
-  }
-  if (!cmd.autoFire) w.autoOn = false;
+  autoFireCheck(cmd, dt, W.range);
   if (!(cmd.fire || w.autoOn) || w.cooldown > 0) return;
   w.cooldown += 60 / W.rpm;
   w.ammo = Math.floor(w.ammo) - 1; w.shots++; w.fired++;
@@ -976,14 +991,25 @@ function weaponTick(cmd, dt){
   }
   events.push({ type: 'shot', from: origin, to: end, hit: !!hit, hitTarget, normal: hit ? hit.normal : null, tracer: w.shots % W.tracerEvery === 0 });
 }
+// v2.6 自動開火：用「準星實際指向」（第三人稱已校正）判斷，活靶落在射控輔助範圍（2°）內且視線沒被擋，持續 0.1 秒就開火；子彈照樣由射控補正到靶上
+function autoFireCheck(cmd, dt, range){
+  const w = state.weapon, P = state.player;
+  if (!cmd.autoFire){ w.autoOn = false; w.autoAcc = 0; return; }
+  if ((state.tick % 6) !== 0) return;
+  const tr0 = playerBody.translation(), o = eyePos(V(tr0.x, tr0.y, tr0.z)), dir = dirFromYawPitch(cmd.gunYaw ?? P.yaw, cmd.gunPitch ?? P.pitch, V());
+  let ok = false; const cone = Math.cos(CONFIG.fireControl.coneDeg * DEG);
+  for (const t of targets){ if (t.dead) continue; const to = V().subVectors(t.mesh.position, o), d = to.length(); if (d > range) continue; to.divideScalar(d);
+    if (to.dot(dir) < cone) continue; const h = castRay(o, to, d + 1); if (h && targetsByCollider.get(h.handle) === t){ ok = true; break; } }
+  w.autoAcc = ok ? (w.autoAcc || 0) + 6 * dt : 0; w.autoOn = w.autoAcc >= 0.1;
+}
 // v1.9 主武：57mm 滑膛炮。按住會以 0.8 秒間隔連續射擊；砲彈是實體彈道（700 m/s、受重力）
 const CN = CONFIG.cannon;
 function cannonTick(cmd, dt){
   const w = state.weapon, c = w.cannon, P = state.player;
-  c.cool = Math.max(0, c.cool - dt); w.autoOn = false;
+  c.cool = Math.max(0, c.cool - dt); autoFireCheck(cmd, dt, CN.range);
   if (c.reloading > 0){ c.reloading -= dt; if (c.reloading <= 0){ const n = Math.min(CN.mag - c.ammo, Math.floor(c.reserve)); c.ammo += n; c.reserve -= n; c.reloading = 0; events.push({ type: 'reloaded' }); } return; }
   if (((cmd.reload && c.ammo < CN.mag) || c.ammo <= 0) && c.reserve >= 1){ c.reloading = CN.reload; events.push({ type: 'reload' }); return; }
-  if (w.blocked || !cmd.fire || c.cool > 0 || c.ammo <= 0) return;
+  if (w.blocked || !(cmd.fire || w.autoOn) || c.cool > 0 || c.ammo <= 0) return;
   c.cool = 60 / CN.rpm; c.ammo--; w.shots++; w.fired++;
   const gy = cmd.gunYaw ?? P.yaw, gp = cmd.gunPitch ?? P.pitch;
   const dir = dirFromYawPitch(gy, gp, V());
@@ -1141,6 +1167,13 @@ const mech = (() => {
   scene.add(M.root);
   const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _k = new THREE.Vector3(), _q = new THREE.Quaternion();
   function seg(mesh, a, b){ _a.subVectors(b, a); const len = _a.length(); mesh.position.copy(a).addScaledVector(_a, 0.5); mesh.scale.set(1, len, 1); mesh.quaternion.setFromUnitVectors(UP, _a.divideScalar(len || 1)); }
+  let nailSide = 0;
+  M.muzzle = (kind, out) => { if (!M.loaded) return null;
+    if (kind === 'mg' && M.mgMuzzle) return M.mgMuzzle.getWorldPosition(out);
+    if (kind === 'cannon' && M.cannonMuzzle) return M.cannonMuzzle.getWorldPosition(out);
+    if (kind === 'nail'){ const fr = M.legs.filter(L => L.rest && L.rest.z < 0); if (!fr.length) return null; const L = fr[(nailSide++) % fr.length];   // 前腳（樁腳）左右輪流
+      return M.body.localToWorld(out.copy(L.cur).lerp(L.hip, 0.15)); }
+    return null; };
   M.dishTip = (i, out) => { M.claws[i].children[1].getWorldPosition(out); return out; };
   M.update = (dt, pos, P, ropes) => {
     M.root.position.copy(pos);
@@ -1149,7 +1182,7 @@ const mech = (() => {
     const upT = P.pinned && P.pinned.normal ? P.pinned.normal : P.grounded && P.groundN ? P.groundN : UP; M.up.lerp(upT, 1 - Math.exp(-dt / 0.12)).normalize();   // v2.4 釘在牆上：腹部朝牆
     _q.setFromUnitVectors(UP, M.up); M.root.quaternion.setFromAxisAngle(UP, M.yaw).premultiply(_q);
     // 炮塔與砲管跟著準星；機槍臂也指向準星
-    M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9); if (M.mgArm) M.mgArm.rotation.x = clamp(P.pitch, -0.3, 0.5);
+    M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9); if (M.mgArm){ const ap = clamp(P.pitch, -0.5, 0.7); M.mgArm.rotation.x = ap * 0.45; if (M.mgWrist) M.mgWrist.rotation.x = ap * 0.55; }   // 肩與手腕分攤，槍管跟準星同角度
     // 碟形發射器轉向勾住的錨點（沒勾就朝前）
     const hk = ropes.find(r => r.hooked);
     if (hk){ M.dish.worldToLocal(_k.copy(hk.anchor)); const t = Math.atan2(-_k.x, -_k.z); M.dish.rotation.y += Math.atan2(Math.sin(t), Math.cos(t)) * Math.min(1, dt * 10); }
@@ -1257,13 +1290,28 @@ const mech = (() => {
     // 格鬥臂：移除左刀臂，右刀臂加裝 14.5mm 機槍
     const bl = gltf.scene.getObjectByName('Blade_L'), br = gltf.scene.getObjectByName('Blade_R');   // 載入器會把空白換成底線、拿掉點
     if (bl) bl.visible = false;
-    if (br){ const bb = new THREE.Box3().setFromObject(br), tip = M.body.worldToLocal(new THREE.Vector3((bb.min.x + bb.max.x)/2, bb.max.y + 0.15, bb.min.z));   // 轉向後刀尖在 -z
-      const mid = M.body.worldToLocal(new THREE.Vector3((bb.min.x + bb.max.x)/2, bb.max.y + 0.2, bb.max.z - 0.9));   // 刀臂根部（靠機身那端）上方
-      const gun = new THREE.Group(); gun.position.copy(mid); M.body.add(gun); M.mgArm = gun;
+    // v2.6 格鬥臂：拿掉原作刀臂，改成「肩 → 上臂往前下 → 前臂往下彎（L 型）→ 手腕握機槍朝前」；日後裝刀時改成螳螂式折臂
+    if (br){ const bb = new THREE.Box3().setFromObject(br); br.visible = false;
       const mat = metal || new THREE.MeshStandardMaterial({ color: 0x555b60, metalness: 0.7, roughness: 0.45 });
-      const rcv = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.26, 0.9), mat); gun.add(rcv);
-      const brl = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 1.4, 10), mat); brl.rotation.x = Math.PI / 2; brl.position.z = -0.45 - 0.7; gun.add(brl);
-      const box2 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.3, 0.3), mat); box2.position.set(0.2, -0.05, 0.15); gun.add(box2); }
+      const matD = mat.clone(); matD.color = new THREE.Color(0x2e3338); matD.flatShading = true; const matF = mat.clone(); matF.flatShading = true;
+      const prism = (len, r0, r1, m) => { const g = new THREE.CylinderGeometry(r1, r0, len, 6); g.translate(0, len / 2, 0); return new THREE.Mesh(g, m); };   // 沿 +Y 的錐形六角柱
+      const joint = (r, m) => new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), m);
+      const sh = M.body.worldToLocal(new THREE.Vector3((bb.min.x + bb.max.x) / 2, (bb.min.y + bb.max.y) / 2 + 0.1, bb.max.z - 0.4));
+      const S = new THREE.Group(); S.position.copy(sh); M.body.add(S); S.add(joint(0.32, matD));
+      const d1 = new THREE.Vector3(0, -0.42, -1).normalize(), L1 = 1.8, d2 = new THREE.Vector3(0, -1, -0.18).normalize(), L2 = 1.25;
+      const up = prism(L1, 0.26, 0.17, matF); up.quaternion.setFromUnitVectors(UP, d1); S.add(up);
+      const fin = prism(0.9, 0.05, 0.02, matD); fin.quaternion.setFromUnitVectors(UP, new THREE.Vector3(0, 0.55, -1).normalize()); fin.position.copy(d1).multiplyScalar(L1 * 0.35); S.add(fin);   // 上臂背鰭（銳利感）
+      const E = new THREE.Group(); E.position.copy(d1).multiplyScalar(L1); S.add(E); E.add(joint(0.22, matD));
+      const lo = prism(L2, 0.2, 0.13, matF); lo.quaternion.setFromUnitVectors(UP, d2); E.add(lo);
+      const W = new THREE.Group(); W.position.copy(d2).multiplyScalar(L2); E.add(W); W.add(joint(0.16, matD));
+      const rcv = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.24, 0.8), matF); rcv.position.set(0, -0.05, -0.25); W.add(rcv);
+      const brl = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.3, 8), matD); brl.rotation.x = Math.PI / 2; brl.position.set(0, -0.02, -1.3); W.add(brl);
+      const mag = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.32, 0.28), matD); mag.position.set(0.18, -0.2, 0.0); W.add(mag);
+      const muz = new THREE.Object3D(); muz.position.set(0, -0.02, -1.98); W.add(muz);
+      M.mgArm = S; M.mgWrist = W; M.mgMuzzle = muz; }
+    // 57mm 砲口位置（砲管不參與機身變形）
+    { const cn = gltf.scene.getObjectByName('Cannon'); if (cn){ const cbx = new THREE.Box3().setFromObject(cn), mz = new THREE.Object3D();
+        mz.position.copy(M.body.worldToLocal(new THREE.Vector3((cbx.min.x + cbx.max.x) / 2, cbx.max.y - (cbx.max.y - cbx.min.y) * 0.35, cbx.min.z))); M.body.add(mz); M.cannonMuzzle = mz; } }
     // ---- v2.5 結構大修：直接改模型頂點（計算期間世界座標＝機身座標）----
     const _wv = new THREE.Vector3();
     function warpMesh(mesh, fn){
@@ -1338,8 +1386,9 @@ function spawnBoom(p, n){ const b = booms[boomIdx++ % booms.length]; b.m.positio
 function drawShells(dt){
   const sh = state.weapon.shells;
   shellMeshes.forEach((o, i) => { const s2 = sh[i]; o.me.visible = o.tl.visible = !!s2; if (!s2) return;
-    o.me.position.copy(s2.p); const a = o.tl.geometry.attributes.position, L = 6 / s2.v.length();
-    a.setXYZ(0, s2.p.x, s2.p.y, s2.p.z); a.setXYZ(1, s2.p.x - s2.v.x * L, s2.p.y - s2.v.y * L, s2.p.z - s2.v.z * L); a.needsUpdate = true; });
+    const vp = V().copy(s2.p); if (s2.voff && s2.vt > 0){ vp.addScaledVector(s2.voff, s2.vt / 0.2); s2.vt -= dt; }
+    o.me.position.copy(vp); const a = o.tl.geometry.attributes.position, L = 6 / s2.v.length();
+    a.setXYZ(0, vp.x, vp.y, vp.z); a.setXYZ(1, vp.x - s2.v.x * L, vp.y - s2.v.y * L, vp.z - s2.v.z * L); a.needsUpdate = true; });
   for (const b of booms) if (b.life > 0){ b.life -= dt; const k = 1 - b.life / 0.35; b.m.scale.setScalar(0.5 + k * CONFIG.cannon.splashR); b.m.material.opacity = 0.8 * (1 - k); if (b.life <= 0) b.m.visible = false; }
 }
 function spawnSparks(p, n){ for (let i=0;i<6;i++){ const s = sparks[sparkIdx++ % sparks.length]; s.m.position.copy(p); s.v.set((Math.random()-.5)*8, Math.random()*6, (Math.random()-.5)*8); if (n) s.v.addScaledVector(n, 4); s.life = 0.3; s.m.visible = true; } }
@@ -1923,9 +1972,11 @@ function frame(now){
       case 'snap': sfx('clank', ev.strength); if (opts.shake){ shakeT = CONFIG.camera.shakeDur; shakeAmp = (0.15 + 0.35*ev.strength) * CONFIG.camera.shakeScale; } flashT = 0.08; crossPulse = 1; buzz(30); break;
       case 'land': sfx('clank', ev.strength); if (opts.shake){ shakeT = CONFIG.camera.shakeDur; shakeAmp = (0.2 + 0.4*ev.strength) * CONFIG.camera.shakeScale; } break;
       case 'break': sfx('miss'); break;
-      case 'cannon': sfx('cannon'); if (opts.shake){ shakeT = CONFIG.camera.shakeDur * 0.6; shakeAmp = 0.25 * CONFIG.camera.shakeScale; } buzz(25); break;
+      case 'cannon': { const mz = opts.view3P ? mech.muzzle('cannon', V()) : null, shl = state.weapon.shells[state.weapon.shells.length - 1];
+        if (mz){ spawnSparks(mz, null); spawnSparks(mz, null); if (shl && !shl.voff){ shl.voff = mz.clone().sub(shl.p); shl.vt = 0.2; } } }   // v2.6 砲彈外觀從砲口出發，0.2 秒內併回實際彈道
+        sfx('cannon'); if (opts.shake){ shakeT = CONFIG.camera.shakeDur * 0.6; shakeAmp = 0.25 * CONFIG.camera.shakeScale; } buzz(25); break;
       case 'boom': sfx('boom', ev.hitTarget ? 1 : 0.6); spawnBoom(ev.at, ev.normal); if (ev.hitTarget){ hitMarkT = 0.18; sfx('hit'); } break;
-      case 'shot': sfx('shot'); if (ev.tracer) spawnTracer(ev.from, ev.to); if (ev.hit) spawnSparks(ev.to, ev.normal); if (ev.hitTarget){ hitMarkT = 0.12; sfx('hit'); } break;
+      case 'shot': { sfx('shot'); const mz = opts.view3P ? mech.muzzle(ev.nail ? 'nail' : 'mg', V()) : null; const from = mz || ev.from; if (mz) spawnSparks(mz, null); if (ev.tracer) spawnTracer(from, ev.to); } if (ev.hit) spawnSparks(ev.to, ev.normal); if (ev.hitTarget){ hitMarkT = 0.12; sfx('hit'); } break;
       case 'kill': sfx('clank', 0.6); break;
       case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '01 主武：57mm 滑膛炮' : state.weapon.active === 'mg' ? '02 副武：14.5mm 機槍' : '03 腿部：釘槍（靠牆開槍＝釘住；也能當武器）', 1200); break;
       case 'pin': sfx('clank', 0.8); buzz(25); flashT = 0.05; break;
