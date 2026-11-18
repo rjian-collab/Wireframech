@@ -490,7 +490,9 @@ for (let deg = MAPC.ringStepDeg; deg < 360; deg += MAPC.ringStepDeg){
   const PAIR = { 20: ['shard', 1, 24, 20, 1], 40: ['twin', 0, 30, 22, 1], 60: ['mesa', 3, 28, 26, 2], 80: ['spire', 2, 22, 22, 1],
                  200: ['lobed', 3, 26, 24, 2], 220: ['round', 1, 26, 22, 3], 240: ['spire', 0, 24, 24, 1], 260: ['mesa', 2, 30, 24, 2] };
   const [style, pal, w0, d0, oc] = PAIR[key] || ['round', 0, 26, 22, 1];
-  const name = '外圈 ' + deg + '°'; addTiltIsland(name, x, top, z, w0, d0, 6, MAPC.ringTiltDeg, { chains: 1, style, pal, outcrops: oc, seed: 1000 + key }); ring.push(name);
+  const big = !(key === 80 || key === 220) ? 1.6 : 1;   // v3.1 大部分外圈島放大 ×1.6（發揮地面水平機動）；80°/100° 尖錐與 220°/320° 圓島維持小島
+  const w0b = w0 * big, d0b = d0 * big;
+  const name = '外圈 ' + deg + '°'; addTiltIsland(name, x, top, z, w0b, d0b, 6, MAPC.ringTiltDeg, { chains: 1, style, pal, outcrops: big > 1 ? oc + 2 : oc, seed: 1000 + key }); ring.push(name);
 }
 // 中央大平台：全場最低、平的，有掩體與補給
 addIsland('中央平台', MC.x, -20, MC.z, 110, 60, 12, { supply: true, boulders: 5, chains: 3, style: 'lobed', pal: 0 });   // v2.5 中央淨空，只留 5 顆石頭
@@ -802,7 +804,10 @@ function createBotBrain(a){
         const T = clamp(d / 26, 0.9, 2.6) * k, v = V((to.x - p0.x) / T, (to.y - p0.y - 0.5 * g * T * T) / T, (to.z - p0.z) / T);
         let ok = true; const a0 = V().copy(p0);
         for (let i = 1; i <= 12 && ok; i++){ const t = T * i / 12, b0 = V(p0.x + v.x * t, p0.y + v.y * t + 0.5 * g * t * t, p0.z + v.z * t);
-          const dd = V().subVectors(b0, a0), L = dd.length(); if (i < 12 || true){ const h = castRay(a0, dd.divideScalar(L), Math.max(0.1, L - (i === 12 ? 1.5 : 0))); if (h && i < 11) ok = false; } a0.copy(b0); }
+          const dd = V().subVectors(b0, a0), L = dd.length(); dd.divideScalar(L);
+          for (const oy of [-1.3, 0, 1.3]){ const h = castRay(V(a0.x, a0.y + oy, a0.z), dd, L); if (h && h.point.distanceTo(to) > 3.5){ ok = false; break; } }   // 機體有厚度：上下各多掃一條
+          a0.copy(b0); }
+        if (v.y + g * T > -2) ok = false;   // 必須是「往下落」到落腳點上，不能從下面撞上去   // 中途撞到東西（不是落點本身）就不行
         if (ok && v.length() < 60) return { v, T, to };
       }
       return null;
