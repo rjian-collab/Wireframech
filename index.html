@@ -117,7 +117,8 @@
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
-  "rapier": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/dist/rapier.mjs"
+  "rapier": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/dist/rapier.mjs",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"
 } }
 </script>
 </head>
@@ -166,9 +167,10 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.2</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.3</div>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
+    <li style="opacity:.75;font-size:12px">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、移除左刀臂、加裝機槍與鋼索發射器、壓縮）</li>
     <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），左上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>按住後往任一方向快速一滑＝往那邊撲擊</b>（在地上、坡上、貼牆或釘在牆上時）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
@@ -219,7 +221,7 @@ const CONFIG = Object.freeze({
   stickJump: { windowMs: 220, dist: 1.25 },
   spider: { maxSlopeDeg: 70, slopePress: 4, snapDown: 1.5, pounceSpeed: 17, pounceUp: 7, pounceWallPush: 5, cooldown: 0.35 },   // v1.8 蜘蛛腳：70° 內可站、貼地、撲擊
   assist: { ropeBufferS: 1.0, lockEnemyDeg: 15, lockEnemyRange: 250, levelIdleMs: 1000, levelPitchDeg: 10, levelRate: 45, quickTurnS: 0.25, doubleTapMs: 300 },
-  tp: { dist: 10, height: 4.2, minDist: 2.2, hideBelow: 2.6, bodyYawTau: 0.12 },   // v2.1 第三人稱鏡頭
+  tp: { dist: 15, height: 5.5, minDist: 2.2, hideBelow: 2.6, bodyYawTau: 0.12 },   // v2.1 第三人稱鏡頭
   camera: { stabHoldMs: 150, stabMinSpeed: 4, stabMinDist: 8, stabMaxRate: 300, stabGyroInput: 25, shakeScale: 0.4, eye: 1.1, fovBase: 70, fovAt40: 85, fovMax: 90, fovTau: 0.3, rollMaxDeg: 8, pitchLimit: 85,
     shakeDur: 0.5, speedLinesMin: 25, speedLinesMax: 60 },
   render: { dprMax: 1.5, dprFallback: 1.0, fallbackFps: 50, fpsWindow: 2 },
@@ -1112,7 +1114,7 @@ const mech = (() => {
     const upT = P.grounded && P.groundN ? P.groundN : UP; M.up.lerp(upT, 1 - Math.exp(-dt / 0.12)).normalize();
     _q.setFromUnitVectors(UP, M.up); M.root.quaternion.setFromAxisAngle(UP, M.yaw).premultiply(_q);
     // 炮塔與砲管跟著準星；機槍臂也指向準星
-    M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9);
+    M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9); if (M.mgArm) M.mgArm.rotation.x = clamp(P.pitch, -0.3, 0.5);
     // 碟形發射器轉向勾住的錨點（沒勾就朝前）
     const hk = ropes.find(r => r.hooked);
     if (hk){ M.dish.worldToLocal(_k.copy(hk.anchor)); const t = Math.atan2(-_k.x, -_k.z); M.dish.rotation.y += Math.atan2(Math.sin(t), Math.cos(t)) * Math.min(1, dt * 10); }
@@ -1124,8 +1126,12 @@ const mech = (() => {
     const planted = !air && !swing, stepDur = clamp(0.16 - hs * 0.004, 0.08, 0.16), thresh = 0.7 + hs * 0.06;
     M.root.updateMatrixWorld(true);
     for (const L of M.legs){
-      const reach = swing ? 2.9 : air ? 1.7 : 2.6, drop = swing ? -1.3 : air ? -1.0 : -2.1;
-      _b.set(Math.sin(L.a) * reach, drop, -Math.cos(L.a) * reach);           // 本機座標的「休息位置」
+      if (L.ik){   // v2.3 模型腳：休息位置來自模型本身（前後腳拉開）；空中收腳、擺盪時張開
+        _b.copy(L.hip).lerp(L.rest, swing ? 1.08 : air ? 0.72 : 1); _b.y += swing ? 1.0 : air ? 0.8 : 0;
+      } else {
+        const reach = swing ? 2.9 : air ? 1.7 : 2.6, drop = swing ? -1.3 : air ? -1.0 : -2.1;
+        _b.set(Math.sin(L.a) * reach, drop, -Math.cos(L.a) * reach);           // 本機座標的「休息位置」
+      }
       if (!planted){ L.w = null; L.step = null; L.cur.lerp(_b, 1 - Math.exp(-dt / 0.07)); continue; }
       const rest = M.body.localToWorld(_b.clone());
       if (!L.w){ L.w = rest.clone(); }
@@ -1140,13 +1146,95 @@ const mech = (() => {
       L.cur.copy(M.body.worldToLocal(L.w.clone()));
     }
     for (const L of M.legs){
+      if (L.ik){ solveIK(L); continue; }
       _k.copy(L.hip).lerp(L.cur, 0.35); _k.y = Math.max(L.hip.y, L.cur.y) + 1.25; _k.x += Math.sin(L.a) * 0.6; _k.z -= Math.cos(L.a) * 0.5;   // 膝蓋往外上拱
       seg(L.femur, L.hip, _k); seg(L.tibia, _k, L.cur); L.foot.position.copy(L.cur);
       if (L.nail){ L.nail.position.copy(L.hip).lerp(_k, 0.55); L.nail.quaternion.copy(L.femur.quaternion); }
     }
   };
+  // ---- v2.3 兩骨 IK：髖關節繞機身 Y 軸轉向＋在腳的平面內抬大腿；膝關節在同一平面內彎（膝蓋朝上） ----
+  const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _d3 = new THREE.Vector3();
+  function solveIK(L){
+    const R = L.ik; _d3.subVectors(L.cur, L.hip);
+    const psi = Math.atan2(_d3.x, _d3.z); let dpsi = psi - R.psi0; dpsi = Math.atan2(Math.sin(dpsi), Math.cos(dpsi));
+    const r = Math.hypot(_d3.x, _d3.z), y = _d3.y;
+    const dist = clamp(Math.hypot(r, y), Math.abs(R.L1 - R.L2) + 0.02, R.L1 + R.L2 - 0.02);
+    const phi = Math.atan2(y, r), alpha = Math.acos(clamp((R.L1*R.L1 + dist*dist - R.L2*R.L2) / (2*R.L1*dist), -1, 1));
+    const a1 = phi + alpha, kx = R.L1 * Math.cos(a1), ky = R.L1 * Math.sin(a1), a2 = Math.atan2(y - ky, r - kx);
+    _qa.setFromAxisAngle(UP, dpsi); _qb.setFromAxisAngle(R.n0, a1 - R.a10); L.hipG.quaternion.copy(_qa).multiply(_qb);
+    L.kneeG.quaternion.setFromAxisAngle(R.n0, (a2 - a1) - (R.a20 - R.a10));
+  }
+  // ---- v2.3 載入正式機體模型（GLB）。載入失敗就保留基本幾何的過渡模型 ----
+  //  模型："Eighty-Six XM2 Reginleif [Undertaker]" by Z7RO（Sketchfab）, CC BY 4.0；已修改：
+  //  重組腳部關節做 IK、前後腳拉開（重心偏後）、移除左刀臂、右刀臂加裝 14.5mm 機槍（格鬥臂）、背部加裝碟形鋼索發射器、壓縮貼圖與網格
+  M.loadModel = async () => {
+    const [{ GLTFLoader }, { MeshoptDecoder }, { RoomEnvironment }] = await Promise.all([
+      import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js'), import('three/addons/environments/RoomEnvironment.js')]);
+    // 環境光照：讓模型的金屬與烤漆有反光（只影響物理材質，地形不受影響）
+    const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.7;
+    const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
+    const gltf = await loader.loadAsync('assets/mech.glb');
+    const mdl = new THREE.Group(); mdl.add(gltf.scene); mdl.rotation.y = Math.PI;   // 模型正面是 +z，遊戲正面是 -z
+    // 計算期間把機體放回原點、朝正前方，世界座標＝機身本機座標，包圍盒才不會因旋轉而算錯
+    const savePos = M.root.position.clone(), saveQ = M.root.quaternion.clone(); M.root.position.set(0, 0, 0); M.root.quaternion.identity();
+    M.body.add(mdl); M.root.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(gltf.scene.getObjectByName('Cockpit') || gltf.scene), c = box.getCenter(new THREE.Vector3());
+    const all = new THREE.Box3().setFromObject(gltf.scene);
+    M.body.worldToLocal(c); const minY = M.body.worldToLocal(all.min.clone()).y;
+    mdl.position.set(-c.x, -2.1 - minY, -c.z); M.root.updateMatrixWorld(true);   // 機身中心對準碰撞體、腳底對齊地面
+    // 以四隻腳底的中心對準碰撞體，再讓機身略偏後（腳的支撐面往前延伸 → 重心偏後）
+    { const lowPt = S2 => { let mn = Infinity; const pts = [], v = new THREE.Vector3(); S2.traverse(o => { if (!o.isMesh) return; const pa = o.geometry.attributes.position; for (let k = 0; k < pa.count; k += 3){ v.fromBufferAttribute(pa, k).applyMatrix4(o.matrixWorld); pts.push(v.clone()); if (v.y < mn) mn = v.y; } }); const f = new THREE.Vector3(); let n = 0; for (const q of pts) if (q.y < mn + 0.12){ f.add(q); n++; } return f.divideScalar(Math.max(1, n)); };
+      const cen = new THREE.Vector3(); let nl = 0; for (let i = 1; i <= 4; i++){ const S2 = gltf.scene.getObjectByName('PileDriver_' + i); if (S2){ cen.add(lowPt(S2)); nl++; } }
+      if (nl){ cen.divideScalar(nl); mdl.position.x -= cen.x; mdl.position.z -= cen.z + 0.5; M.root.updateMatrixWorld(true); } }
+    gltf.scene.traverse(o => { if (o.isMesh){ o.frustumCulled = false; } });
+    // 隱藏基本幾何的過渡零件
+    for (const ch of [...M.body.children]) if (ch !== mdl && ch !== M.dish) ch.visible = false;
+    // 找一個金屬材質給加裝零件用，風格才一致
+    let metal = null; gltf.scene.traverse(o => { if (!metal && o.isMesh && /Scratched_?Metal/.test(o.name)) metal = o.material; });
+    if (metal){ M.dish.traverse(o => { if (o.isMesh && o.material !== undefined && o.material.type !== 'MeshBasicMaterial') o.material = metal; }); }
+    // 碟形鋼索發射器：放在機身背部頂端
+    const core = new THREE.Box3().setFromObject(gltf.scene.getObjectByName('Cockpit_Procedural_Scratched_Metal_0') || gltf.scene);
+    M.dish.position.set((core.min.x + core.max.x) / 2, core.max.y + 0.05, core.min.z + (core.max.z - core.min.z) * 0.72); M.dish.visible = true;   // 機身頂端偏後
+    M.dish.scale.setScalar(0.85);
+    // 格鬥臂：移除左刀臂，右刀臂加裝 14.5mm 機槍
+    const bl = gltf.scene.getObjectByName('Blade_L'), br = gltf.scene.getObjectByName('Blade_R');   // 載入器會把空白換成底線、拿掉點
+    if (bl) bl.visible = false;
+    if (br){ const bb = new THREE.Box3().setFromObject(br), tip = M.body.worldToLocal(new THREE.Vector3((bb.min.x + bb.max.x)/2, bb.max.y + 0.15, bb.min.z));   // 轉向後刀尖在 -z
+      const mid = M.body.worldToLocal(new THREE.Vector3((bb.min.x + bb.max.x)/2, bb.max.y + 0.2, bb.max.z - 0.9));   // 刀臂根部（靠機身那端）上方
+      const gun = new THREE.Group(); gun.position.copy(mid); M.body.add(gun); M.mgArm = gun;
+      const mat = metal || new THREE.MeshStandardMaterial({ color: 0x555b60, metalness: 0.7, roughness: 0.45 });
+      const rcv = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.26, 0.9), mat); gun.add(rcv);
+      const brl = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 1.4, 10), mat); brl.rotation.x = Math.PI / 2; brl.position.z = -0.45 - 0.7; gun.add(brl);
+      const box2 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.3, 0.3), mat); box2.position.set(0.2, -0.05, 0.15); gun.add(box2); }
+    // 腳：重組成「髖 → 大腿 → 膝 → 樁腳」的關節，之後每幀用 IK 擺
+    const legs = [];
+    for (let i = 1; i <= 4; i++){
+      const J = gltf.scene.getObjectByName('Joint_' + i), T = gltf.scene.getObjectByName('Leg_' + i), S = gltf.scene.getObjectByName('PileDriver_' + i);
+      if (!J || !T || !S){ M.root.position.copy(savePos); M.root.quaternion.copy(saveQ); return false; }
+      const K = S.children.find(o => /^Leg_10/.test(o.name));
+      const hipW = new THREE.Box3().setFromObject(J).getCenter(new THREE.Vector3()), kneeW = new THREE.Box3().setFromObject(K || S).getCenter(new THREE.Vector3());
+      // 腳底：樁腳最低的那些頂點的平均
+      let minY2 = Infinity; const pts = []; const v = new THREE.Vector3();
+      S.traverse(o => { if (!o.isMesh) return; const pa = o.geometry.attributes.position; for (let k = 0; k < pa.count; k += 3){ v.fromBufferAttribute(pa, k).applyMatrix4(o.matrixWorld); pts.push(v.clone()); if (v.y < minY2) minY2 = v.y; } });
+      const footW = new THREE.Vector3(); let nf = 0; for (const p2 of pts) if (p2.y < minY2 + 0.12){ footW.add(p2); nf++; } footW.divideScalar(Math.max(1, nf));
+      const hip = M.body.worldToLocal(hipW.clone()), knee = M.body.worldToLocal(kneeW.clone()), foot = M.body.worldToLocal(footW.clone());
+      const hipG = new THREE.Group(); hipG.position.copy(hip); M.body.add(hipG); hipG.updateMatrixWorld(true);
+      hipG.attach(J); hipG.attach(T);
+      const kneeG = new THREE.Group(); kneeG.position.copy(knee).sub(hip); hipG.add(kneeG); kneeG.updateMatrixWorld(true); kneeG.attach(S);
+      const h0 = new THREE.Vector3(foot.x - hip.x, 0, foot.z - hip.z).normalize(), n0 = new THREE.Vector3().crossVectors(h0, UP).normalize();
+      const kr = (knee.x - hip.x) * h0.x + (knee.z - hip.z) * h0.z, ky = knee.y - hip.y, fr = (foot.x - knee.x) * h0.x + (foot.z - knee.z) * h0.z, fy = foot.y - knee.y;
+      const front = foot.z < hip.z;   // 本機座標 -z 是前方
+      const rest = foot.clone(); rest.z += front ? -0.9 : 0.35;   // 前後腳拉開：前腳往前 0.9m、後腳往後 0.35m（重心偏後）
+      legs.push({ hip, hipG, kneeG, rest, cur: foot.clone(), w: null, step: null, grp: ((foot.x > 0) === front) ? 0 : 1, a: 0,
+        ik: { psi0: Math.atan2(h0.x, h0.z), n0, L1: Math.hypot(kr, ky), L2: Math.hypot(fr, fy), a10: Math.atan2(ky, kr), a20: Math.atan2(fy, fr) } });
+    }
+    M.legs.length = 0; M.legs.push(...legs); M.model = mdl; M.loaded = true;
+    M.root.position.copy(savePos); M.root.quaternion.copy(saveQ); M.root.updateMatrixWorld(true);
+    return true;
+  };
   return M;
 })();
+mech.loadModel().then(ok => { if (!ok) console.warn('機體模型結構不符，改用過渡模型'); }).catch(err => console.warn('機體模型載入失敗，改用過渡模型', err));
 function updateMech(dt, alpha){ const P = state.player; mech.update(dt, V().lerpVectors(P.prevPos, P.currPos, alpha), P, state.ropes); }
 function placeCylinder(mesh, a, b){
   _d.subVectors(b, a); const len = _d.length(); if (len < 1e-3){ mesh.visible = false; return; }
@@ -1801,7 +1889,8 @@ function frame(now){
     camera.position.copy(_cam); tpCam.pos.copy(_cam); tpCam.valid = true; mech.root.visible = dist > T.hideBelow;
   } else { tpCam.valid = false; mech.root.visible = false; }
   updateMech(dt, alpha);
-  camera.rotation.set(P.pitch + state.weapon.recoil*DEG, P.yaw, opts.roll ? rollNow : 0, 'YXZ');
+  if (window.__camOverride){ const o = window.__camOverride; camera.position.set(o.x, o.y, o.z); camera.lookAt(o.lx, o.ly, o.lz); }   // 測試用的自由鏡頭
+  else camera.rotation.set(P.pitch + state.weapon.recoil*DEG, P.yaw, opts.roll ? rollNow : 0, 'YXZ');
 
   // 勾點預覽（每幀射線）
   if (opts.smart && !mouseMode){ const rs = state.ropes, one = rs[0].hooked ? rs[0] : rs[1].hooked ? rs[1] : null;
@@ -1888,7 +1977,7 @@ goBtn.addEventListener('click', async e => {
 
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
-window.__game = { tpCam, buildCommand, castRay, rocks, islands, targets, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
+window.__game = { mech, tpCam, buildCommand, castRay, rocks, islands, targets, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
 </script>
 </body>
 </html>
