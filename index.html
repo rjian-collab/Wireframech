@@ -135,12 +135,14 @@
 </div>
 <div id="topbar">
   <button class="small" id="bReset" aria-label="重生">↺</button>
+  <button class="small" id="bView" aria-label="切換視角" style="width:auto;padding:0 10px;border-radius:20px;font-size:13px">3P</button>
   <button class="small" id="bSet" aria-label="設定">⚙</button>
   <button class="small" id="bFS" aria-label="回到全螢幕" style="display:none;width:auto;padding:0 12px;border-radius:20px;font-size:14px">⛶ 全螢幕</button>
 </div>
 <div id="settings">
   <label>跟手準星 <select id="optFollow" style="font-size:15px"><option value="none">無（都用畫面中央）</option><option value="weapon">武器（按住射擊拖曳＝移動準星）</option><option value="rope">鋼索（按住右索拖曳瞄準、放開射出）</option></select></label>
   <label><input type="checkbox" id="optAutoFire"> 自動開火（準星對到敵人就射，只限機槍）</label>
+  <label><input type="checkbox" id="optView3P" checked> 第三人稱視角（看得到機體；左上角 3P／1P 也能切換）</label>
   <label><input type="checkbox" id="optStab" checked> 鏡頭鎖定地形（擺盪時自動補正，準星停在地形上）</label>
   <label><input type="checkbox" id="optLockEnemy" checked> 鎖定敵人視角（放手時準星附近有敵人，擺盪中視角一直看著它）</label>
   <label><input type="checkbox" id="optRopeBuffer" checked> 按住等勾點（沒勾點時按住鋼索，勾點一出現就自動勾上，最多 1 秒）</label>
@@ -163,9 +165,10 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.0</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.1</div>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
+    <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），左上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>按住後往任一方向快速一滑＝往那邊撲擊</b>（在地上、坡上、貼牆或釘在牆上時）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
     <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">往上一甩＝輪流切換 01 主武 57mm 滑膛炮 → 02 副武 14.5mm 機槍 → 03 腿部釘槍</b></li>
@@ -215,6 +218,7 @@ const CONFIG = Object.freeze({
   stickJump: { windowMs: 220, dist: 1.25 },
   spider: { maxSlopeDeg: 70, slopePress: 4, snapDown: 1.5, pounceSpeed: 17, pounceUp: 7, pounceWallPush: 5, cooldown: 0.35 },   // v1.8 蜘蛛腳：70° 內可站、貼地、撲擊
   assist: { ropeBufferS: 1.0, lockEnemyDeg: 15, lockEnemyRange: 250, levelIdleMs: 1000, levelPitchDeg: 10, levelRate: 45, quickTurnS: 0.25, doubleTapMs: 300 },
+  tp: { dist: 10, height: 4.2, minDist: 2.2, hideBelow: 2.6, bodyYawTau: 0.12 },   // v2.1 第三人稱鏡頭
   camera: { stabHoldMs: 150, stabMinSpeed: 4, stabMinDist: 8, stabMaxRate: 300, stabGyroInput: 25, shakeScale: 0.4, eye: 1.1, fovBase: 70, fovAt40: 85, fovMax: 90, fovTau: 0.3, rollMaxDeg: 8, pitchLimit: 85,
     shakeDur: 0.5, speedLinesMin: 25, speedLinesMax: 60 },
   render: { dprMax: 1.5, dprFallback: 1.0, fallbackFps: 50, fpsWindow: 2 },
@@ -474,7 +478,7 @@ const state = {
   weapon: { active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: 5, reserve: 5, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0 },
 };
 const events = []; // {type, ...} 給 render/hud/audio 用
-const opts = { assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true, autoLevel: true };
+const opts = { view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true, autoLevel: true };
 
 // =====================================================================
 // INPUT → command
@@ -482,6 +486,15 @@ const opts = { assistReel: false, aimAssist: true, shake: true, sens: 0.25, smar
 const input = { hookMain: false, moveX: 0, moveZ: 0, hookL: false, hookR: false, fire: false, boost: false, jumpQueued: false, reloadQueued: false,
   keys: new Set(), stickX: 0, stickZ: 0 };
 let seq = 0;
+const tpCam = { pos: V(), valid: false };
+// 第三人稱：從鏡頭中心射線打到的點，反推「從機體眼睛看過去」的 yaw/pitch（射擊與鋼索選點都用它）
+function aim3P(eyeOverride){
+  if (!opts.view3P || !tpCam.valid) return null;
+  const P = state.player, eye = eyeOverride ? V().copy(eyeOverride) : eyePos(P.currPos, V()), fwd = dirFromYawPitch(P.yaw, P.pitch, V());
+  const h = castRay(tpCam.pos, fwd, 700), aim = h ? h.point : tpCam.pos.clone().addScaledVector(fwd, 700);
+  const d = aim.sub(eye); if (d.lengthSq() < 4) return null; d.normalize();
+  return [Math.atan2(-d.x, -d.z), Math.asin(clamp(d.y, -1, 1))];
+}
 function buildCommand(){
   const k = input.keys;
   let mx = input.stickX, mz = input.stickZ;
@@ -492,6 +505,8 @@ function buildCommand(){
     hookMain: input.hookMain || k.has('KeyF'), smart: opts.smart && !mouseMode, autoFire: opts.autoFire && !mouseMode,
     swap: input.swapQueued, gunYaw: input.gunYaw, gunPitch: input.gunPitch, ropeYaw: input.ropeYaw, ropePitch: input.ropePitch,
     jump: input.jumpQueued, jumpX: input.jumpX || 0, jumpZ: input.jumpZ == null ? 1 : input.jumpZ, boost: input.boost || k.has('ShiftLeft') || k.has('ShiftRight') || k.has('Space'), thrust: input.thrust, reload: input.reloadQueued };
+  // v2.1 第三人稱：鏡頭在機體後上方，從鏡頭中心射線打到的點反推槍口方向，子彈才會打在準星上
+  { const a3 = aim3P(); if (a3){ cmd.aimYaw = a3[0]; cmd.aimPitch = a3[1]; if (cmd.gunYaw == null){ cmd.gunYaw = a3[0]; cmd.gunPitch = a3[1]; } } }
   input.jumpQueued = false; input.reloadQueued = false; input.swapQueued = false; input.fireTap = false;
   if (input.ropeLatch && !state.ropes[1].hooked && state.ropes[1].wasHeld){ input.ropeLatch = false; input.hookR = false; }   // 右索自己脫鉤／沒勾到 → 解除鎖定
   else if (input.ropeLatch) input.hookR = true;
@@ -607,7 +622,7 @@ function simTick(cmd){
     if (press || retry){
       // 觸控：兩條索都用準星選點；另一條已勾住時避開同一點（相距 <3m 改找次佳）
       const other = state.ropes[r.side === 'L' ? 1 : 0];
-      const ay = (r.side === 'R' && cmd.ropeYaw != null) ? cmd.ropeYaw : P.yaw, ap = (r.side === 'R' && cmd.ropePitch != null) ? cmd.ropePitch : P.pitch;   // 跟手準星（鋼索）
+      const ay = (r.side === 'R' && cmd.ropeYaw != null) ? cmd.ropeYaw : (cmd.aimYaw ?? P.yaw), ap = (r.side === 'R' && cmd.ropePitch != null) ? cmd.ropePitch : (cmd.aimPitch ?? P.pitch);   // 跟手準星（鋼索）
       const hit = viaMain ? findSmartHook(ay, ap, eye, other.hooked ? other.anchor : null) : findHook(r.side, ay, ap, eye);
       r.smart = viaMain;
       if (hit){ r.hooked = true; r.bufT = 0; r.anchor.copy(hit.point); r.L = clamp(_p.distanceTo(hit.point), G.minLength, G.range); events.push({ type: 'hook', side: r.side }); }
@@ -846,10 +861,8 @@ function simTick(cmd){
   state.tick++;
 }
 
-function fallToVoid(){ // 掉進虛空：傳送回最近的補給島
-  const p = playerBody.translation(); let best = null, bd = Infinity;
-  for (const pad of supplyPads){ const d = Math.hypot(pad.x - p.x, pad.z - p.z); if (d < bd){ bd = d; best = pad; } }
-  const P = state.player, tx = best ? best.x : S.x, ty = best ? best.y + 2.2 : S.y, tz = best ? best.z : S.z;
+function fallToVoid(){ // 掉進虛空：v2.1 一律傳送回起點（基地 A 的出生點）
+  const P = state.player, tx = S.x, ty = S.y, tz = S.z; P.yaw = CONFIG.map.spawnYaw; P.pitch = 0; P.pinned = null;
   playerBody.setTranslation({ x: tx, y: ty, z: tz }, true); playerBody.setLinvel({ x:0, y:0, z:0 }, true);
   for (const r of state.ropes) r.hooked = false;
   P.prevPos.set(tx, ty, tz); P.currPos.set(tx, ty, tz); P.falls = (P.falls || 0) + 1;
@@ -1046,6 +1059,80 @@ let wasInWin = false;
 const ropeMeshes = state.ropes.map(()=>{ const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1,6,1,true), new THREE.MeshBasicMaterial({ color: 0x9fe8ff })); m.visible = false; scene.add(m); return m; });
 const anchorMeshes = state.ropes.map(()=>{ const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), new THREE.MeshBasicMaterial({ color: 0x40e0ff })); m.visible = false; scene.add(m); return m; });
 const UP = V(0,1,0), _q = new THREE.Quaternion();
+// =====================================================================
+// v2.1 機體模型（依第二階段草圖）：低矮蜘蛛機身、六腳、頂部炮塔（57mm）、背部碟形鋼索發射器（可 360° 轉）、
+//  前方格鬥臂（14.5mm 機槍）、前腳釘槍。全部用基本幾何組成，單位：公尺（碰撞膠囊高 4.2m，腳底在中心下方 2.1m）
+// =====================================================================
+const mech = (() => {
+  const M = { root: new THREE.Group(), legs: [], phase: 0, yaw: 0, up: new THREE.Vector3(0, 1, 0) };
+  const metal = new THREE.MeshLambertMaterial({ color: 0x46525f }), dark = new THREE.MeshLambertMaterial({ color: 0x2a323b }),
+        glow = new THREE.MeshBasicMaterial({ color: 0x7ff5e0 }), warm = new THREE.MeshLambertMaterial({ color: 0x8a6a3a });
+  const body = new THREE.Group(); M.root.add(body); M.body = body;
+  const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 10), metal); hull.scale.set(1.5, 0.65, 1.9); hull.position.y = -0.35; body.add(hull);
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 8), dark); belly.scale.set(1.1, 0.45, 1.35); belly.position.y = -0.7; body.add(belly);
+  for (const sx of [-0.35, 0.35]){ const eye = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.05), glow); eye.position.set(sx, -0.2, -1.7); body.add(eye); }
+  // 炮塔＋57mm 砲管（炮塔左右跟視角、砲管上下跟視角）
+  const turret = new THREE.Group(); turret.position.set(0, 0.2, -0.1); body.add(turret); M.turret = turret;
+  const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 0.5, 14), metal); turret.add(tb);
+  const mant = new THREE.Group(); mant.position.set(0, 0.1, -0.55); turret.add(mant); M.mantlet = mant;
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 2.8, 10), dark); barrel.rotation.x = Math.PI / 2; barrel.position.z = -1.4; mant.add(barrel);
+  const brake = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.3, 10), dark); brake.rotation.x = Math.PI / 2; brake.position.z = -2.8; mant.add(brake);
+  // 背部碟形鋼索發射器（兩個鉤爪臂，會轉向勾住的錨點）
+  const dish = new THREE.Group(); dish.position.set(0, 0.25, 0.85); body.add(dish); M.dish = dish;
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.55, 0.18, 18), warm); dish.add(disc);
+  M.claws = [-1, 1].map(sx => { const g = new THREE.Group(); g.position.set(sx * 0.35, 0.1, 0); dish.add(g);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 1.1), dark); arm.position.z = -0.45; arm.rotation.x = 0; g.add(arm);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.35, 6), glow); tip.rotation.x = -Math.PI / 2; tip.position.z = -1.05; g.add(tip); g.rotation.x = 0.5; return g; });
+  // 前方格鬥臂＋14.5mm 機槍
+  const arm = new THREE.Group(); arm.position.set(0.75, -0.35, -1.3); body.add(arm); M.arm = arm;
+  const up1 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.9), metal); up1.position.z = -0.4; arm.add(up1);
+  const fore = new THREE.Group(); fore.position.z = -0.85; arm.add(fore);
+  const lo1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.8), dark); lo1.position.z = -0.35; fore.add(lo1);
+  const mg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.9, 6), dark); mg.rotation.x = Math.PI / 2; mg.position.set(0, 0.14, -0.6); fore.add(mg);
+  // 六隻腳：髖關節在機身周圍（前、中、後各一對），大腿往上外、小腿往下著地
+  const legGeo = new THREE.CylinderGeometry(0.17, 0.12, 1, 6);
+  const hipAngles = [-40, -90, -140, 40, 90, 140];   // 0°＝正前方，負＝左
+  hipAngles.forEach((deg, i) => {
+    const a = deg * DEG, hip = new THREE.Vector3(Math.sin(a) * 1.0, -0.4, -Math.cos(a) * 1.2);
+    const femur = new THREE.Mesh(legGeo, metal), tibia = new THREE.Mesh(legGeo, dark), foot = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 4), dark);
+    body.add(femur); body.add(tibia); body.add(foot);
+    let nail = null; if (Math.abs(deg) === 40){ nail = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 8), warm); body.add(nail); }   // 前腳的釘槍
+    M.legs.push({ a, hip, femur, tibia, foot, nail, tri: (i % 2) ^ (i < 3 ? 0 : 1), cur: new THREE.Vector3() });
+  });
+  scene.add(M.root);
+  const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _k = new THREE.Vector3(), _q = new THREE.Quaternion();
+  function seg(mesh, a, b){ _a.subVectors(b, a); const len = _a.length(); mesh.position.copy(a).addScaledVector(_a, 0.5); mesh.scale.set(1, len, 1); mesh.quaternion.setFromUnitVectors(UP, _a.divideScalar(len || 1)); }
+  M.dishTip = (i, out) => { M.claws[i].children[1].getWorldPosition(out); return out; };
+  M.update = (dt, pos, P, ropes) => {
+    M.root.position.copy(pos);
+    // 機身朝向：左右跟視角（平滑），站在坡上時貼齊坡面
+    let dy = P.yaw - M.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); M.yaw += dy * (1 - Math.exp(-dt / CONFIG.tp.bodyYawTau));
+    const upT = P.grounded && P.groundN ? P.groundN : UP; M.up.lerp(upT, 1 - Math.exp(-dt / 0.12)).normalize();
+    _q.setFromUnitVectors(UP, M.up); M.root.quaternion.setFromAxisAngle(UP, M.yaw).premultiply(_q);
+    // 炮塔與砲管跟著準星；機槍臂也指向準星
+    M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9);
+    // 碟形發射器轉向勾住的錨點（沒勾就朝前）
+    const hk = ropes.find(r => r.hooked);
+    if (hk){ M.dish.worldToLocal(_k.copy(hk.anchor)); const t = Math.atan2(-_k.x, -_k.z); M.dish.rotation.y += Math.atan2(Math.sin(t), Math.cos(t)) * Math.min(1, dt * 10); }
+    else M.dish.rotation.y *= Math.exp(-dt * 4);
+    M.claws.forEach((c, i) => { c.rotation.x = ropes[i].hooked ? 0.9 : 0.35; });
+    // 腳：三腳步態（著地時隨速度交替擺動）；空中撲擊收腳；擺盪時張開
+    const hs = Math.hypot(P.vel.x, P.vel.z), air = !P.grounded && !P.pinned, swing = ropes.some(r => r.hooked);
+    M.phase += dt * (P.grounded ? Math.min(14, 2 + hs * 0.9) : 3);
+    const fwdSpeed = P.grounded ? clamp(hs / 9, 0, 1.3) : 0;
+    for (const L of M.legs){
+      const reach = swing ? 2.8 : air ? 1.8 : 2.3, drop = swing ? -1.4 : air ? -1.1 : -2.05;
+      const ph = M.phase + L.tri * Math.PI, step = Math.sin(ph) * 0.6 * fwdSpeed, lift = Math.max(0, Math.cos(ph)) * 0.45 * fwdSpeed;
+      _b.set(Math.sin(L.a) * reach, drop + lift, -Math.cos(L.a) * reach * 1.1 - step);
+      L.cur.lerp(_b, 1 - Math.exp(-dt / 0.06));
+      _k.copy(L.hip).add(L.cur).multiplyScalar(0.5); _k.y = Math.max(L.hip.y, L.cur.y) + 0.55; _k.x *= 1.25; _k.z *= 1.1;   // 膝蓋抬高、往外
+      seg(L.femur, L.hip, _k); seg(L.tibia, _k, L.cur); L.foot.position.copy(L.cur);
+      if (L.nail){ L.nail.position.copy(L.hip).lerp(_k, 0.55); L.nail.quaternion.copy(L.femur.quaternion); }
+    }
+  };
+  return M;
+})();
+function updateMech(dt, alpha){ const P = state.player; mech.update(dt, V().lerpVectors(P.prevPos, P.currPos, alpha), P, state.ropes); }
 function placeCylinder(mesh, a, b){
   _d.subVectors(b, a); const len = _d.length(); if (len < 1e-3){ mesh.visible = false; return; }
   mesh.position.copy(a).addScaledVector(_d, 0.5); mesh.scale.set(1, len, 1);
@@ -1353,6 +1440,7 @@ addEventListener('keydown', e => {
 
   if (e.code === 'KeyR') input.reloadQueued = true;
   if (e.code === 'KeyX') input.swapQueued = true;
+  if (e.code === 'KeyV') setView(!opts.view3P);
 });
 addEventListener('keyup', e => input.keys.delete(e.code));
 renderer.domElement.addEventListener('mousedown', ()=>{});
@@ -1367,6 +1455,9 @@ document.getElementById('bSet').addEventListener('click', ()=> setEl.style.displ
 document.getElementById('bReset').addEventListener('click', respawn);
 document.getElementById('optShake').addEventListener('change', e => opts.shake = e.target.checked);
 document.getElementById('optStab').addEventListener('change', e => opts.stab = e.target.checked);
+function setView(on){ opts.view3P = on; document.getElementById('optView3P').checked = on; document.getElementById('bView').textContent = on ? '3P' : '1P'; }
+document.getElementById('optView3P').addEventListener('change', e => setView(e.target.checked));
+document.getElementById('bView').addEventListener('click', e => { e.stopPropagation(); setView(!opts.view3P); });
 document.getElementById('optLockEnemy').addEventListener('change', e => opts.lockEnemy = e.target.checked);
 document.getElementById('optRopeBuffer').addEventListener('change', e => opts.ropeBuffer = e.target.checked);
 document.getElementById('optAutoLevel').addEventListener('change', e => opts.autoLevel = e.target.checked);
@@ -1625,7 +1716,7 @@ function frame(now){
       case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '01 主武：57mm 滑膛炮' : state.weapon.active === 'mg' ? '02 副武：14.5mm 機槍' : '03 腿部：釘槍（靠牆開槍＝釘住；也能當武器）', 1200); break;
       case 'pin': sfx('clank', 0.8); buzz(25); flashT = 0.05; break;
       case 'unpin': sfx('miss'); break;
-      case 'void': toast('墜入虛空！已傳送回最近的補給島', 2000); flashT = 0.08; break;
+      case 'void': toast('墜入虛空！已傳送回基地 A', 2000); flashT = 0.08; break;
     }
   }
   events.length = 0;
@@ -1683,11 +1774,20 @@ function frame(now){
     }
   } else stab.point = null;
   stabActive = !!stab.point;
+  // v2.1 第三人稱鏡頭：在機體後上方，視線方向與準星一致；中間有東西擋住就自動拉近
+  if (opts.view3P){
+    const T = CONFIG.tp, fwd = dirFromYawPitch(P.yaw, P.pitch, V()), pivot = V().copy(_eye); pivot.y += T.height - CONFIG.camera.eye;
+    const back = fwd.clone().negate(); const hb = castRay(pivot, back, T.dist + 0.5);
+    const dist = hb ? Math.max(T.minDist, hb.toi - 0.5) : T.dist;
+    _cam.copy(pivot).addScaledVector(back, dist); if (shakeT > 0){ const k = shakeT / CONFIG.camera.shakeDur * shakeAmp; _cam.x += (Math.random()-.5)*k; _cam.y += (Math.random()-.5)*k; }
+    camera.position.copy(_cam); tpCam.pos.copy(_cam); tpCam.valid = true; mech.root.visible = dist > T.hideBelow;
+  } else { tpCam.valid = false; mech.root.visible = false; }
+  updateMech(dt, alpha);
   camera.rotation.set(P.pitch + state.weapon.recoil*DEG, P.yaw, opts.roll ? rollNow : 0, 'YXZ');
 
   // 勾點預覽（每幀射線）
   if (opts.smart && !mouseMode){ const rs = state.ropes, one = rs[0].hooked ? rs[0] : rs[1].hooked ? rs[1] : null;
-    let py = P.yaw, pp = P.pitch; if (ropeAiming) [py, pp] = screenDir(ropeOff.x, ropeOff.y);
+    let py = P.yaw, pp = P.pitch; { const a3 = aim3P(_eye); if (a3) [py, pp] = a3; } if (ropeAiming) [py, pp] = screenDir(ropeOff.x, ropeOff.y);
     hookPreview[0] = (rs[0].hooked && rs[1].hooked) ? null : findSmartHook(py, pp, _eye, one ? one.anchor : null); hookPreview[1] = null; }
   else for (let i=0;i<2;i++) hookPreview[i] = state.ropes[i].hooked ? null : findHook(i===0?'L':'R', P.yaw, P.pitch, _eye);
   // v0.5 放手軌跡預測線：「現在放手會飛到哪」；在弧底窗口變綠（放手 ×1.15）
@@ -1717,7 +1817,8 @@ function frame(now){
     const r = state.ropes[i];
     if (r.hooked){
       const side = i===0 ? -1 : 1;
-      const sh = V().copy(_eye).addScaledVector(_right, side*1.1).addScaledVector(dirFromYawPitch(P.yaw, P.pitch, _t), 2.5); sh.y -= 0.9;
+      const sh = opts.view3P ? mech.dishTip(i, V()) : V().copy(_eye).addScaledVector(_right, side*1.1).addScaledVector(dirFromYawPitch(P.yaw, P.pitch, _t), 2.5);
+      if (!opts.view3P) sh.y -= 0.9;
       placeCylinder(ropeMeshes[i], sh, r.anchor);
       ropeMeshes[i].material.color.setHSL(0.53, 1, 0.55 + 0.35*r.tension);
       ropeMeshes[i].scale.x = ropeMeshes[i].scale.z = 0.45 + 0.45*r.tension;
@@ -1769,7 +1870,7 @@ goBtn.addEventListener('click', async e => {
 
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
-window.__game = { castRay, rocks, islands, targets, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
+window.__game = { tpCam, buildCommand, castRay, rocks, islands, targets, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
 </script>
 </body>
 </html>
