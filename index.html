@@ -21,6 +21,11 @@
   #frame { position:fixed; inset:0; pointer-events:none;
     box-shadow: inset 0 0 0 1px rgba(120,200,255,.15), inset 0 0 10vmin 1vmin rgba(5,10,16,.5); }
   #flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; }
+  #hurt { position:fixed; inset:0; pointer-events:none; opacity:0; background:radial-gradient(ellipse at center, rgba(255,0,0,0) 45%, rgba(255,30,30,.55) 100%); }
+  #result { position:fixed; inset:0; z-index:7; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:rgba(4,8,14,.82); color:#e8f6ff; text-align:center; }
+  #result h2 { margin:0; font-size:clamp(28px, 9vmin, 54px); letter-spacing:.2em; } #result .sc { font-size:clamp(18px, 6vmin, 30px); color:#9fe4ff; }
+  #result button { min-width:180px; min-height:48px; border-radius:12px; border:1px solid rgba(140,220,255,.5); background:rgba(60,170,230,.18); color:#eaf8ff; font-size:17px; }
+  .go2 { background:linear-gradient(180deg,#ff9a50,#e0602a) !important; }
   #touch { position:fixed; inset:0; touch-action:none; }
   /* 按鈕：圓形，外圈填色＝張力／燃料 */
   .btn { position:absolute; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -154,7 +159,8 @@
 <div id="app"></div>
 <canvas id="hud"></canvas>
 <div id="frame"></div>
-<div id="flash"></div>
+<div id="flash"></div><div id="hurt"></div>
+<div id="result"><h2 id="resTitle">勝利</h2><div class="sc" id="resScore"></div><button id="resAgain">再來一場</button><button id="resPractice">回到練習</button></div>
 <div id="touch">
   <div class="stick" id="stickBase"></div><div class="knob" id="stickKnob"></div>
   <div class="stick" id="stickBase2"></div><div class="knob" id="stickKnob2"></div>
@@ -217,10 +223,11 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.8</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v3.0</div>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
     <li style="opacity:.75;font-size:12px">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）</li>
+    <li><b style="color:#ffb070">對戰 AI</b>：你從基地 A、AI 從基地 B 出發；先擊破 5 次或 5 分鐘內分數高的贏；掉下虛空算對方得分；橘色機體與橘色鋼索是 AI</li>
     <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），左上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>輕點＝原地跳；快速往任一方向滑出並放開＝往那邊跳</b>；推得越遠走越快（在地上、坡上、貼牆或釘在牆上時都能跳）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
@@ -235,7 +242,7 @@
   </ul>
   <p class="kb">鍵盤：X 切換主副武　WASD　F 智慧鋼索（勾住時 W/S 收放、A/D 擺盪）　Q E 左右索　Space／Shift 推進　R 裝填　滑鼠瞄準、左鍵射擊</p>
   <label id="gyroStartRow" style="display:none;margin-top:8px;font-size:15px"><input type="checkbox" id="gyroStart" checked style="width:20px;height:20px;vertical-align:middle"> 使用陀螺儀瞄準</label>
-  <button class="go" id="goBtn" disabled>載入中…</button>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="go" id="goBtn" disabled>載入中…</button><button class="go go2" id="goAI" disabled>對戰 AI</button></div>
   <div id="status"></div>
 </div>
 
@@ -279,6 +286,7 @@ const CONFIG = Object.freeze({
   cannon: { rpm: 75, speed: 700, range: 600, damage: 700, splash: 350, splashR: 4, mag: 6, reserve: 24, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
   nail: { crawlSpeed: 5, crawlPerNail: 6, damage: 1000, mag: 6, reserve: 18, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6, brake: 0.3 },   // 副武：釘槍（5×2 發）
   safeZone: { radius: 18 },
+  pvp: { hp: 3000, killLimit: 5, timeLimit: 300, spawnB: { x: 354, y: 12.2, z: 0 } },   // v3.0 對戰：機體血量、先擊破 5 次、5 分鐘
   weapon: { rpm: 600, range: 500, damage: 200, ammo: 1000, reload: 3,   // v1.9 起為副武：14.5mm 機槍（格鬥臂）
     spread: { base: 0.3, moving: 0.5, swinging: 1.0, swingSpeed: 12, max: 2.0, bloomPerShot: 0.08, recover: 0.3 },
     recoilDeg: 0.3, recoilTau: 0.15, tracerEvery: 5 },
@@ -525,7 +533,8 @@ const voidPlane = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.
 voidPlane.rotation.x = -Math.PI/2; voidPlane.position.set(200, -90, 0); scene.add(voidPlane);
 
 // ---------- 靶子 ----------
-const targets = [];
+const practiceTargets = [];   // v3.0 練習靶
+let targets = practiceTargets;   // v3.0「目前這台機體的敵人清單」：本機＝練習靶或 AI；跑 AI 那一格時換成 AI 的敵人
 const matTarget = new THREE.MeshLambertMaterial({ color: 0xe8e8e8 });
 function makeTargetTexture(){
   const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
@@ -547,7 +556,7 @@ function addTarget(x, y, z, kind, groundY = 0){
     const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,20,6), matTower); cable.position.set(x, y+11.5, z); scene.add(cable);
   }
   const t = { body, col, mesh, kind, hp: CONFIG.target.hp, dead: 0, base: V(x,y,z), phase: 0 };
-  targets.push(t); targetsByCollider.set(col.handle, t);
+  practiceTargets.push(t); targetsByCollider.set(col.handle, t);
   return t;
 }
 // 靶子：外圈四座各一、中央平台兩個、敵方基地一個（左右移動）、吊在最高點下方一個
@@ -558,28 +567,297 @@ addTarget(350, 13, 0, 'moving', 10);
 
 // ---------- 玩家機體 ----------
 const S = CONFIG.map.spawn;
-const playerBody = world.createRigidBody(
+let playerBody = world.createRigidBody(
   RAPIER.RigidBodyDesc.dynamic().setTranslation(S.x, S.y, S.z).lockRotations().setCcdEnabled(true).setLinearDamping(CONFIG.body.linDamping));
 const capsuleVolume = Math.PI*CONFIG.body.radius**2*(2*CONFIG.body.halfHeight) + 4/3*Math.PI*CONFIG.body.radius**3;
-const playerCol = world.createCollider(
+let playerCol = world.createCollider(
   RAPIER.ColliderDesc.capsule(CONFIG.body.halfHeight, CONFIG.body.radius).setFriction(0).setRestitution(0)
     .setDensity(CONFIG.body.mass / capsuleVolume), playerBody);
 
 // =====================================================================
 // STATE（可序列化純資料）
 // =====================================================================
-const state = {
-  tick: 0,
-  player: { yaw: CONFIG.map.spawnYaw, pitch: 0, grounded: false, fuel: CONFIG.boost.fuel,
-    prevPos: V(S.x,S.y,S.z), currPos: V(S.x,S.y,S.z), vel: V(), lastVy: 0 },
-  ropes: [
+// v3.0 每台機體一份：玩家狀態、兩條鋼索、武器（本機玩家與 AI 用同一套格式）
+const newPlayerState = (sp, yaw) => ({ yaw, pitch: 0, grounded: false, fuel: CONFIG.boost.fuel, prevPos: V(sp.x,sp.y,sp.z), currPos: V(sp.x,sp.y,sp.z), vel: V(), lastVy: 0 });
+const newRopes = () => [
     { side: 'L', hooked: false, anchor: V(), L: 0, tension: 0, reeling: false },
-    { side: 'R', hooked: false, anchor: V(), L: 0, tension: 0, reeling: false },
-  ],
-  weapon: { active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: 5, reserve: 5, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0 },
-};
+    { side: 'R', hooked: false, anchor: V(), L: 0, tension: 0, reeling: false } ];
+const newWeapon = () => ({ active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0 });
+const state = { tick: 0, player: newPlayerState(S, CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon() };
 const events = []; // {type, ...} 給 render/hud/audio 用
 const opts = { paint: 'steel', view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true, autoLevel: true };
+
+// =====================================================================
+// v3.0 玩家列表＋隊伍（LocalPlayer／BotPlayer；之後的 NetworkPlayer 用同樣欄位）
+// =====================================================================
+const actors = [];
+let curActor = null;   // 目前正在跑物理／武器的那台
+function makeActorTarget(a){ const t = { actor: a, hp: 1, dead: 0, mesh: { position: V(a.spawn.x, a.spawn.y, a.spawn.z), visible: true }, col: a.col }; targetsByCollider.set(a.col.handle, t); return t; }
+const local = { pid: 'p1', name: '你', team: 0, kind: 'local', active: true, body: playerBody, col: playerCol, P: state.player, ropes: state.ropes, weapon: state.weapon,
+  hp: CONFIG.pvp.hp, spawn: V(S.x, S.y, S.z), spawnYaw: CONFIG.map.spawnYaw, enemies: practiceTargets };
+local.tgt = makeActorTarget(local); actors.push(local); curActor = local;
+let practiceOn = true;
+// 暫時把全域的「目前機體」換成 a（物理、武器程式都讀這幾個全域），跑完換回本機
+function withActor(a, fn){
+  const sv = [playerBody, playerCol, state.player, state.ropes, state.weapon, targets, curActor];
+  playerBody = a.body; playerCol = a.col; state.player = a.P; state.ropes = a.ropes; state.weapon = a.weapon; targets = a.enemies; curActor = a;
+  try { return fn(); } finally { [playerBody, playerCol, state.player, state.ropes, state.weapon, targets, curActor] = sv; }
+}
+function placeActor(a, p, yaw){
+  a.body.setTranslation({ x: p.x, y: p.y, z: p.z }, true); a.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+  a.P.prevPos.set(p.x, p.y, p.z); a.P.currPos.set(p.x, p.y, p.z); a.P.vel.set(0, 0, 0); a.P.yaw = yaw; a.P.pitch = 0; a.P.pinned = null; a.P.fuel = CONFIG.boost.fuel;
+  for (const r of a.ropes){ r.hooked = false; r.wasHeld = false; } a.tgt.mesh.position.set(p.x, p.y, p.z);
+}
+function actorDamage(v, dmg){
+  if (match.state !== 'live' || v.P.safe || curActor === v) return false;   // 保護區內不受傷；不會打到自己
+  v.hp = Math.max(0, v.hp - dmg); v.lastHitBy = curActor; events.push({ type: 'actorHit', victim: v.pid, dmg });
+  if (v.hp <= 0) match.died(v, curActor);
+  return true;
+}
+// ---- 裁判（match authority）：比分、計時、重生、勝負只在這裡決定；1v1 打 AI 時就是本機 ----
+const match = {
+  mode: 'practice', state: 'idle', score: [0, 0], timeLeft: 0, feed: [],
+  start(mode){
+    this.mode = mode; this.score = [0, 0]; this.timeLeft = CONFIG.pvp.timeLimit; this.feed = [];
+    setPractice(mode === 'practice');
+    if (mode === 'ai'){ const b = ensureBot(); b.active = true; b.body.setEnabled(true); b.brain.reset(); }
+    else if (bot){ bot.active = false; bot.body.setEnabled(false); bot.mech.root.visible = false; }
+    for (const a of actors) if (a.active){ a.hp = CONFIG.pvp.hp; Object.assign(a.weapon, newWeapon()); placeActor(a, a.spawn, a.spawnYaw); }
+    if (bot && bot.active) bot.brain.reset();
+    state.weapon = local.weapon;
+    this.state = mode === 'ai' ? 'live' : 'idle';
+    hudMatch();
+  },
+  died(v, killer){
+    if (this.state !== 'live') return;
+    const other = v.team === 0 ? 1 : 0; this.score[other]++;
+    const msg = killer && killer !== v ? `${killer.name} 擊破 ${v.name}` : `${v.name} 墜落（${other === 0 ? '你' : 'AI'} +1）`;
+    this.feed.unshift({ msg, t: 4 }); events.push({ type: 'died', victim: v.pid, killer: killer ? killer.pid : null });
+    v.hp = CONFIG.pvp.hp; placeActor(v, v.spawn, v.spawnYaw);
+    if (this.score[other] >= CONFIG.pvp.killLimit) this.end();
+    hudMatch();
+  },
+  tick(dt){
+    if (this.state !== 'live') return;
+    this.timeLeft -= dt; for (const f of this.feed) f.t -= dt; this.feed = this.feed.filter(f => f.t > 0).slice(0, 3);
+    if (this.timeLeft <= 0){ this.timeLeft = 0; this.end(); }
+  },
+  end(){ this.state = 'over'; input.fire = false; showResult(); },
+};
+function setPractice(on){
+  practiceOn = on; for (const t of practiceTargets){ t.col.setEnabled(on && !t.dead); t.mesh.visible = on && !t.dead; }
+  local.enemies = on ? practiceTargets : (bot ? [bot.tgt] : []); targets = local.enemies;
+}
+// ---- v3.0 電腦 AI：輸出和玩家一樣的 command 物件（之後可直接拿來當網路測試的假對手）----
+//  導航：每座島取數個「落腳點」，兩點之間 58m 內、視線沒被擋就連一條「鋼索可達」的邊；移動＝瞄準下一個落腳點射鋼索、收索拉過去、到了放手
+//  戰鬥：挑一個看得到你、距離 60–220m、不在保護區的落腳點；瞄準有前置量＋隨時間收斂的誤差；遠距 57mm、近距 14.5mm
+const BOTCFG = { thinkS: 0.1, errDegStart: 4.5, errDegMin: 1.1, settleS: 2.2, turnRate: 3.2, hopTimeout: 6, fightMin: 60, fightMax: 220, mgRange: 90, regoalS: [7, 12] };
+let NAV = null;
+function buildNav(){
+  const pts = [], up = { x: 0, y: -1, z: 0 };
+  islands.forEach((I, ii) => {
+    const offs = [[0, 0], [0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3], [0.22, 0.22], [-0.22, 0.22], [0.22, -0.22], [-0.22, -0.22]];
+    for (const [fx, fz] of offs){
+      const x = I.cx + fx * (I.w || 10), z = I.cz + fz * (I.d || I.w || 10);
+      const h = castRay({ x, y: I.top + 30, z }, up, 80, false);
+      if (!h || h.normal.y < 0.8 || Math.abs(h.point.y - I.top) > 10) continue;
+      const p = V(h.point.x, h.point.y, h.point.z);
+      if (pts.some(q => q.isl === ii && q.p.distanceTo(p) < 3)) continue;
+      pts.push({ id: pts.length, isl: ii, p, safe: safeZones.some(zz => Math.hypot(p.x - zz.x, p.z - zz.z) < zz.r), nb: [] });
+    }
+  });
+  const d = V();
+  for (const a of pts) for (const b of pts){
+    if (a.id >= b.id || a.isl === b.isl) continue;
+    const dist = a.p.distanceTo(b.p); if (dist > 58 || dist < 4) continue;
+    const e = V(a.p.x, a.p.y + 2.5, a.p.z), e2 = V(b.p.x, b.p.y + 2.5, b.p.z);
+    const ok1 = (() => { d.subVectors(b.p, e); const L = d.length(); d.divideScalar(L); const h = castRay(e, d, L + 1, false); return h && h.point.distanceTo(b.p) < 2; })();
+    const ok2 = (() => { d.subVectors(a.p, e2); const L = d.length(); d.divideScalar(L); const h = castRay(e2, d, L + 1, false); return h && h.point.distanceTo(a.p) < 2; })();
+    if (ok1) a.nb.push([b.id, dist]); if (ok2) b.nb.push([a.id, dist]);
+  }
+  NAV = { pts };
+  return NAV;
+}
+function navPath(from, to){   // Dijkstra（點數少，直接掃）
+  const n = NAV.pts.length, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), done = new Uint8Array(n);
+  dist[from] = 0;
+  for (;;){
+    let u = -1, bd = Infinity; for (let i = 0; i < n; i++) if (!done[i] && dist[i] < bd){ bd = dist[i]; u = i; }
+    if (u < 0 || u === to) break; done[u] = 1;
+    for (const [v, w] of NAV.pts[u].nb){ const nd = dist[u] + w + 8; if (nd < dist[v]){ dist[v] = nd; prev[v] = u; } }   // 每跳 +8：少跳幾次比較好
+  }
+  if (!isFinite(dist[to])) return null;
+  const path = []; for (let v = to; v !== from && v >= 0; v = prev[v]) path.unshift(v);
+  return path;
+}
+function createBotBrain(a){
+  const B = BOTCFG, rnd = Math.random;
+  const st = {};
+  const brain = {
+    st,
+    reset(){ Object.assign(st, { t: 0, think: 0, path: [], hopT: 0, goal: -1, goalT: 0, mode: 'idle', seeT: 0, lostT: 99, err: V(), errT: 0, gunYaw: a.P.yaw, gunPitch: 0,
+      strafe: 1, strafeT: 1, burst: 0, wantFire: false, wantW: 'main', aimYaw: a.P.yaw, aimPitch: 0, hold: false, reel: 0, jumpT: 3, boost: false, bad: new Map(), stuckT: 0, lastP: V().copy(a.spawn) }); },
+    nearestPt(p, maxD = 20){ let best = -1, bd = maxD; for (const q of NAV.pts){ const dd = q.p.distanceTo(p); if (dd < bd){ bd = dd; best = q.id; } } return best; },
+    command(dt){
+      if (!NAV) buildNav();
+      st.t += dt; st.think -= dt;
+      const P = a.P, pos = P.currPos, eye = eyePos(pos, V()), enemy = a.enemies[0], ep = enemy ? enemy.mesh.position : null;
+      if (st.think <= 0){ st.think = B.thinkS; this.think(pos, eye, ep, enemy); }
+      // 槍口轉向（有轉速上限，看起來像在瞄）
+      const k = Math.min(1, B.turnRate * dt / Math.max(0.001, Math.abs(st.dYaw || 0) + Math.abs(st.dPitch || 0)));
+      let dy = (st.tYaw ?? P.yaw) - st.gunYaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+      const dp = (st.tPitch ?? 0) - st.gunPitch; st.dYaw = dy; st.dPitch = dp;
+      st.gunYaw += dy * k; st.gunPitch += dp * k;
+      const aimErr = Math.hypot(dy, dp);
+      const fire = st.nailFire || (st.wantFire && aimErr < 1.5 * DEG && !P.safe && (a.weapon.active !== 'mg' || st.burst > 0));
+      const cmd = { seq: 0, tick: state.tick, moveX: st.moveX || 0, moveZ: st.reel || 0, yaw: st.travel && st.moveYaw != null ? st.moveYaw : st.gunYaw, pitch: st.gunPitch, fire, hookL: false, hookR: st.hold, hookMain: false,
+        smart: true, autoFire: false, swap: false, swapTo: st.wantW !== a.weapon.active ? st.wantW : null, gunYaw: st.gunYaw, gunPitch: st.gunPitch,
+        aimYaw: st.aimYaw, aimPitch: st.aimPitch, ropeYaw: st.aimYaw, ropePitch: st.aimPitch, jump: !!st.jump, jumpPow: 1, jumpX: st.jumpX || 0, jumpZ: st.jumpZ || 0, boost: st.boost, thrust: false, reload: false };
+      st.jump = false; if (st.burst > 0) st.burst -= dt;
+      return cmd;
+    },
+    think(pos, eye, ep, enemy){
+      const P = a.P, dt = B.thinkS, r = a.ropes[1], hooked = a.ropes.some(x => x.hooked);
+      // ---- 看不看得到敵人 ----
+      let see = false, dist = 1e9;
+      if (ep){ const to = V().subVectors(ep, eye); dist = to.length(); to.divideScalar(dist);
+        const h = castRay(eye, to, dist + 2); see = !h || targetsByCollider.get(h.handle) === enemy; }
+      if (see){ st.seeT += dt; st.lostT = 0; } else { st.seeT = 0; st.lostT += dt; }
+      // ---- 戰鬥：挑武器、算瞄準點 ----
+      st.wantFire = false; st.nailFire = false;
+      if (P.grounded && !P.pinned) st.climb = false;
+      if (ep && see && dist < 600){
+        if (!st.climb) st.wantW = dist < B.mgRange ? 'mg' : 'main';
+        const ev = enemy.actor ? enemy.actor.P.vel : V(), tf = st.wantW === 'main' ? dist / CN.speed : 0;
+        const aim = V().copy(ep).addScaledVector(ev, tf); aim.y += 0.5 * -CONFIG.physics.gravity * tf * tf;
+        st.errT -= dt; if (st.errT <= 0){ st.errT = 0.6;   // 誤差每 0.6 秒換一次，持續看著目標會越來越準
+          const deg = Math.max(B.errDegMin, B.errDegStart - (B.errDegStart - B.errDegMin) * Math.min(1, st.seeT / B.settleS));
+          const m = Math.tan(deg * DEG) * dist; st.err.set((rnd() - 0.5) * 2, (rnd() - 0.5) * 1.4, (rnd() - 0.5) * 2).multiplyScalar(m); }
+        aim.add(st.err);
+        const d = V().subVectors(aim, eye).normalize(); st.tYaw = Math.atan2(-d.x, -d.z); st.tPitch = Math.asin(clamp(d.y, -1, 1));
+        st.wantFire = st.seeT > 0.35 && !st.climb;   // 反應時間
+        if (st.wantW === 'mg' && st.burst <= -0.5) st.burst = 0.8;   // 機槍點放
+      } else if (ep){ const d = V().subVectors(ep, eye).normalize(); st.tYaw = Math.atan2(-d.x, -d.z); st.tPitch = clamp(Math.asin(d.y), -0.3, 0.3); }
+      // ---- 卡住偵測 ----
+      if (pos.distanceTo(st.lastP) < 0.8 && !P.grounded) st.stuckT += dt; else st.stuckT = 0; st.lastP.copy(pos);
+      // ---- 選戰鬥位置（落腳點）----
+      st.goalT -= dt;
+      const here = P.grounded ? this.nearestPt(pos) : -1;
+      if (ep && (st.goal < 0 || st.goalT <= 0 || (st.lostT > 3 && here === st.goal))){
+        let best = -1, bs = Infinity;
+        for (const q of NAV.pts){ if (q.safe) continue;
+          const dE = q.p.distanceTo(ep); if (dE < B.fightMin * 0.7 || dE > B.fightMax * 1.3) continue;
+          const e2 = V(q.p.x, q.p.y + 2.5, q.p.z), to = V().subVectors(ep, e2), L = to.length(); to.divideScalar(L);
+          const h = castRay(e2, to, L - 2, false); if (h) continue;   // 從那裡看得到敵人
+          const sc = q.p.distanceTo(pos) * 0.6 + Math.abs(dE - 140) * 0.4 - (q.p.y - ep.y) * 0.5 + rnd() * 25;
+          if (sc < bs){ bs = sc; best = q.id; } }
+        if (best >= 0 && best !== st.goal){ st.goal = best; st.path = []; }
+        st.goalT = B.regoalS[0] + rnd() * (B.regoalS[1] - B.regoalS[0]);
+      }
+      if (st.goal < 0){ const q = NAV.pts.filter(q => !q.safe); if (q.length) st.goal = q[Math.floor(rnd() * q.length)].id; }
+      // ---- 移動 ----
+      st.moveX = 0; st.boost = false; st.travel = false; st.reel = 0;
+      const islTop = p2 => { let bi = null, bd = 1e9; for (const I of islands){ const dd = Math.hypot(I.cx - p2.x, I.cz - p2.z) - Math.max(I.w || 10, I.d || 10) * 0.5; if (dd < bd){ bd = dd; bi = I; } } return bi; };
+      // ---- 攀爬：吊在島下面／沒燃料往下掉，身邊 6m 有牆 → 換釘槍釘上牆，沿牆往上爬到島面（爬到能站的坡度會自動脫離）----
+      if (P.pinned){
+        st.climb = true; st.wantW = 'sub'; st.hold = false; st.reel = 1; st.boost = false;
+        if (pos.distanceTo(st.lastPin || (st.lastPin = V().copy(pos))) < 0.25) st.pinStuck = (st.pinStuck || 0) + dt; else st.pinStuck = 0;
+        st.lastPin.copy(pos); if (st.pinStuck > 0.8){ st.climbX = st.climbX ? -st.climbX : 1; st.pinStuck = 0; }
+        st.moveX = st.climbX || 0; return;
+      }
+      const nails = a.weapon.nail.ammo + a.weapon.nail.reserve;
+      if (!P.grounded && nails > 0 && ((hooked && (st.nearT || 0) > 1.0) || (!hooked && P.fuel < 0.3 && P.vel.y < -1))){
+        let wall = false; for (let k2 = 0; k2 < 8 && !wall; k2++){ const a2 = k2 / 8 * Math.PI * 2; const h = castRay(eye, { x: Math.cos(a2), y: 0, z: Math.sin(a2) }, CONFIG.nail.nearWall); if (h && Math.abs(h.normal.y) < 0.6) wall = true; }
+        if (wall){ st.climb = true; st.climbX = 0; st.wantW = 'sub'; st.hold = false; st.reel = 0;
+          if (a.weapon.active === 'sub' && a.weapon.nail.cool <= 0 && !a.weapon.nail.reloading && !a.weapon.prevFire) st.nailFire = true; return; }
+      }
+      if (hooked && !P.grounded && P.vel.length() < 4) P.fuel = Math.min(CONFIG.boost.fuel, P.fuel + CONFIG.boost.regenGround * dt);   // AI 專用輔助：吊著不動時慢慢回燃料（不然吊在島下面會永遠上不去）
+      if (hooked){
+        st.hopT += dt; st.holdT = 0; const tgt = st.path.length ? NAV.pts[st.path[0]] : null;
+        const toA = r.hooked ? pos.distanceTo(r.anchor) : 0, goalY = tgt ? tgt.p.y : r.anchor.y;
+        st.hold = true; st.travel = true; st.moveYaw = Math.atan2(-(r.anchor.x - pos.x), -(r.anchor.z - pos.z));
+        // 收索拉過去；比目的地低時開推進往上（不然會被拉到島的下緣、鋼索被島擋住而斷掉）；靠近 7m 內鎖住繩長，著地才放手
+        const spd = P.vel.length();
+        st.reel = toA > 12 && spd < 22 ? 1 : 0;   // 速度夠了就不再收，避免衝過頭
+        st.boost = P.fuel > 0.4 && pos.y < goalY - 0.5 && P.vel.y < 5 && toA > 6;
+        const near = toA < 8 || (tgt && Math.hypot(pos.x - tgt.p.x, pos.z - tgt.p.z) < 6 && pos.y > tgt.p.y - 1);
+        if (near) st.nearT = (st.nearT || 0) + dt; else st.nearT = 0;
+        const landed = near && P.grounded && P.vel.length() < 14;
+        if (landed || st.nearT > 1.5 || st.hopT > B.hopTimeout || st.stuckT > 1.2){ st.hold = false; st.reel = 0; st.nearT = 0;
+          if (tgt && !landed && st.hopT > B.hopTimeout) st.bad.set(st.path[0], (st.bad.get(st.path[0]) || 0) + 1);
+          if (tgt && landed) st.path.shift(); st.hopT = 0; st.stuckT = 0; }
+        return;
+      }
+      // 卡在陡坡／島緣（沒著地但幾乎不動）：朝最近的島中心跳一下
+      if (!P.grounded && !P.pinned && P.vel.length() < 3){ st.restT = (st.restT || 0) + dt;
+        if (st.restT > 0.8){ st.restT = 0; const I = islTop(pos); if (I){ st.travel = true; st.moveYaw = Math.atan2(-(I.cx - pos.x), -(I.cz - pos.z)); st.jump = true; st.jumpX = 0; st.jumpZ = 1; } return; } }
+      else st.restT = 0;
+      if (!P.grounded && !P.pinned){
+        // 空中沒勾：先找最近的島；比島面低就開推進往上，高過島面才瞄島面上的落腳點勾過去
+        const I = islTop(pos); st.travel = true; st.path = [];
+        const above = I && pos.y > I.top + 1.5, rI = I ? Math.max(I.w || 10, I.d || 10) * 0.5 : 0, hd = I ? Math.hypot(pos.x - I.cx, pos.z - I.cz) : 0;
+        if (I) st.moveYaw = Math.atan2(-(I.cx - pos.x), -(I.cz - pos.z));
+        st.holdT = (st.holdT || 0) + dt;
+        if (st.holdT > 0.6){ st.holdT = 0; st.hold = false; return; }   // 放開一下再按，才會重新射索
+        if (!above && P.fuel > 0.3){   // 比島面低：在島正下方就先往外推出島的範圍，出來了再往上、往島飛
+          if (hd < rI + 2 && pos.y < I.top - 2) st.moveYaw += Math.PI;
+          st.boost = true; st.reel = 0.8; st.hold = false; return; }   // reel 在沒勾住時＝往 moveYaw 方向推
+        const tg = this.pickVisible(eye, pos, 58);
+        if (tg) this.aimAt(eye, tg.p); else if (I && above) this.aimAt(eye, V(I.cx, I.top + 2, I.cz)); else { st.hold = false; return; }
+        st.hold = true; return;
+      }
+      st.hold = false;
+      if (here < 0){ const tg = this.pickVisible(eye, pos, 58); if (tg){ this.aimAt(eye, tg.p); st.hold = true; } return; }
+      if (here === st.goal || NAV.pts[here].isl === NAV.pts[st.goal].isl){ st.path = []; this.strafeOnIsland(pos, see); return; }
+      if (!st.path.length || NAV.pts[st.path[0]].isl === NAV.pts[here].isl){
+        st.path = navPath(here, st.goal) || [];
+        if (st.path.length && (st.bad.get(st.path[0]) || 0) >= 2){ st.goal = -1; st.path = []; st.bad.clear(); return; }
+        while (st.path.length && NAV.pts[st.path[0]].isl === NAV.pts[here].isl) st.path.shift();
+      }
+      if (!st.path.length){   // 導航圖上沒路（這座島沒有預先算好的邊）：直接挑一個看得到、比較靠近目標的別座島落腳點勾過去
+        const gp = NAV.pts[st.goal].p, myIsl = NAV.pts[here].isl; let best = null, bs = Infinity; const d3 = V();
+        for (const q of NAV.pts){ if (q.isl === myIsl || (st.bad.get(q.id) || 0) >= 2) continue; const L = q.p.distanceTo(eye); if (L > 58 || L < 6) continue;
+          const sc = q.p.distanceTo(gp) + L * 0.3 + rnd() * 10; if (sc >= bs) continue;
+          d3.subVectors(q.p, eye).divideScalar(L); const h = castRay(eye, d3, L + 1); if (h && h.point.distanceTo(q.p) < 2.5){ bs = sc; best = q; } }
+        if (!best){ st.goal = -1; return; }
+        st.path = [best.id];
+      }
+      const nx = NAV.pts[st.path[0]]; this.aimAt(eye, V(nx.p.x, nx.p.y + 0.3, nx.p.z));
+      st.holdT = (st.holdT || 0) + dt; if (st.holdT > 1.2){ st.holdT = 0; st.hold = false; st.bad.set(st.path[0], (st.bad.get(st.path[0]) || 0) + 1); return; }   // 一直勾不到：放開重來，記一次失敗
+      st.hold = true; st.hopT = 0;
+    },
+    aimAt(eye, p){ const d = V().subVectors(p, eye).normalize(); st.aimYaw = Math.atan2(-d.x, -d.z); st.aimPitch = Math.asin(clamp(d.y, -1, 1)); },
+    pickVisible(eye, pos, range){
+      let best = null, bs = Infinity; const d = V();
+      for (const q of NAV.pts){ const L = q.p.distanceTo(eye); if (L > range) continue; const sc = L - (q.p.y - pos.y) * 1.5 + (q.safe ? 30 : 0); if (sc >= bs) continue;
+        d.subVectors(q.p, eye).divideScalar(L); const h = castRay(eye, d, L + 1); if (h && h.point.distanceTo(q.p) < 2.5){ bs = sc; best = q; } }
+      return best;
+    },
+    strafeOnIsland(pos, see){
+      st.strafeT -= BOTCFG.thinkS; if (st.strafeT <= 0){ st.strafe = -st.strafe; st.strafeT = 1 + rnd() * 1.4; }
+      if (!see){ st.moveX = 0; return; }
+      const yaw = st.gunYaw, rx = Math.cos(yaw) * st.strafe, rz = -Math.sin(yaw) * st.strafe;
+      const h = castRay({ x: pos.x + rx * 4, y: pos.y + 1, z: pos.z + rz * 4 }, { x: 0, y: -1, z: 0 }, 6);
+      if (!h){ st.strafe = -st.strafe; st.strafeT = 1.2; }
+      st.moveX = st.strafe * 0.55;
+      st.jumpT -= BOTCFG.thinkS; if (st.jumpT <= 0){ st.jumpT = 3 + rnd() * 4; st.jump = true; st.jumpX = 0; st.jumpZ = 0; }
+    },
+  };
+  brain.reset();
+  return brain;
+}
+let bot = null;
+function ensureBot(){
+  if (bot) return bot;
+  const sp = CONFIG.pvp.spawnB, body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(sp.x, sp.y, sp.z).lockRotations().setCcdEnabled(true).setLinearDamping(CONFIG.body.linDamping));
+  const col = world.createCollider(RAPIER.ColliderDesc.capsule(CONFIG.body.halfHeight, CONFIG.body.radius).setFriction(0).setRestitution(0).setDensity(CONFIG.body.mass / capsuleVolume), body);
+  bot = { pid: 'bot1', name: 'AI', team: 1, kind: 'bot', active: true, body, col, P: newPlayerState(sp, -CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon(),
+    hp: CONFIG.pvp.hp, spawn: V(sp.x, sp.y, sp.z), spawnYaw: -CONFIG.map.spawnYaw, enemies: [local.tgt] };
+  bot.tgt = makeActorTarget(bot); actors.push(bot);
+  bot.mech = createMech({ weapon: () => bot.weapon, paint: 'desert' }); bot.mech.loadModel().catch(() => { bot.mech.failed = true; });
+  bot.brain = createBotBrain(bot);
+  return bot;
+}
 
 // =====================================================================
 // INPUT → command
@@ -702,7 +980,7 @@ function findHook(side, yaw, pitch, origin){
   return null;
 }
 
-function simTick(cmd){
+function simTick(cmd, sub = false){   // v3.0 sub＝替其他機體（AI）跑的一格：不推進世界時間、不動靶
   const P = state.player;
   P.yaw = cmd.yaw; P.pitch = cmd.pitch;
   const tr = playerBody.translation(), lv = playerBody.linvel();
@@ -889,7 +1167,10 @@ function simTick(cmd){
   if (P.pinned){ _v.set(0, 0, 0); playerBody.setTranslation(P.pinned.pos, true); P.fuel = Math.min(CONFIG.boost.fuel, P.fuel + CONFIG.boost.regenGround * dt); }
   playerBody.setLinearDamping(anyHooked ? 0 : CONFIG.body.linDamping);   // 勾住時不減速：鉤索勾著就能一直擺盪回來
   playerBody.setLinvel(_v, true);
+  // v3.0 多台機體共用一個物理世界：這一格只推進目前這台，其他機體的位置／速度先存起來、step 後還原
+  const frozen = []; for (const a of actors) if (a.active && a.body !== playerBody){ const t0 = a.body.translation(), v0 = a.body.linvel(); frozen.push([a.body, { x: t0.x, y: t0.y, z: t0.z }, { x: v0.x, y: v0.y, z: v0.z }]); }
   world.step();
+  for (const [b, t0, v0] of frozen){ b.setTranslation(t0, true); b.setLinvel(v0, true); }
   if (P.pinned){ playerBody.setTranslation(P.pinned.pos, true); playerBody.setLinvel({ x: 0, y: 0, z: 0 }, true); }
 
   // --- step 後：讀回、地面判定、鋼索約束 ---
@@ -975,17 +1256,18 @@ function simTick(cmd){
   P.lastVy = _v.y;
   P.vel.copy(_v);
 
+  actorEnvTick(dt);
   weaponTick(cmd, dt);
-  worldTick(dt);
-  state.tick++;
+  if (!sub){ worldTick(dt); state.tick++; }
 }
 
-function fallToVoid(){ // 掉進虛空：v2.1 一律傳送回起點（基地 A 的出生點）
-  const P = state.player, tx = S.x, ty = S.y, tz = S.z; P.yaw = CONFIG.map.spawnYaw; P.pitch = 0; P.pinned = null;
+function fallToVoid(){ // 掉進虛空：傳送回自己的出生點（v3.0 對戰中算對方得分）
+  const a = curActor, P = state.player, tx = a.spawn.x, ty = a.spawn.y, tz = a.spawn.z; P.yaw = a.spawnYaw; P.pitch = 0; P.pinned = null;
   playerBody.setTranslation({ x: tx, y: ty, z: tz }, true); playerBody.setLinvel({ x:0, y:0, z:0 }, true);
   for (const r of state.ropes) r.hooked = false;
   P.prevPos.set(tx, ty, tz); P.currPos.set(tx, ty, tz); P.falls = (P.falls || 0) + 1;
   events.push({ type: 'void' });
+  if (match.state === 'live') match.died(a, null);
 }
 function respawn(){
   playerBody.setTranslation({ x:S.x, y:S.y, z:S.z }, true); playerBody.setLinvel({ x:0, y:0, z:0 }, true);
@@ -1046,7 +1328,7 @@ function weaponTick(cmd, dt){
   let hitTarget = false;
   if (hit){
     const t = targetsByCollider.get(hit.handle);
-    if (t && !t.dead){ t.hp -= W.damage; hitTarget = true; w.hits++; if (t.hp <= 0){ t.dead = CONFIG.target.respawn; t.col.setEnabled(false); t.mesh.visible = false; events.push({ type: 'kill' }); } }
+    if (t && !t.dead && damageTarget(t, W.damage)){ hitTarget = true; w.hits++; }
   }
   events.push({ type: 'shot', from: origin, to: end, hit: !!hit, hitTarget, normal: hit ? hit.normal : null, tracer: w.shots % W.tracerEvery === 0 });
 }
@@ -1083,7 +1365,7 @@ function cannonTick(cmd, dt){
   if (!P.grounded && !P.pinned){ const lv = playerBody.linvel(); playerBody.setLinvel({ x: lv.x - dir.x * CN.knockback, y: lv.y - dir.y * CN.knockback, z: lv.z - dir.z * CN.knockback }, true); }   // 空中開砲會被後座力往後推
   events.push({ type: 'cannon', from: origin });
 }
-function damageTarget(t, dmg){ if (!t || t.dead) return false; t.hp -= dmg; if (t.hp <= 0){ t.dead = CONFIG.target.respawn; t.col.setEnabled(false); t.mesh.visible = false; events.push({ type: 'kill' }); } return true; }
+function damageTarget(t, dmg){ if (!t || t.dead) return false; if (t.actor) return actorDamage(t.actor, dmg); if (!practiceOn) return false; t.hp -= dmg; if (t.hp <= 0){ t.dead = CONFIG.target.respawn; t.col.setEnabled(false); t.mesh.visible = false; events.push({ type: 'kill' }); } return true; }
 function shellsTick(dt){
   const w = state.weapon;
   for (let i = w.shells.length - 1; i >= 0; i--){
@@ -1120,7 +1402,7 @@ function nailTick(cmd, dt, fireEdge){
   let hitTarget = false;
   if (hit){
     const t = targetsByCollider.get(hit.handle);
-    if (t && !t.dead){ t.hp -= N.damage; hitTarget = true; w.hits++; if (t.hp <= 0){ t.dead = CONFIG.target.respawn; t.col.setEnabled(false); t.mesh.visible = false; events.push({ type: 'kill' }); } }
+    if (t && !t.dead && damageTarget(t, N.damage)){ hitTarget = true; w.hits++; }
     else if (false){
       // 釘在牆上：機體貼著牆面停住，可以站在垂直壁面射擊；勾索或推進就會脫離
       const pos = V(hit.point.x + hit.normal.x * (CONFIG.body.radius + 0.25), hit.point.y - CONFIG.camera.eye, hit.point.z + hit.normal.z * (CONFIG.body.radius + 0.25));
@@ -1159,7 +1441,7 @@ function currentSpread(){
   if (sp > s.swingSpeed && !P.grounded) v += s.swinging;
   return Math.min(s.max, v + state.weapon.bloom);
 }
-function worldTick(dt){
+function actorEnvTick(dt){   // v3.0 每台機體各自：後座回復、保護區、補給平台
   state.weapon.recoil *= Math.exp(-dt / W.recoilTau);
   // 補給平台：站上去補燃料與彈藥
   { const P = state.player, p = playerBody.translation(); P.onPad = false;
@@ -1169,7 +1451,10 @@ function worldTick(dt){
       const w = state.weapon; if (w.reloading <= 0) w.ammo = Math.min(W.ammo, w.ammo + CONFIG.supply.ammoPerSec * dt);
       w.nail.reserve = CONFIG.nail.reserve; if (!w.nail.reloading) w.nail.ammo = CONFIG.nail.mag;
       w.cannon.reserve = Math.min(CN.reserve, w.cannon.reserve + CN.ammoPerSec * dt); } } }
-  for (const t of targets){
+  if (curActor) curActor.tgt.mesh.position.set(_p.x, _p.y, _p.z);   // 給別台瞄準／判定用的位置
+}
+function worldTick(dt){
+  for (const t of practiceTargets){
     if (t.kind === 'moving'){
       t.phase += dt;
       const z = Math.sin(t.phase * 2 / 20) * 20; // 最高 2m/s，z ±20 往返
@@ -1187,13 +1472,14 @@ const predLine = (()=>{ const g = new THREE.BufferGeometry(); g.setAttribute('po
   const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.5, depthTest: false })); l.frustumCulled = false; l.visible = false; scene.add(l); return l; })();
 let wasInWin = false;
 const ropeMeshes = state.ropes.map(()=>{ const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1,6,1,true), new THREE.MeshBasicMaterial({ color: 0x9fe8ff })); m.visible = false; scene.add(m); return m; });
+const botRopeMeshes = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1,6,1,true), new THREE.MeshBasicMaterial({ color: 0xffa040 })); m.visible = false; scene.add(m); return m; });
 const anchorMeshes = state.ropes.map(()=>{ const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), new THREE.MeshBasicMaterial({ color: 0x40e0ff })); m.visible = false; scene.add(m); return m; });
 const UP = V(0,1,0), _q = new THREE.Quaternion();
 // =====================================================================
 // v2.1 機體模型（依第二階段草圖）：低矮蜘蛛機身、六腳、頂部炮塔（57mm）、背部碟形鋼索發射器（可 360° 轉）、
 //  前方格鬥臂（14.5mm 機槍）、前腳釘槍。全部用基本幾何組成，單位：公尺（碰撞膠囊高 4.2m，腳底在中心下方 2.1m）
 // =====================================================================
-const mech = (() => {
+function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台（各自載模型、各自塗裝）
   const M = { root: new THREE.Group(), legs: [], phase: 0, yaw: 0, up: new THREE.Vector3(0, 1, 0) };
   const metal = new THREE.MeshLambertMaterial({ color: 0x46525f }), dark = new THREE.MeshLambertMaterial({ color: 0x2a323b }),
         glow = new THREE.MeshBasicMaterial({ color: 0x7ff5e0 }), warm = new THREE.MeshLambertMaterial({ color: 0x8a6a3a });
@@ -1249,7 +1535,7 @@ const mech = (() => {
     _q.setFromUnitVectors(UP, M.up); M.root.quaternion.setFromAxisAngle(UP, M.yaw).premultiply(_q);
     // 炮塔與砲管跟著準星；機槍臂也指向準星
     M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9); if (M.mgArm) M.mgArm.rotation.x = clamp(P.pitch, -0.4, 0.7);   // 機槍跟準星上下
-    if (M.arm2){ const want = state.weapon.active === 'mg' ? 1 : 0; M.arm2.k += (want - M.arm2.k) * Math.min(1, dt * 8);   // 選 02 副武時展開成 L，其他時候收成 V
+    if (M.arm2){ const want = (cfg.weapon ? cfg.weapon() : state.weapon).active === 'mg' ? 1 : 0; M.arm2.k += (want - M.arm2.k) * Math.min(1, dt * 8);   // 選 02 副武時展開成 L，其他時候收成 V
       const k = M.arm2.k; M.arm2.S.rotation.x = 0.75 * (1 - k) + 0.6 * k; M.arm2.E.rotation.x = 1.6 * (1 - k) + 1.02 * k; }   // v2.9 收：V 字開口朝前（前臂斜向前上、不進機鼻）；展：上臂斜前下＋前臂水平
     // v2.9 滑膛炮後座：機身往後一頓、機首微抬，腳固定在地上吸收（IK 自動彎膝）
     M.rc = Math.max(0, (M.rc || 0) - dt / 0.28); const rk = M.rc * M.rc * (3 - 2 * M.rc);
@@ -1353,7 +1639,7 @@ const mech = (() => {
     M.paintMats.metal = new Set(); gltf.scene.traverse(o => { if (!o.isMesh || /Red|Neon/.test(o.name) || M.paintMats.armor.has(o.material)) return; M.paintMats.metal.add(o.material); });
     // v2.5 結構：右臂拿掉原作的長刀刃，只留臂座當格鬥臂（機槍裝在上面）
     gltf.scene.traverse(o => { if (o.isMesh && /^Blade_R_(Metal_with_leaks|Stainless)/.test(o.name)) o.visible = false; });
-    M.applyPaint(opts.paint);
+    M.applyPaint(cfg.paint || opts.paint);
     // 隱藏基本幾何的過渡零件
     for (const ch of [...M.body.children]) if (ch !== mdl && ch !== M.dish) ch.visible = false;
     // 找一個金屬材質給加裝零件用，風格才一致
@@ -1439,9 +1725,26 @@ const mech = (() => {
     return true;
   };
   return M;
-})();
+  return M;
+}
+const mech = createMech();
 mech.loadModel().then(ok => { if (!ok){ mech.failed = true; console.warn('機體模型結構不符，改用過渡模型'); } }).catch(err => { mech.failed = true; console.warn('機體模型載入失敗，改用過渡模型', err); });
-function updateMech(dt, alpha){ const P = state.player; mech.update(dt, V().lerpVectors(P.prevPos, P.currPos, alpha), P, state.ropes); }
+function updateMech(dt, alpha){ const P = state.player; mech.update(dt, V().lerpVectors(P.prevPos, P.currPos, alpha), P, state.ropes);
+  if (bot){ const on = bot.active && (bot.mech.loaded || bot.mech.failed); bot.mech.root.visible = on;
+    if (on) withActor(bot, () => bot.mech.update(dt, V().lerpVectors(bot.P.prevPos, bot.P.currPos, alpha), bot.P, bot.ropes)); } }
+// v3.0 別台機體（AI／之後的連線玩家）的事件：只做畫面與聲音，不動本機的 HUD
+function remoteEvent(ev){
+  const M2 = bot && bot.mech, dist = ev.from ? ev.from.distanceTo(camera.position) : 100, vol = clamp(60 / Math.max(30, dist), 0.15, 1);
+  switch (ev.type){
+    case 'shot': { const mz = M2 ? M2.muzzle(ev.nail ? 'nail' : 'mg', V()) : null, from = mz || ev.from; spawnSparks(from, null); spawnTracer(from, ev.to); if (ev.hit) spawnSparks(ev.to, ev.normal); if (vol > 0.3) sfx('shot'); break; }
+    case 'cannon': { const mz = M2 ? M2.muzzle('cannon', V()) : null, shl = bot.weapon.shells[bot.weapon.shells.length - 1];
+      if (mz){ spawnSparks(mz, null); if (shl && !shl.voff){ shl.voff = mz.clone().sub(shl.p); shl.vt = 0.2; } } if (M2) M2.recoil(); sfx(vol > 0.5 ? 'cannon' : 'boom', vol); break; }
+    case 'boom': sfx('boom', 0.6); spawnBoom(ev.at, ev.normal); break;
+    case 'died': if (ev.victim === local.pid){ toast(ev.killer ? '被 AI 擊破！回到基地 A' : '墜落！對方 +1', 1800); flashT = 0.08; } else if (!ev.killer) toast('AI 墜落！你 +1', 1500); break;
+    case 'actorHit': if (ev.victim === local.pid){ hurtT = Math.min(0.6, hurtT + ev.dmg / 1500); sfx('clank', 0.5); buzz(30); } break;
+  }
+}
+let hurtT = 0;
 function placeCylinder(mesh, a, b){
   _d.subVectors(b, a); const len = _d.length(); if (len < 1e-3){ mesh.visible = false; return; }
   mesh.position.copy(a).addScaledVector(_d, 0.5); mesh.scale.set(1, len, 1);
@@ -1463,7 +1766,7 @@ const booms = []; { const g = new THREE.SphereGeometry(1, 12, 8);
 let boomIdx = 0;
 function spawnBoom(p, n){ const b = booms[boomIdx++ % booms.length]; b.m.position.copy(p); b.life = 0.35; b.m.visible = true; for (let k = 0; k < 3; k++) spawnSparks(p, n); }
 function drawShells(dt){
-  const sh = state.weapon.shells;
+  const sh = bot && bot.active ? state.weapon.shells.concat(bot.weapon.shells) : state.weapon.shells;
   shellMeshes.forEach((o, i) => { const s2 = sh[i]; o.me.visible = o.tl.visible = !!s2; if (!s2) return;
     const vp = V().copy(s2.p); if (s2.voff && s2.vt > 0){ vp.addScaledVector(s2.voff, s2.vt / 0.2); s2.vt -= dt; }
     o.me.position.copy(vp); const a = o.tl.geometry.attributes.position, L = 6 / s2.v.length();
@@ -1829,7 +2132,7 @@ for (const el of [setEl, document.getElementById('topbar')]) el.addEventListener
 // =====================================================================
 // HUD 繪製
 // =====================================================================
-const flashEl = document.getElementById('flash');
+const flashEl = document.getElementById('flash'), hurtEl = document.getElementById('hurt');
 let flashT = 0, shakeT = 0, shakeAmp = 0, hitMarkT = 0, crossPulse = 0, fovNow = CONFIG.camera.fovBase, rollNow = 0;
 const hookPreview = [null, null];
 const _proj = V();
@@ -1992,9 +2295,18 @@ function drawHUD(dt){
   const fs = clamp(h / 700, 0.75, 1), wst = state.weapon;
   const acc = wst.fired ? Math.round(wst.hits / wst.fired * 100) : 0;
   c.textAlign = 'center'; c.font = `600 ${Math.round(15*fs)}px sans-serif`;
+  if (match.mode === 'ai'){   // v3.0 對戰：比分、時間、雙方血條、擊破訊息
+    const tl = Math.ceil(match.timeLeft), line = `你 ${match.score[0]}  :  ${match.score[1]} AI      ${Math.floor(tl / 60)}:${String(tl % 60).padStart(2, '0')}`;
+    const tw = c.measureText(line).width, bw = Math.max(tw + 40, 260 * fs), by = 8 + 24 * fs + 8;
+    c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(cx - bw/2, 6, bw, 24*fs + 22);
+    c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs);
+    const hb = (x, k, col, right) => { const w = bw/2 - 14; c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(x, by, w, 6); c.fillStyle = col; c.fillRect(right ? x + w * (1 - k) : x, by, w * k, 6); };
+    hb(cx - bw/2 + 8, local.hp / CONFIG.pvp.hp, '#5fe0ff', false); if (bot) hb(cx + 6, bot.hp / CONFIG.pvp.hp, '#ffa040', true);
+    c.font = `600 ${Math.round(13*fs)}px sans-serif`; match.feed.forEach((f2, i) => { c.fillStyle = `rgba(255,220,180,${Math.min(1, f2.t)})`; c.fillText(f2.msg, cx, by + 24*fs + i * 18*fs); });
+  } else {
   c.fillStyle = 'rgba(0,0,0,.35)'; const line = `${sp.toFixed(0)} m/s   命中 ${acc}%   墜落 ${P.falls || 0}`;
   const tw = c.measureText(line).width; c.fillRect(cx - tw/2 - 10, 8, tw + 20, 24*fs + 4);
-  c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs);
+  c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs); }
 }
 
 // 按鈕上的狀態：彈量、跳/推進＋燃料圈（有變化才寫 DOM）
@@ -2047,6 +2359,12 @@ function frame(now){
     P.prevPos.copy(P.currPos);
     simTick(buildCommand());
     const tr = playerBody.translation(); P.currPos.set(tr.x, tr.y, tr.z);
+    if (bot && bot.active && match.state === 'live'){   // v3.0 AI 跟玩家跑同一套物理與武器
+      const n0 = events.length;
+      withActor(bot, () => { bot.P.prevPos.copy(bot.P.currPos); simTick(bot.brain.command(DT), true); const tb = bot.body.translation(); bot.P.currPos.set(tb.x, tb.y, tb.z); });
+      for (let i = n0; i < events.length; i++) events[i].by = bot.pid;
+    }
+    match.tick(DT);
     acc -= DT; ticks++;
   }
   if (ticks >= CONFIG.physics.maxTicksPerFrame && acc >= DT) acc = 0;
@@ -2054,6 +2372,7 @@ function frame(now){
 
   // 事件處理
   for (const ev of events){
+    if (ev.by){ remoteEvent(ev); continue; }
     switch (ev.type){
       case 'hook': sfx('hook'); buzz(20); break;
       case 'bottomFling': sfx('clank', 0.4); buzz(15); flashT = 0.06; break;
@@ -2072,6 +2391,8 @@ function frame(now){
       case 'pin': sfx('clank', 0.8); buzz(25); flashT = 0.05; break;
       case 'unpin': sfx('miss'); break;
       case 'nailOut': toast('釘子用完了！', 1500); break;
+      case 'died': if (ev.victim === local.pid){ toast('墜落！對方 +1', 1800); flashT = 0.08; } else { toast('擊破 AI！', 1500); sfx('clank', 1); } break;
+      case 'actorHit': break;
       case 'nailBrake': sfx('clank', 1); buzz(35); if (opts.shake){ shakeT = CONFIG.camera.shakeDur * 0.5; shakeAmp = 0.18 * CONFIG.camera.shakeScale; } break;
       case 'void': toast('墜入虛空！已傳送回基地 A', 2000); flashT = 0.08; break;
     }
@@ -2183,11 +2504,14 @@ function frame(now){
       anchorMeshes[i].position.copy(r.anchor); anchorMeshes[i].visible = true;
     } else { ropeMeshes[i].visible = false; anchorMeshes[i].visible = false; }
   }
+  for (let i = 0; i < 2; i++){ const r = bot && bot.active ? bot.ropes[i] : null, m = botRopeMeshes[i];   // v3.0 AI 的鋼索（橘色）
+    if (r && r.hooked && bot.mech.loaded){ placeCylinder(m, bot.mech.dishTip(i, V()), r.anchor); m.visible = true; } else m.visible = false; }
   // 特效
   for (const t of tracers) if (t.life > 0){ t.life -= dt; t.m.material.opacity = Math.max(0, t.life/0.3); if (t.life <= 0) t.m.visible = false; }
   drawShells(dt);
   for (const s of sparks) if (s.life > 0){ s.life -= dt; s.v.y -= 20*dt; s.m.position.addScaledVector(s.v, dt); if (s.life <= 0) s.m.visible = false; }
   if (flashT > 0){ flashT -= dt; flashEl.style.opacity = Math.max(0, flashT/0.08) * 0.35; } else flashEl.style.opacity = 0;
+  if (hurtT > 0){ hurtT = Math.max(0, hurtT - dt); } hurtEl.style.opacity = Math.min(1, hurtT * 2.2);
   hitMarkT = Math.max(0, hitMarkT - dt); crossPulse = Math.max(0, crossPulse - dt*5);
 
   renderer.render(scene, camera);
@@ -2201,7 +2525,9 @@ requestAnimationFrame(frame);
 
 // 開始畫面
 const goBtn = document.getElementById('goBtn');
-goBtn.disabled = false; goBtn.textContent = '開始';
+goBtn.disabled = false; goBtn.textContent = '練習（打靶）';
+const goAI = document.getElementById('goAI'); goAI.disabled = false;
+let startMode = 'practice';
 // v1.3.1：iPad 的陀螺儀權限對話框會讓全螢幕跳掉（對話框不能和進入全螢幕同時發生）
 //  → 第一下只要求權限，第二下才進全螢幕並開始；遊戲中掉出全螢幕時顯示「⛶ 全螢幕」鈕
 const canFS = () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
@@ -2211,24 +2537,36 @@ function updateFSBtn(){ document.getElementById('bFS').style.display = (running 
 document.getElementById('bFS').addEventListener('click', e => { e.stopPropagation(); goFS(); });
 for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => { setTimeout(() => { resize(); calcStick(); idleStick(); updateFSBtn(); }, 50); });
 addEventListener('resize', updateFSBtn);
-goBtn.addEventListener('click', async e => {
-  unlockAudio();
+async function startClick(mode){
+  startMode = mode; unlockAudio();
   const wantGyro = matchMedia('(pointer:coarse)').matches && document.getElementById('gyroStart').checked;
   if (wantGyro && needsMotionPerm() && !motionGranted && !goBtn.dataset.asked){
     goBtn.dataset.asked = '1'; goBtn.disabled = true; goBtn.textContent = '等待陀螺儀權限…';
     await enableGyro(true);
-    goBtn.disabled = false; goBtn.textContent = '進入戰場（全螢幕）';
+    goBtn.disabled = false; goBtn.textContent = '進入戰場（全螢幕）'; if (mode === 'ai'){ goAI.textContent = '進入對戰（全螢幕）'; }
     return; // 第二下才進全螢幕
   }
   if (wantGyro && !gyro.on) enableGyro(true);
   document.getElementById('start').style.display = 'none';
   goFS();
+  match.start(mode);
   last = performance.now(); running = true; idleStick(); setTimeout(updateFSBtn, 400);
-});
+}
+goBtn.addEventListener('click', () => startClick('practice'));
+goAI.addEventListener('click', () => startClick('ai'));
+function showResult(){ const win = match.score[0] > match.score[1], draw = match.score[0] === match.score[1];
+  document.getElementById('resTitle').textContent = draw ? '平手' : win ? '勝利' : '敗北';
+  document.getElementById('resTitle').style.color = draw ? '#e8f6ff' : win ? '#63e6ff' : '#ff8a6a';
+  document.getElementById('resScore').textContent = `你 ${match.score[0]} ： ${match.score[1]} AI`;
+  document.getElementById('result').style.display = 'flex'; }
+function hudMatch(){ if (match.state !== 'over') document.getElementById('result').style.display = 'none'; }
+document.getElementById('resAgain').addEventListener('click', e => { e.stopPropagation(); match.start('ai'); });
+document.getElementById('resPractice').addEventListener('click', e => { e.stopPropagation(); match.start('practice'); });
+document.getElementById('result').addEventListener('pointerdown', e => e.stopPropagation());
 
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
-window.__game = { mech, tpCam, buildCommand, castRay, rocks, islands, targets, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
+window.__game = { match, actors, local, get bot(){ return bot; }, ensureBot, withActor, buildNav, get NAV(){ return NAV; }, navPath, practiceTargets, mech, tpCam, buildCommand, castRay, rocks, islands, get targets(){ return targets; }, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
 </script>
 </body>
 </html>
