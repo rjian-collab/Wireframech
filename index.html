@@ -163,16 +163,16 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.9</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・環形戰場 v2.0</div>
   <ul>
-    <li>空島戰場：<b>掉到最下面就是虛空</b>；發光平台是補給島，站上去補燃料和彈藥</li>
+    <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
     <li><b>藍色搖桿</b>：移動；<b>按住後往任一方向快速一滑＝往那邊撲擊</b>（在地上、坡上、貼牆或釘在牆上時）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
     <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">往上一甩＝輪流切換 01 主武 57mm 滑膛炮 → 02 副武 14.5mm 機槍 → 03 腿部釘槍</b></li>
     <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、欄位（01 主武／02 副武／03 腿部）、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
     <li><b>腿部釘槍</b>（不佔手臂）：身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器打敵人。</li>
     <li><b>57mm 滑膛炮</b>：每 0.8 秒一發、6 發一匣，砲彈有飛行時間與下墜，落點 4m 內有爆炸傷害；空中開砲會被後座力往後推</li>
-    <li>地圖中央的補給站有<b style="color:#40ffb0">無敵區</b>：不會受傷，也不能開火；設定裡可選「跟手準星」</li>
+    <li>兩邊基地有<b style="color:#40ffb0">出生保護區</b>：不會受傷，也不能開火；設定裡可選「跟手準星」</li>
     <li>擺盪時鏡頭會<b>鎖住準星下的地形</b>，不會亂晃；放手時準星附近有敵人，就<b>一直看著那個敵人</b>；一轉視角就解除</li>
     <li>新手輔助：沒有勾點時<b>先按住鋼索</b>，勾點一出現就自動勾上（中心小圓閃爍＝在等）；沒勾鋼索時 1 秒不操作，視角會回到往上看；<b>空白處點兩下＝180° 迴轉</b></li>
     <li>擺到最低點（預測線變<b style="color:#7f7">綠</b>）放手速度 ×1.15；放手後的最高點有短暫懸停</li>
@@ -221,12 +221,13 @@ const CONFIG = Object.freeze({
   // v1.9 主武：57mm 滑膛炮（實體彈道：有飛行時間與彈道下墜、落點爆炸範圍傷害）
   cannon: { rpm: 75, speed: 700, range: 600, damage: 700, splash: 350, splashR: 4, mag: 6, reserve: 24, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
   nail: { damage: 1000, mag: 5, reserve: 5, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6 },   // 副武：釘槍（5×2 發）
-  safeZone: { radius: 22 },
+  safeZone: { radius: 18 },
   weapon: { rpm: 600, range: 500, damage: 200, ammo: 1000, reload: 3,   // v1.9 起為副武：14.5mm 機槍（格鬥臂）
     spread: { base: 0.3, moving: 0.5, swinging: 1.0, swingSpeed: 12, max: 2.0, bloomPerShot: 0.08, recover: 0.3 },
     recoilDeg: 0.3, recoilTau: 0.15, tracerEvery: 5 },
   target: { hp: 1000, respawn: 3 },
-  map: { respawnY: -70, spawn: { x: 12, y: 6.2, z: 0 }, spawnYaw: -Math.PI/2 /* 面向 +x（密集島方向） */ },
+  map: { respawnY: -70, spawn: { x: 46, y: 12.2, z: 0 }, spawnYaw: -Math.PI/2 /* 面向 +x（敵方基地方向） */,
+    center: { x: 200, z: 0 }, ringR: 150, ringStepDeg: 20, ringBase: 12, ringPeak: 58, ringTiltDeg: 18 },
 });
 const DEG = Math.PI / 180;
 const G = CONFIG.grapple;
@@ -347,42 +348,70 @@ function addRamp(x0, y0, z, len, wid, deg, mat = matClutter){
   const m = new THREE.Mesh(new THREE.BoxGeometry(len, th, wid), mat); m.position.set(cx, cy, z); m.quaternion.copy(q); scene.add(m);
   const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), new THREE.LineBasicMaterial({ color: 0x2b3440 })); e.position.copy(m.position); e.quaternion.copy(q); scene.add(e);
 }
-//          名稱        x    頂高   z    寬  深  厚
-addIsland('起點島',     20,   4,    0,  44, 44, 10, { chains: 2 });
-addRamp(24, 4, -15, 14, 6, 35); addRamp(24, 4, 15, 12, 6, 60); addRamp(2, 4, -15, 9, 6, 78);   // 起點島坡道：35°、60° 可站；78° 站不住（要用釘槍）
-addIsland('補給島 A',  110,  18,   55,  26, 26,  6, { supply: true });
-addIsland('補給島 B',  110,   8,  -55,  26, 26,  6, { supply: true });
-// v1.7：中線（起點島 ↔ 遠島，z=0）保持淨空，讓兩端可以隔著地圖對射；密集地形拆成南北兩座、補給島 C 壓低
-addIsland('密集島',    190,   6,  -42,  48, 40, 10, { dense: 12, chains: 2 });
-addIsland('密集島 北', 210,  10,   42,  40, 36, 10, { dense: 10, chains: 2 });
-addIsland('高島',      265,  42,   55,  32, 32,  8, { chains: 2 });
-addIsland('低島',      265, -12,  -55,  32, 32,  8, { chains: 1 });
-addIsland('補給島 C',  305,   0,    0,  26, 26,  6, { supply: true });
-addIsland('遠島',      380,  16,    0,  44, 44, 10, { dense: 6, chains: 2 });
-addIsland('中央補給站', 200,  70,    0,  30, 30,  6, { supply: true });   // 地圖中央、密集島正上方；周圍是無敵區
-const safeZone = { x: 200, y: 70, z: 0, r: CONFIG.safeZone.radius };
-{ const dome = new THREE.Mesh(new THREE.SphereGeometry(safeZone.r, 24, 12, 0, Math.PI*2, 0, Math.PI/2),
+// ===== v2.0 環形競技場（依玩家場地草圖）=====
+//  兩隊基地在環的兩端（A：x=50、B：x=350）；外圈是一圈往內傾的空島，從兩邊基地出發往左右都一路往上爬（鏡像對稱），
+//  最高點在兩基地之間的正側方；中央大平台低於所有島：沒有墜落風險，但位置劣勢。外圈＝高機動、難瞄準；中央＝穩但被俯射
+const MAPC = CONFIG.map, MC = MAPC.center;
+// 傾斜島：上表面朝環中心往下傾 tiltDeg；用旋轉的剛體（蜘蛛腳 70° 以內都站得住）
+function addTiltIsland(name, cx, top, cz, w, d, th, tiltDeg, opt = {}){
+  const yaw = Math.atan2(MC.x - cx, MC.z - cz);   // 局部 +z 指向環中心
+  const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(tiltDeg * DEG, yaw, 0, 'YXZ'));
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
+  const c = new THREE.Vector3(cx, top, cz).addScaledVector(up, -th / 2);
+  const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(c.x, c.y, c.z).setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }));
+  const col = world.createCollider(RAPIER.ColliderDesc.cuboid(w / 2, th / 2, d / 2).setFriction(0), body); hookable.add(col.handle);
+  const grp = new THREE.Group(); grp.position.copy(c); grp.quaternion.copy(q); scene.add(grp);
+  grp.add(new THREE.Mesh(new THREE.BoxGeometry(w, th, d), matIsland));
+  const g = new THREE.Mesh(new THREE.BoxGeometry(w + 0.2, 0.4, d + 0.2), matGrass); g.position.y = th / 2 - 0.19; grp.add(g);
+  addBox(cx, top - th * 1.6, cz, w * 0.55, th * 0.9, d * 0.55, matIsland, true);   // 島底（不傾斜）
+  if (opt.chains) for (let i = 0; i < opt.chains; i++){ const px = cx + (mrng() - 0.5) * w * 0.4, pz = cz + (mrng() - 0.5) * d * 0.4, ln = 10 + mrng() * 12; addBox(px, top - th * 2.2 - ln / 2, pz, 0.8, ln, 0.8, matRock, true); }
+  islands.push({ name, cx, top, cz, w, d, tilt: tiltDeg });
+}
+// 兩邊基地（平的、有補給、有出生保護區）
+addIsland('基地 A', 50, 10, 0, 40, 40, 10, { supply: true, chains: 2 });
+addIsland('基地 B', 350, 10, 0, 40, 40, 10, { supply: true, chains: 2 });
+// 外圈：每 20° 一座，高度依「離最近基地的角度」一階一階往上
+const ring = [];
+for (let deg = MAPC.ringStepDeg; deg < 360; deg += MAPC.ringStepDeg){
+  if (deg === 180) continue;
+  const th = deg * DEG, x = MC.x + Math.cos(th) * MAPC.ringR, z = MC.z + Math.sin(th) * MAPC.ringR;   // 180°＝基地 A（x=50）、0°＝基地 B（x=350）
+  const fromBase = Math.min(Math.abs(((deg % 360) + 360) % 360), 360 - deg, Math.abs(deg - 180));
+  const top = MAPC.ringBase + (MAPC.ringPeak - MAPC.ringBase) * Math.round(fromBase / MAPC.ringStepDeg) / (90 / MAPC.ringStepDeg);
+  const name = '外圈 ' + deg + '°'; addTiltIsland(name, x, top, z, 26, 22, 6, MAPC.ringTiltDeg, { chains: 1 }); ring.push(name);
+}
+// 中央大平台：全場最低、平的，有掩體與補給
+addIsland('中央平台', MC.x, -20, MC.z, 110, 60, 12, { supply: true, dense: 12, chains: 3 });
+// 出生保護區（兩邊基地各一）：區內不能開火，日後 PvP 區內不受傷
+const safeZones = [{ x: 50, y: 10, z: 0, r: CONFIG.safeZone.radius }, { x: 350, y: 10, z: 0, r: CONFIG.safeZone.radius }];
+for (const sz of safeZones){
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(sz.r, 24, 12, 0, Math.PI*2, 0, Math.PI/2),
     new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.10, depthWrite: false, side: THREE.DoubleSide }));
-  dome.position.set(safeZone.x, safeZone.y, safeZone.z); scene.add(dome);
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(safeZone.r, 0.25, 6, 48), new THREE.MeshBasicMaterial({ color: 0x40ffb0 }));
-  ring.rotation.x = Math.PI/2; ring.position.set(safeZone.x, safeZone.y + 0.3, safeZone.z); scene.add(ring); }
-// 島與島之間的浮游岩（鋼索中繼點），每條航線 1~2 顆，比兩端高 25~35m
+  dome.position.set(sz.x, sz.y, sz.z); scene.add(dome);
+  const rg = new THREE.Mesh(new THREE.TorusGeometry(sz.r, 0.25, 6, 48), new THREE.MeshBasicMaterial({ color: 0x40ffb0 }));
+  rg.rotation.x = Math.PI/2; rg.position.set(sz.x, sz.y + 0.3, sz.z); scene.add(rg);
+}
+// 鋼索中繼的浮游岩：外圈相鄰兩島之間、基地與外圈、外圈到中央（四條放射線）
 const byName = n => islands.find(i => i.name === n);
-// v1.5：航線從 17 條減到 12 條、浮游岩彼此至少相距 30m、中央補給站抬高到 70m，讓密集島上空與島間的空域保持暢通
-const routes = [['起點島','補給島 A'],['起點島','補給島 B'],['補給島 B','密集島'],['補給島 A','密集島 北'],
-  ['密集島 北','高島'],['密集島','低島'],['密集島','補給島 C'],['密集島 北','補給島 C'],['補給島 C','遠島'],['高島','遠島'],['低島','遠島'],
-  ['補給島 A','中央補給站'],['補給島 B','中央補給站'],['中央補給站','補給島 C'],['起點島','中央補給站']];
+const routes = [];
+const loop = ['基地 A', ...ring.filter(n => +n.split(' ')[1].replace('°','') > 180), '基地 B', ...ring.filter(n => +n.split(' ')[1].replace('°','') < 180)];
+// 順序：A(180°) → 200…340 → B(0°) → 20…160 → 回到 A
+loop.sort((a, b) => { const ang = n => n === '基地 A' ? 180 : n === '基地 B' ? 360 : +n.split(' ')[1].replace('°',''); return ang(a) - ang(b); });
+for (let i = 0; i < loop.length; i++) routes.push([loop[i], loop[(i + 1) % loop.length]]);
+for (const d of [60, 120, 240, 300]) routes.push(['外圈 ' + d + '°', '中央平台']);
+routes.push(['基地 A', '中央平台'], ['基地 B', '中央平台']);
 const rocks = [];
-// 出生點正前方保證有一顆（新手平視就勾得到），航線上的岩石會自動避開它
-{ const S0 = CONFIG.map.spawn; const fx = S0.x + 36, fy = S0.y + 24; rocks.push({ x: fx, y: fy, z: 0 }); addBox(fx, fy, 0, 6, 4.8, 6, matRock, true); }
+// 兩邊基地正前方高處各一顆（新手平視就勾得到；夠高，不擋兩基地對射）
+for (const [fx, fz] of [[MAPC.spawn.x + 40, 0], [350 - 44, 0]]){ rocks.push({ x: fx, y: 44, z: fz }); addBox(fx, 44, fz, 6, 4.8, 6, matRock, true); }
 for (const [a, b] of routes){
   const A = byName(a), B = byName(b), dist = Math.hypot(B.cx - A.cx, B.cz - A.cz);
-  const nRocks = Math.max(1, Math.ceil(dist / 32) - 1);   // 約每 32m 一顆，鋼索 60m 一定搆得到
+  const nRocks = Math.max(1, Math.ceil(dist / 32) - 1);
   for (let k = 1; k <= nRocks; k++){
     const f = k / (nRocks + 1);
-    const x = A.cx + (B.cx - A.cx) * f + (mrng() - 0.5) * 8, z = A.cz + (B.cz - A.cz) * f + (mrng() - 0.5) * 8;
-    const y = A.top + (B.top - A.top) * f + 20 + mrng() * 10, sz = 4 + mrng() * 3;
-    if (rocks.some(q => Math.hypot(q.x - x, q.y - y, q.z - z) < 30)) continue;   // 太靠近既有的浮游岩就不放
+    const x = A.cx + (B.cx - A.cx) * f + (mrng() - 0.5) * 6, z = A.cz + (B.cz - A.cz) * f + (mrng() - 0.5) * 6;
+    const y = A.top + (B.top - A.top) * f + 16 + mrng() * 8, sz = 4 + mrng() * 3;   // 跟著兩端高度漸變（往中央會一路往下）
+    if (rocks.some(q => Math.hypot(q.x - x, q.y - y, q.z - z) < 28)) continue;
+    // 兩基地之間的中線保持淨空（|z|<10 且在兩基地之間的岩石要夠高，不擋對射）
+    if (Math.abs(z) < 10 && x > 70 && x < 330 && y < 40) continue;
     rocks.push({ x, y, z }); addBox(x, y, z, sz, sz * 0.8, sz, matRock, true);
   }
 }
@@ -416,11 +445,11 @@ function addTarget(x, y, z, kind, groundY = 0){
   targets.push(t); targetsByCollider.set(col.handle, t);
   return t;
 }
-addTarget(196, 9, -30, 'static', 6);    // 密集島
-addTarget(210, 13, 30, 'static', 10);   // 密集島 北
-addTarget(380, 19, 0, 'moving', 16);     // 遠島（左右移動）
-addTarget(265, 31, 55, 'air');           // 吊在高島下方
-addTarget(305, 3, 9, 'static', 0);       // 補給島 C
+// 靶子：外圈四座各一、中央平台兩個、敵方基地一個（左右移動）、吊在最高點下方一個
+for (const d of [60, 120, 240, 300]){ const I = byName('外圈 ' + d + '°'); addTarget(I.cx, I.top + 2.5, I.cz, 'static', I.top - 1); }
+addTarget(185, -17, -14, 'static', -20); addTarget(215, -17, 14, 'static', -20);
+addTarget(350, 13, 0, 'moving', 10);
+{ const I = byName('外圈 100°'); addTarget(I.cx, I.top - 14, I.cz, 'air'); }
 
 // ---------- 玩家機體 ----------
 const S = CONFIG.map.spawn;
@@ -643,7 +672,7 @@ function simTick(cmd){
   }
 
   // --- 地面 / 空中移動 ---
-  const onSlope = P.grounded && P.groundN && P.groundN.y < 0.95;
+  const onSlope = P.grounded && P.groundN && P.groundN.y < 0.995;
   if (onSlope && !(anyHooked && reelIn > 0) && !P.thrusting){
     // v1.8 蜘蛛腳：在 70° 以內的坡面上抵銷重力、貼住坡面，沿坡面移動
     const n = P.groundN; _v.y -= CONFIG.physics.gravity * dt;   // gravity 為負值 → 這裡加回去
@@ -991,7 +1020,7 @@ function worldTick(dt){
   state.weapon.recoil *= Math.exp(-dt / W.recoilTau);
   // 補給平台：站上去補燃料與彈藥
   { const P = state.player, p = playerBody.translation(); P.onPad = false;
-    P.safe = Math.hypot(p.x - safeZone.x, p.y - safeZone.y, p.z - safeZone.z) < safeZone.r;   // 無敵區（日後 PvP：區內不受傷、不能開火）
+    P.safe = safeZones.some(z => Math.hypot(p.x - z.x, p.y - z.y, p.z - z.z) < z.r);   // 無敵區（日後 PvP：區內不受傷、不能開火）
     if (P.grounded) for (const pad of supplyPads){ if (Math.hypot(pad.x - p.x, pad.z - p.z) < pad.r && Math.abs(p.y - pad.y) < 4){
       P.onPad = true; P.fuel = Math.min(CONFIG.boost.fuel, P.fuel + CONFIG.boost.regenPad * dt);
       const w = state.weapon; if (w.reloading <= 0) w.ammo = Math.min(W.ammo, w.ammo + CONFIG.supply.ammoPerSec * dt);
@@ -1421,7 +1450,7 @@ function drawHUD(dt){
   if (opts.follow === 'weapon' && !mouseMode && (aimOff.x || aimOff.y)) drawReticle(aimOff.x, aimOff.y, '#ff6a50', state.weapon.active === 'main' ? '57mm' : state.weapon.active === 'mg' ? '14.5mm' : '釘槍');
   if (ropeAiming) drawReticle(ropeOff.x, ropeOff.y, '#3de0ff', '放開＝射出右索');
   // 狀態橫幅：無敵區／釘在牆上
-  { const msgs = []; if (P.safe) msgs.push(['無敵區：不會受傷，也不能開火', '#40ffb0']); if (P.pinned) msgs.push(['釘在牆上：勾索或推進就會脫離', '#ffc94a']);
+  { const msgs = []; if (P.safe) msgs.push(['出生保護區：不會受傷，也不能開火', '#40ffb0']); if (P.pinned) msgs.push(['釘在牆上：勾索、推進或撲擊就會脫離', '#ffc94a']);
     msgs.forEach(([m, col], i) => { c.font = '700 14px sans-serif'; c.textAlign = 'center'; const tw2 = c.measureText(m).width;
       c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(cx - tw2/2 - 10, cy - 96 - i*26, tw2 + 20, 22); c.fillStyle = col; c.fillText(m, cx, cy - 80 - i*26); }); }
   // ===== v1.3 準星介面（參考 86 機甲 HUD）=====
