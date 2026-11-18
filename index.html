@@ -160,13 +160,13 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.3</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.4</div>
   <ul>
     <li>空島戰場：<b>掉到最下面就是虛空</b>；發光平台是補給島，站上去補燃料和彈藥</li>
     <li><b>藍色搖桿</b>：移動</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
     <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">往上一甩＝切換主武／副武</b></li>
-    <li>準星：大弧上的兩個菱形＝左索／右索（灰＝沒勾點、黃＝可勾、青＝勾住）；弧頂＝彈量與彈種；下方 01／02＝主武／副武；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
+    <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；弧頂＝彈量與彈種；下方 01／02＝主武／副武；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
     <li>副武是釘槍：身邊 6m 內有牆時開槍＝釘在最近的牆上（自動收回鋼索；推進或勾索就脫離）</li>
     <li>地圖中央的補給站有<b style="color:#40ffb0">無敵區</b>：不會受傷，也不能開火；設定裡可選「跟手準星」</li>
     <li>擺盪時鏡頭會<b>鎖住準星下的地形</b>，不會亂晃；一轉視角就解除</li>
@@ -1326,15 +1326,24 @@ function drawHUD(dt){
     c.font = `600 ${Math.round(8*sc)}px sans-serif`; c.fillStyle = DIM;
     c.textAlign = 'right'; txt('ALT', cx - xs - sw - 4*sc, yL + 10*sc); c.textAlign = 'left'; txt('SPD', cx + xs + sw + 4*sc, yL + 10*sc);
     c.shadowBlur = 6;
-    // 兩個菱形＝左／右索：灰＝沒勾點、黃＝可勾、青＝勾住（勾住時旁邊顯示索長，張力高變紅）
-    state.ropes.forEach((r, i) => {
-      const ang = Math.PI * 1.5 + (i === 0 ? -0.72 : 0.72), dx2 = Math.cos(ang) * R0, dy2 = Math.sin(ang) * R0, d = 7 * sc;
-      const col = r.hooked ? (r.tension > 0.85 ? '#ff6050' : '#3de0ff') : hookPreview[0] ? '#ffe14a' : 'rgba(170,190,200,.6)';
-      c.save(); c.translate(cx + dx2, cy + dy2); c.rotate(ang + Math.PI / 2 + Math.PI / 4);
-      c.fillStyle = col; c.fillRect(-d, -d, d * 2, d * 2); c.restore();
-      if (r.hooked || r === state.ropes[0] && false){ c.shadowBlur = 0; c.font = `700 ${Math.round(9*sc)}px ui-monospace, monospace`; c.fillStyle = col;
-        c.textAlign = i === 0 ? 'right' : 'left'; txt(r.L.toFixed(0) + 'm', cx + dx2 + (i === 0 ? -12 : 12)*sc, cy + dy2 - 6*sc); c.shadowBlur = 6; }
-    });
+    // v1.4：菱形＝敵人方向（沿大圓周指向敵人；在背後時改空心；最近的標距離）。鋼索瞄準一律用準星
+    { const _ep = camera.position, list = [];
+      for (const t of targets){ if (t.dead) continue; const d = t.mesh.position.distanceTo(_ep); if (d < 400) list.push([d, t]); }
+      list.sort((x, y) => x[0] - y[0]);
+      list.slice(0, 4).forEach(([d, t], k) => {
+        const v = t.mesh.position.clone().applyMatrix4(camera.matrixWorldInverse); // 相機座標：x 右、y 上、z 往後為正
+        const behind = v.z > 0, onScreen = !behind && Math.abs(v.x / -v.z) < 0.35 && Math.abs(v.y / -v.z) < 0.25;
+        let ang = Math.atan2(-v.y, v.x); if (behind && Math.hypot(v.x, v.y) < 0.5) ang = Math.PI / 2;
+        const ex = cx + Math.cos(ang) * R0, ey = cy + Math.sin(ang) * R0, dd = (k === 0 ? 8 : 6) * sc;
+        const col = k === 0 ? '#ff5a48' : 'rgba(255,110,90,.65)';
+        c.save(); c.translate(ex, ey); c.rotate(ang + Math.PI / 2 + Math.PI / 4);
+        if (behind){ c.strokeStyle = col; c.lineWidth = 2.2; c.strokeRect(-dd, -dd, dd * 2, dd * 2); } else { c.fillStyle = col; c.fillRect(-dd, -dd, dd * 2, dd * 2); }
+        c.restore();
+        if (k === 0 && !onScreen){ c.shadowBlur = 0; c.font = `700 ${Math.round(9*sc)}px ui-monospace, monospace`; c.fillStyle = col;
+          const right = Math.cos(ang) >= 0; c.textAlign = right ? 'left' : 'right';
+          txt(Math.round(d) + 'm' + (behind ? ' 後' : ''), ex + (right ? 13 : -13) * sc, ey - 8 * sc); c.shadowBlur = 6; }
+      });
+    }
     // 內圈括弧＝射擊散布（散得越開括弧越開），各帶兩條刻度
     const spread = currentSpread(), Ri = (0.62 + spread * 0.08 + crossPulse * 0.08) * R0, hb = 0.48;
     for (const mid of [Math.PI, 0]){
@@ -1346,7 +1355,10 @@ function drawHUD(dt){
     const g0 = 9*sc, g1 = 19*sc;
     line([[cx - g1 - 4*sc, cy], [cx - g0 - 2*sc, cy]], hot, 2); line([[cx + g0 + 2*sc, cy], [cx + g1 + 4*sc, cy]], hot, 2);
     line([[cx, cy - g1 - 6*sc], [cx, cy - g0 - 4*sc]], hot, 2); line([[cx, cy + g0 + 4*sc], [cx, cy + g1 + 6*sc]], hot, 2);
-    c.strokeStyle = hot; c.lineWidth = 1.6; c.beginPath(); c.arc(cx, cy, 4.5*sc, 0, Math.PI*2); c.stroke();
+    const anyH = state.ropes[0].hooked || state.ropes[1].hooked, canH = !!hookPreview[0];
+    const ccol = hitMarkT > 0 ? '#ff5050' : anyH ? '#3de0ff' : canH ? '#ffe14a' : MINT; // 中心小圓：黃＝按下去會勾到、青＝已勾住
+    c.strokeStyle = ccol; c.lineWidth = (anyH || canH) ? 2.4 : 1.6; c.beginPath(); c.arc(cx, cy, (canH && !anyH ? 5.5 : 4.5)*sc, 0, Math.PI*2); c.stroke();
+    if (anyH){ c.fillStyle = 'rgba(61,224,255,.35)'; c.fill(); }
     if (hitMarkT > 0){ for (const [a2,b2] of [[-1,-1],[1,-1],[-1,1],[1,1]]) line([[cx+a2*7*sc, cy+b2*7*sc], [cx+a2*13*sc, cy+b2*13*sc]], '#ff5050', 2); }
     // 彈種資訊（準星附近）：弧頂＝彈量、弧頂上方＝彈種；準星下方＝武器欄位
     c.shadowBlur = 4;
@@ -1355,11 +1367,12 @@ function drawHUD(dt){
     c.font = `700 ${Math.round(13*sc)}px ui-monospace, Menlo, monospace`; c.fillStyle = wcol; c.textAlign = 'center';
     
     c.font = `700 ${Math.round(9*sc)}px ui-monospace, Menlo, monospace`;
-    txt(blocked ? 'SAFE ZONE · HOLD FIRE' : sub ? 'NAIL GUN' : '14.5mm MG', cx, cy - R0 - 8*sc);
-    c.font = `700 ${Math.round(15*sc)}px ui-monospace, Menlo, monospace`; txt(cnt, cx, cy + R0 * 0.62 + 22*sc);
-    c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`; txt((sub ? '02' : '01'), cx - 12*sc, cy + R0 * 0.62 + 36*sc);
-    c.font = `600 ${Math.round(9*sc)}px sans-serif`; txt(sub ? '副武' : '主武', cx + 12*sc, cy + R0 * 0.62 + 36*sc);
-    if (opts.autoFire && !mouseMode){ c.font = `700 ${Math.round(9*sc)}px ui-monospace, monospace`; c.fillStyle = wst2.autoOn ? '#ff7060' : DIM; txt('AUTO', cx, cy + R0 * 0.62 + 49*sc); }
+    const wname = blocked ? 'SAFE ZONE · HOLD FIRE' : sub ? 'NAIL GUN' : '14.5mm MG', yB = cy + R0 + 24*sc; // 武器資訊集中在大弧下方（弧上留給敵人方向）
+    c.font = `700 ${Math.round(15*sc)}px ui-monospace, Menlo, monospace`; txt(cnt, cx, yB);
+    c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'right'; txt((sub ? '02 ' : '01 '), cx - 2*sc, yB + 14*sc);
+    c.font = `600 ${Math.round(9*sc)}px sans-serif`; c.textAlign = 'left'; txt(sub ? '副武' : '主武', cx + 2*sc, yB + 14*sc);
+    c.font = `700 ${Math.round(9*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'center'; txt(wname, cx, yB + 27*sc);
+    if (opts.autoFire && !mouseMode){ c.fillStyle = wst2.autoOn ? '#ff7060' : DIM; txt('AUTO', cx, yB + 40*sc); }
     c.restore();
   }
   if (levelT > 0){ levelT -= dt; P.pitch *= Math.max(0, 1 - dt / Math.max(levelT, dt)); }
