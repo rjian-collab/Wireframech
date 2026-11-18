@@ -163,10 +163,10 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.5</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵・空島原型 v1.6</div>
   <ul>
     <li>空島戰場：<b>掉到最下面就是虛空</b>；發光平台是補給島，站上去補燃料和彈藥</li>
-    <li><b>藍色搖桿</b>：移動</li>
+    <li><b>藍色搖桿</b>：移動；<b>按住快速往上滑＝跳躍</b>（在地上或貼牆時）</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
     <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">往上一甩＝切換主武／副武</b></li>
     <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、01／02 主武／副武、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
@@ -192,7 +192,7 @@ import RAPIER from 'rapier';
 const CONFIG = Object.freeze({
   physics: { dt: 1/120, maxTicksPerFrame: 8, gravity: -20 },
   body: { mass: 3000, radius: 1.2, halfHeight: 0.9, linDamping: 0.05 },
-  ground: { speed: 9, accel: 40, friction: 30, slideFriction: 8, slideAbove: 12, jump: 7 },
+  ground: { speed: 9, accel: 40, friction: 30, slideFriction: 8, slideAbove: 12, jump: 10 },
   air: { control: 2 },
   boost: { accel: 40, fuel: 6, horizontal: 0.75, lift: 0.8, fallBrake: 2.5, hCap: 24, regenGround: 0.6, regenPad: 4 },
   supply: { ammoPerSec: 200 },
@@ -206,11 +206,12 @@ const CONFIG = Object.freeze({
     pumpGainCap: 1.15 /* 收索時每 tick 角動量補償上限 */,
     smartStopDist: 5, smartSlowSpeed: 8, releaseBoost: 3, releaseUp: 3, smartHeightWeight: 1.2, smartHeightCap: 25, smartMinDist: 10, smartHeadOnPenalty: 18, wallJumpOut: 9, wallJumpUp: 9,
   },
-  touch: { fireDelayMs: 80, swapFlick: 40, swapWindowMs: 250, followGain: 1.3, thrustOvershoot: 1.35, holdDecideMs: 110, moveDeadzone: 0.15, doubleTapWindow: 300, doubleTapDist: 40, tapMaxMs: 200, tapMaxMove: 12, edgeGraceMs: 150,
+  touch: { fireDelayMs: 80, btnHitScale: 1.35, swapFlick: 40, swapWindowMs: 250, followGain: 1.3, thrustOvershoot: 1.35, holdDecideMs: 110, moveDeadzone: 0.15, doubleTapWindow: 300, doubleTapDist: 40, tapMaxMs: 200, tapMaxMove: 12, edgeGraceMs: 150,
     dragSlowK: 0.7, dragFastK: 1.6, dragSlowAt: 40, dragFastAt: 400 },
   rope: { swingAccel: 6, swingDeadzone: 0.2, reelOn: 0.3, payoutOn: 0.3, payoutSpeed: 8, groundDetach: 0.5, groundDetachSpeed: 3,
     bottomWindowDeg: 15, bottomBonus: 1.15, apexHang: 0.35, apexGravityCut: 10, predictPoints: 24, predictTime: 0.8,
     coneH: 12, coneUp: 25, coneDown: 10, groundMinUp: 5, minDist: 6, upBias: 6, switchHysteresis: 2 },
+  stickJump: { windowMs: 220, dist: 1.25, vertRatio: 0.6 },
   assist: { ropeBufferS: 1.0, lockEnemyDeg: 15, lockEnemyRange: 250, levelIdleMs: 1000, levelPitchDeg: 10, levelRate: 45, quickTurnS: 0.25, doubleTapMs: 300 },
   camera: { stabHoldMs: 150, stabMinSpeed: 4, stabMinDist: 8, stabMaxRate: 300, stabGyroInput: 25, shakeScale: 0.4, eye: 1.1, fovBase: 70, fovAt40: 85, fovMax: 90, fovTau: 0.3, rollMaxDeg: 8, pitchLimit: 85,
     shakeDur: 0.5, speedLinesMin: 25, speedLinesMax: 60 },
@@ -445,7 +446,7 @@ function buildCommand(){
     fire: input.fire || input.fireTap || k.has('Mouse0'), hookL: input.hookL || k.has('KeyQ'), hookR: input.hookR || k.has('KeyE'),
     hookMain: input.hookMain || k.has('KeyF'), smart: opts.smart && !mouseMode, autoFire: opts.autoFire && !mouseMode,
     swap: input.swapQueued, gunYaw: input.gunYaw, gunPitch: input.gunPitch, ropeYaw: input.ropeYaw, ropePitch: input.ropePitch,
-    jump: false, boost: input.boost || k.has('ShiftLeft') || k.has('ShiftRight') || k.has('Space'), thrust: input.thrust, reload: input.reloadQueued };
+    jump: input.jumpQueued, boost: input.boost || k.has('ShiftLeft') || k.has('ShiftRight') || k.has('Space'), thrust: input.thrust, reload: input.reloadQueued };
   input.jumpQueued = false; input.reloadQueued = false; input.swapQueued = false; input.fireTap = false;
   if (input.ropeLatch && !state.ropes[1].hooked && state.ropes[1].wasHeld){ input.ropeLatch = false; input.hookR = false; }   // 右索自己脫鉤／沒勾到 → 解除鎖定
   else if (input.ropeLatch) input.hookR = true;
@@ -609,7 +610,8 @@ function simTick(cmd){
 
   // --- 跳躍 ---
   if (cmd.jump){
-    if (anyHooked){
+    if (anyHooked){ /* v1.6：搖桿上滑跳躍在勾住時不作用（不會誤把鋼索甩掉） */ }
+    else if (false){
       const h = Math.hypot(_v.x, _v.z);
       if (h > 0.1){ _v.x += _v.x/h*G.jumpForward; _v.z += _v.z/h*G.jumpForward; }
       _v.y += G.jumpUp; // 疊加，保留原本動量
@@ -991,7 +993,7 @@ function idleStick(){ // 沒在操作時，搖桿圖示停在左下角的預設�
   stickBase.style.display = stickKnob.style.display = 'block'; stickBase.classList.add('idle'); stickKnob.classList.add('idle');
   stickBase.classList.remove('rope', 'thrust');
   stickBase.style.left = hx + 'px'; stickBase.style.top = hy + 'px'; stickKnob.style.left = hx + 'px'; stickKnob.style.top = hy + 'px';
-  const bl = document.getElementById('bRopeL'); if (bl){ bl.style.left = (hx + R_STICK * 1.55) + 'px'; bl.style.top = (hy - R_STICK * 1.85) + 'px'; }
+  const bl = document.getElementById('bRopeL'); if (bl){ bl.style.left = (hx + R_STICK * 1.85) + 'px'; bl.style.top = (hy - R_STICK * 2.1) + 'px'; }
 }
 calcStick(); addEventListener('resize', calcStick); addEventListener('resize', idleStick);
 function setStick(p){
@@ -1001,6 +1003,9 @@ function setStick(p){
   const isRope = p.role === 'ropeL' || p.role === 'ropeR';
   // v1.2：兩個鋼索鈕都是小搖桿——按住＝射出鋼索，圈內拖曳＝收放／擺盪，拖出外圈＝推進（往拖曳方向）
   if (isRope){ p.thrust = l > R_STICK * CONFIG.touch.thrustOvershoot; updateThrust(); }
+  // v1.6 移動搖桿「按住快速往上滑」＝跳躍：按下 220ms 內往上滑超過 1.25 倍半徑、且以垂直方向為主
+  if (p.role === 'stick' && !p.jumped){ const rdx = p.x - p.ox, rdy = p.y - p.oy, J = CONFIG.stickJump;
+    if (performance.now() - p.t0 < J.windowMs && -rdy > R_STICK * J.dist && Math.abs(rdx) < -rdy * J.vertRatio){ p.jumped = true; input.jumpQueued = true; buzz(12); } }
   if (p.role === 'stick'){ const dz = CONFIG.touch.moveDeadzone; if (m < dz){ nx = 0; nz = 0; } else { const k = (m-dz)/(1-dz)/m; nx*=k; nz*=k; } }
   input.stickX = nx; input.stickZ = nz; // 鋼索搖桿給原始值，門檻在模擬裡判斷
   if (p.showStick){
@@ -1123,7 +1128,13 @@ function setRole(role, on){
 touchEl.addEventListener('pointerdown', e => {
   e.preventDefault(); unlockAudio(); showTouchUI(true);
   const now = performance.now();
-  const bEl = e.target.closest ? e.target.closest('.btn') : null;
+  let bEl = e.target.closest ? e.target.closest('.btn') : null;
+  // v1.6：按鈕判定範圍放大到 1.35 倍（手指稍微按偏也算），左索優先於移動搖桿
+  if (!bEl || !btnRoles[bEl.id]){ let best = null, bd = 1e9;
+    for (const id of Object.keys(btnRoles)){ const el = document.getElementById(id); if (!el || el.offsetParent === null) continue;
+      const r = el.getBoundingClientRect(), d = Math.hypot(e.clientX - (r.left + r.width/2), e.clientY - (r.top + r.height/2)) / (r.width/2);
+      if (d < CONFIG.touch.btnHitScale && d < bd){ bd = d; best = el; } }
+    if (best) bEl = best; }
   const btnId = bEl && btnRoles[bEl.id] ? bEl.id : null;
   const p = { x: e.clientX, y: e.clientY, ox: e.clientX, oy: e.clientY, lx: e.clientX, ly: e.clientY, t0: now, lt: now, moved: 0 };
   if (btnId){
