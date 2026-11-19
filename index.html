@@ -267,6 +267,7 @@
   <label style="margin:8px 0;font-size:15px">地圖 <select id="mapSel" style="font-size:15px;min-height:36px;border-radius:8px;background:#0f2230;color:#e6f6ff;border:1px solid rgba(140,220,255,.4)"><option value="novice">大島・樹林</option><option value="ring" disabled>環形空島戰場（之後更新）</option></select></label>
   <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="go" id="goBtn" disabled>載入中…</button><button class="go go2" id="goAI" disabled>對戰 AI</button><button class="go" id="goTut" style="background:linear-gradient(180deg,#7fe3a0,#2fa866)">新手教學</button></div>
   <div id="status"></div>
+  <a id="fullLink" href="https://wireframech.vercel.app" target="_blank" rel="noopener" style="display:none;margin-top:6px;padding:8px 14px;border-radius:10px;border:1px solid rgba(140,220,255,.5);color:#9fe8ff;text-decoration:none;font-size:14px">⛶ You can also play at wireframech.vercel.app（大畫面）</a>
   <div style="opacity:.7;font-size:11px;max-width:min(640px,92vw);text-align:center;margin-top:6px;line-height:1.5">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）<br>松樹與地面材質：<a href="https://sketchfab.com/3d-models/pine-forest-ece69535f7584e099488f65f2072264e" target="_blank" style="color:#9fe8ff">“Pine Forest”</a> by fangzhangmnm，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>（已拆出單棵樹、縮小貼圖）</div>
 </div>
 
@@ -2869,6 +2870,7 @@ requestAnimationFrame(frame);
 const goBtn = document.getElementById('goBtn');
 goBtn.disabled = false; goBtn.textContent = '練習（打靶）';
 const goAI = document.getElementById('goAI'); goAI.disabled = false;
+try { if (window.top !== window.self) document.getElementById('fullLink').style.display = 'inline-block'; } catch(_){ document.getElementById('fullLink').style.display = 'inline-block'; }   // 嵌在 itch.io 等網站的小框裡時，顯示大畫面版連結
 const mapSel = document.getElementById('mapSel'); mapSel.value = MAP_ID;
 mapSel.addEventListener('change', () => { try { localStorage.setItem('wfm.map', mapSel.value); } catch(_){} const u = new URL(location.href); u.searchParams.set('map', mapSel.value); location.href = u.toString(); });
 let startMode = 'practice';
@@ -2933,7 +2935,7 @@ const tutorial = (() => {
       init(){ acc = 0; }, done(){ if (P().thrusting) acc += 1 / 60; return acc > 0.6; } },
     { title: '射擊', g: 'hold', text: '<b>按住射擊鈕</b>開火，打掉一個靶（紅白圓靶）。準星對到靶時射控會幫你補正。', hl: 'bFire', init(){}, done(){ return seen('kill'); } },
     { title: '換武器', g: 'swap', text: '在射擊鈕上<b>按住</b>，旁邊會出現三個武器圖示，<b>往圖示方向一甩</b>就換過去。', hl: 'bFire', init(){}, done(){ return seen('swap'); } },
-    { title: '腿部釘槍', g: 'nail', text: '換到 03 釘槍：<b>靠牆開槍</b>＝釘在牆上（推搖桿可以沿牆爬）；<b>在空中開槍</b>＝急煞車。', hl: 'bFire', init(){}, done(){ return seen('pin') || seen('nailBrake'); } },
+    { title: '腿部釘槍', g: 'nail', text: '換到 03 釘槍：<b>靠牆開槍</b>＝釘在牆上（推搖桿可以沿牆爬）；<b>在空中開槍</b>＝急煞車。', hl: 'bFire', init(){}, done(){ return seen('pin') || seen('nailBrake') || events.some(e => !e.by && e.type === 'shot' && e.nail); } },   // v3.6b 在平地開一發釘槍也算過關（原本只認釘牆／空中煞車，大島上沒牆會卡住）
   ];
   // v3.4 用動畫示範手勢（半透明指尖在要操作的按鈕上做一次動作，一直重播），不用文字
   const hand = $('tutHand'), aim = $('tutAim'), trail = $('tutTrail'), rip = hand.querySelector('s'); let anim = null, anim2 = null;
