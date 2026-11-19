@@ -626,7 +626,8 @@ function addMenhir(x, z, groundY, h, yaw){   // 石陣的立石（掩體）
   const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw), b = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(x, groundY + h / 2 - 0.3, z).setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }));
   const c = world.createCollider(RAPIER.ColliderDesc.cuboid(w / 2, h / 2, d / 2).setFriction(0), b); hookable.add(c.handle);
 }
-const MECH_H = 3.8;   // 機體實際高度（腳到頂）約 3.8m
+const MECH_H = 3.8;
+const REAR_LEG_SHIFT = 0.55;   // v3.6 後腳往後移（m）   // 機體實際高度（腳到頂）約 3.8m
 function addBoulder(x, z, groundY, H, rnd){   // 寬的大巨石：露出地面的高度 H，寬度約 H 的 2.4～3.6 倍，下面埋一截
   const g = new THREE.IcosahedronGeometry(1, 1), pa = g.attributes.position, jit = new Map();
   const hy = H * 0.75, rx = H * (1.2 + rnd() * 0.6), rz = H * (1.0 + rnd() * 0.5);
@@ -1841,7 +1842,7 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     // 炮塔與砲管跟著準星；機槍臂也指向準星
     M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9); if (M.mgArm) M.mgArm.rotation.x = clamp(P.pitch, -0.4, 0.7);   // 機槍跟準星上下
     if (M.arm2){ const want = (cfg.weapon ? cfg.weapon() : state.weapon).active === 'mg' ? 1 : 0; M.arm2.k += (want - M.arm2.k) * Math.min(1, dt * 8);   // 選 02 副武時展開成 L，其他時候收成 V
-      const k = M.arm2.k; M.arm2.S.rotation.x = 0.75 * (1 - k) + 0.6 * k; M.arm2.E.rotation.x = 1.6 * (1 - k) + 1.02 * k; }   // v2.9 收：V 字開口朝前（前臂斜向前上、不進機鼻）；展：上臂斜前下＋前臂水平
+      const k = M.arm2.k; M.arm2.S.rotation.x = 0.9 * (1 - k) + 0.6 * k; M.arm2.E.rotation.x = 3.6 * (1 - k) + 1.02 * k; }   // v3.6 收：上臂斜前下、前臂往後上折貼在機鼻下（螳螂）；展：L 形   // v2.9 收：V 字開口朝前（前臂斜向前上、不進機鼻）；展：上臂斜前下＋前臂水平
     // v2.9 滑膛炮後座：機身往後一頓、機首微抬，腳固定在地上吸收（IK 自動彎膝）
     M.rc = Math.max(0, (M.rc || 0) - dt / 0.28); const rk = M.rc * M.rc * (3 - 2 * M.rc);
     M.body.position.set(0, -0.12 * rk, 0.42 * rk); M.body.rotation.x = 0.09 * rk;
@@ -1964,8 +1965,8 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
       const blade = (len, w0, w1, th, m) => { const g = new THREE.CylinderGeometry(w1, w0, len, 4); g.rotateY(Math.PI / 4); g.scale(th, 1, 1); g.translate(0, -len / 2, 0); return new THREE.Mesh(g, m); };   // 菱形斷面、往 -Y 延伸的刃狀臂節
       const joint = (r, m) => new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), m);
       const core = new THREE.Box3().setFromObject(gltf.scene.getObjectByName('Cockpit_Procedural_Scratched_Metal_0') || gltf.scene);
-      // 格鬥臂：肩關節在機頭下方
-      const S = new THREE.Group(); S.position.set((core.min.x + core.max.x) / 2, core.min.y + 0.25, core.min.z + 0.5); M.body.add(S); S.add(joint(0.45, matD));
+      // 格鬥臂：v3.6 肩關節移到機鼻前端、位置比較高（平常像螳螂一樣折在機鼻下）
+      const S = new THREE.Group(); S.position.set((core.min.x + core.max.x) / 2, core.min.y + 0.5, core.min.z - 0.6); M.body.add(S); S.add(joint(0.45, matD));
       const L1 = 1.4, L2 = 2.3;   // v2.9 縮短：避免手肘戳進地面、前臂插進機鼻
       const up = blade(L1, 0.55, 0.38, 0.45, matF); S.add(up);
       const E = new THREE.Group(); E.position.y = -L1; S.add(E); E.add(joint(0.34, matD));
@@ -1997,7 +1998,7 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
       gltf.scene.traverse(o => { if (!o.isMesh || isLegPart(o) || skipBody(o)) return;
         warpMesh(o, v => { if (v.z < zM){ const t = clamp((zM - v.z) / (zM - zF), 0, 1.3), e = t * t * (3 - 2 * Math.min(t, 1));
             v.x *= 1 - 0.55 * Math.min(e, 1); v.y = yc + (v.y - yc) * (1 - 0.35 * Math.min(e, 1)); v.z -= 0.6 * Math.min(t, 1); }
-          else { const t = clamp((v.z - zM) / (zB - zM), 0, 1); v.x *= 1 + 0.14 * t; } }); }); }
+          else { const t = clamp((v.z - zM) / (zB - zM), 0, 1), e = Math.pow(t, 1.3); v.x *= 1 - 0.42 * e; v.y = yc + (v.y - yc) * (1 - 0.22 * e); } }); }); }   // v3.6 後半部流線型往內收
     // 腳變細：沿骨軸（髖→膝、膝→腳底）把粗細縮成 60%
     function thinAlong(node, a, b, k){ if (!node) return; const ab = new THREE.Vector3().subVectors(b, a), L2 = ab.lengthSq();
       node.traverse(o => { if (!o.isMesh) return; warpMesh(o, v => { const t = ((v.x - a.x) * ab.x + (v.y - a.y) * ab.y + (v.z - a.z) * ab.z) / L2, px = a.x + ab.x * t, py = a.y + ab.y * t, pz = a.z + ab.z * t;
@@ -2014,6 +2015,10 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
       S.traverse(o => { if (!o.isMesh) return; const pa = o.geometry.attributes.position; for (let k = 0; k < pa.count; k += 3){ v.fromBufferAttribute(pa, k).applyMatrix4(o.matrixWorld); pts.push(v.clone()); if (v.y < minY2) minY2 = v.y; } });
       const footW = new THREE.Vector3(); let nf = 0; for (const p2 of pts) if (p2.y < minY2 + 0.12){ footW.add(p2); nf++; } footW.divideScalar(Math.max(1, nf));
       const hip = M.body.worldToLocal(hipW.clone()), knee = M.body.worldToLocal(kneeW.clone()), foot = M.body.worldToLocal(footW.clone());
+      const isRear = foot.z > hip.z - 0.2 && hip.z > -0.8;   // v3.6 兩隻後腳整組往後移到機身那條橫線的位置
+      if (isRear){ const dz = REAR_LEG_SHIFT, o0 = M.body.localToWorld(new THREE.Vector3(0, 0, 0)), o1 = M.body.localToWorld(new THREE.Vector3(0, 0, dz)), off = o1.sub(o0);
+        for (const n of [J, T, S]){ const wp = n.getWorldPosition(new THREE.Vector3()).add(off); n.parent.worldToLocal(wp); n.position.copy(wp); n.updateMatrixWorld(true); }
+        hip.z += dz; knee.z += dz; foot.z += dz; }
       thinAlong(T, hip, knee, 0.6); thinAlong(S, knee, foot, 0.6); thinAlong(J, hip.clone().add(new THREE.Vector3(0, 0.3, 0)), hip.clone().add(new THREE.Vector3(0, -0.3, 0)), 0.75);   // v2.5 腳變細
       const hipG = new THREE.Group(); hipG.position.copy(hip); M.body.add(hipG); hipG.updateMatrixWorld(true);
       hipG.attach(J); hipG.attach(T);
