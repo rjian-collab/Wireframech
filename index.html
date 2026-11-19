@@ -236,7 +236,6 @@
   <details style="max-width:min(640px,92vw);margin:4px 0 8px"><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
-    <li style="opacity:.75;font-size:12px">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）</li>
     <li><b style="color:#ffb070">對戰 AI</b>：你從基地 A、AI 從基地 B 出發；先擊破 5 次或 5 分鐘內分數高的贏；掉下虛空算對方得分；橘色機體與橘色鋼索是 AI</li>
     <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），左上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>輕點＝原地跳；快速往任一方向滑出並放開＝往那邊跳</b>；推得越遠走越快（在地上、坡上、貼牆或釘在牆上時都能跳）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
@@ -255,6 +254,7 @@
   <label style="margin:8px 0;font-size:15px">地圖 <select id="mapSel" style="font-size:15px;min-height:36px;border-radius:8px;background:#0f2230;color:#e6f6ff;border:1px solid rgba(140,220,255,.4)"><option value="novice">大島・樹林</option><option value="ring" disabled>環形空島戰場（之後更新）</option></select></label>
   <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="go" id="goBtn" disabled>載入中…</button><button class="go go2" id="goAI" disabled>對戰 AI</button><button class="go" id="goTut" style="background:linear-gradient(180deg,#7fe3a0,#2fa866)">新手教學</button></div>
   <div id="status"></div>
+  <div style="opacity:.7;font-size:11px;max-width:min(640px,92vw);text-align:center;margin-top:6px;line-height:1.5">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）<br>松樹與地面材質：<a href="https://sketchfab.com/3d-models/pine-forest-ece69535f7584e099488f65f2072264e" target="_blank" style="color:#9fe8ff">“Pine Forest”</a> by fangzhangmnm，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>（已拆出單棵樹、縮小貼圖）</div>
 </div>
 
 <script type="module">
@@ -391,6 +391,15 @@ const matPad    = new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: tr
 const islands = [], supplyPads = [];
 // ===== v2.5 真正的空島外型：不規則平頂草地＋往下收的岩石倒錐＋垂下的石筍；碰撞用凸包（站立、鋼索判定照舊）=====
 const matIslandV = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+// v3.3 地面材質（取自 “Pine Forest” by fangzhangmnm, CC BY 4.0）：島面蓋一層貼圖（每 9m 重複一次）
+const groundTex = new THREE.TextureLoader().load('assets/ground.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; t.needsUpdate = true; });
+const matGroundTex = new THREE.MeshLambertMaterial({ map: groundTex, color: 0xd8e8c8 });
+function addGroundCap(cx, top, cz, ring){
+  const pos = [], uv = [], T = 9, push = (x, z) => { pos.push(x, 0, z); uv.push((x + cx) / T, (z + cz) / T); };
+  for (let i = 0; i < ring.length; i++){ const a = ring[i], b = ring[(i + 1) % ring.length]; push(0, 0); push(b.x, b.z); push(a.x, a.z); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, matGroundTex); m.position.set(cx, top + 0.04, cz); m.receiveShadow = true; scene.add(m);
+}
 const matRockF = new THREE.MeshLambertMaterial({ color: 0x6f6a64, flatShading: true });
 const _c1 = new THREE.Color(), _c2 = new THREE.Color();
 // v2.6 島型：round 圓島、mesa 平頂台地（陡壁、淺底）、spire 尖錐（深長的尖底）、shard 裂片（稜角多邊形）、twin 雙瓣、lobed 多瓣
@@ -450,6 +459,7 @@ function addIsland(name, cx, top, cz, w, d, th, opt = {}){
   const m = new THREE.Mesh(sh.geo, matIslandV); m.position.set(cx, top, cz); scene.add(m);
   addHullBody(new THREE.Vector3(cx, top, cz), q, [sh.hullTop, sh.hullBot]);
   islands.push({ name, cx, top, cz, w, d });
+  if (opt.groundTex) addGroundCap(cx, top, cz, sh.R[0]);
   if (opt.supply){ // 補給島：發光補給平台（站上去補燃料與彈藥）
     const pad = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 0.3, 24), matPad); pad.position.set(cx, top + 0.15, cz); scene.add(pad);
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 60, 8), new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.18 }));
@@ -490,6 +500,7 @@ function addTiltIsland(name, cx, top, cz, w, d, th, tiltDeg, opt = {}){
 //  兩隊出生在左右兩座小空島（比大島高 25m），先甩索／跳下大島再開打；左右以 x=200 鏡像對稱
 const LEAF_MATS = [0x1f4a2c, 0x275a33, 0x2f6a3b, 0x3a7a44, 0x47884c].map(c => new THREE.MeshLambertMaterial({ color: c, flatShading: true }));
 const BARK_MATS = [0x4a3a2c, 0x56442f, 0x3e3226].map(c => new THREE.MeshLambertMaterial({ color: c, flatShading: true }));
+const treeSpots = [];
 function addTree(x, z, groundY, h, rnd = mrng){   // v3.2b 擬真一點的針葉樹：微彎的樹幹＋一層層往下垂的枝葉團（下深上淺），每棵大小／色調不同
   const r0 = 0.9 + rnd() * 0.5, grp = new THREE.Group(); grp.position.set(x, groundY, z); grp.rotation.y = rnd() * 6.28; scene.add(grp);
   const lean = [(rnd() - 0.5) * 0.04, (rnd() - 0.5) * 0.04];
@@ -516,6 +527,7 @@ function addTree(x, z, groundY, h, rnd = mrng){   // v3.2b 擬真一點的針葉
       grp.add(m);
     }
   }
+  treeSpots.push({ grp, h, maxR, rot: rnd() * 6.28 });
   // 樹冠碰撞：一個圓錐包住（可勾）
   const cone = new THREE.ConeGeometry(maxR * 0.9, h * 1.02 - y0 + 2, 8); cone.translate(0, (h * 1.02 + y0) / 2, 0);
   const pa = cone.attributes.position, pts = new Float32Array(pa.array.length); pts.set(pa.array); addHullBody(new THREE.Vector3(x, groundY, z), new THREE.Quaternion(), [pts]);
@@ -530,9 +542,9 @@ function addPad(x, y, z){ const pad = new THREE.Mesh(new THREE.CylinderGeometry(
   supplyPads.push({ x, y, z, r: 6 }); }
 function buildNoviceMap(){
   const BIG = { x: 200, top: 0, z: 0, w: 300, d: 160 };
-  addIsland('大島', BIG.x, BIG.top, BIG.z, BIG.w, BIG.d, 16, { chains: 5, style: 'round', pal: 0, outcrops: 0 });
-  addIsland('基地 A', 10, 25, 0, 40, 40, 10, { supply: true, chains: 2, style: 'mesa', pal: 2, outcrops: 2 });
-  addIsland('基地 B', 390, 25, 0, 40, 40, 10, { supply: true, chains: 2, style: 'mesa', pal: 2, outcrops: 2 });
+  addIsland('大島', BIG.x, BIG.top, BIG.z, BIG.w, BIG.d, 16, { chains: 5, style: 'round', pal: 0, outcrops: 0, groundTex: true });
+  addIsland('基地 A', 10, 25, 0, 40, 40, 10, { supply: true, chains: 2, style: 'mesa', pal: 2, outcrops: 2, groundTex: true });
+  addIsland('基地 B', 390, 25, 0, 40, 40, 10, { supply: true, chains: 2, style: 'mesa', pal: 2, outcrops: 2, groundTex: true });
   const rnd = mulberry32(777);
   // 樹林：大島後半（z 20～62），x 75～195 隨機、鏡像到另一半
   const trees = [];
@@ -1831,6 +1843,22 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
   return M;
 }
 const mech = createMech();
+// v3.3 松樹模型（“Pine Forest” by fangzhangmnm, CC BY 4.0；拆出單棵）：載入後取代簡化樹的外觀（碰撞不變）
+async function loadPines(){
+  if (!treeSpots.length) return;
+  try {
+    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+    const g = await new GLTFLoader().loadAsync('assets/pine.glb'); let src = null; g.scene.traverse(o => { if (o.isMesh && !src) src = o; }); if (!src) return;
+    const mt = src.material; mt.alphaTest = 0.5; mt.transparent = false; mt.side = THREE.DoubleSide; mt.metalness = 0; mt.roughness = 0.95; mt.color.setHex(0x8fa486);   // 壓暗一點，不然在這裡的光線下偏灰黃
+    src.geometry.computeBoundingBox(); const bb = src.geometry.boundingBox, H = bb.max.y - bb.min.y, Rm = Math.max(-bb.min.x, bb.max.x, -bb.min.z, bb.max.z);
+    for (const t of treeSpots){
+      for (const c of t.grp.children) c.visible = false;
+      const m = new THREE.Mesh(src.geometry, mt), sy = t.h * 1.04 / H, sxz = Math.max(t.maxR * 1.2 / Rm, sy * 0.42);
+      m.scale.set(sxz, sy, sxz); m.rotation.y = t.rot; m.position.y = -bb.min.y * sy; t.grp.add(m);
+    }
+  } catch (e){ console.warn('松樹模型載入失敗，改用簡化樹', e); }
+}
+loadPines();
 mech.loadModel().then(ok => { if (!ok){ mech.failed = true; console.warn('機體模型結構不符，改用過渡模型'); } }).catch(err => { mech.failed = true; console.warn('機體模型載入失敗，改用過渡模型', err); });
 function updateMech(dt, alpha){ const P = state.player; mech.update(dt, V().lerpVectors(P.prevPos, P.currPos, alpha), P, state.ropes);
   if (bot){ const on = bot.active && (bot.mech.loaded || bot.mech.failed); bot.mech.root.visible = on;

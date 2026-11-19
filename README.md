@@ -41,3 +41,4 @@ WASD 移動・F 鋼索（勾住時 W/S 收放、A/D 擺盪）・Q／E 左右索�
 - 機體模型："Eighty-Six XM2 Reginleif [Undertaker]" (https://skfb.ly/oL9Qx) by Z7RO is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
   - 已修改：重組腳部關節並以 IK 驅動、調整站姿、移除左刀臂、加裝機槍與鋼索發射器、壓縮貼圖與網格。
   - 注意：CC BY 授權的是建模作品；機體設計屬《86 -不存在的戰區-》原作，正式發布前需換成原創設計。
+- "Pine Forest" (https://sketchfab.com/3d-models/pine-forest-ece69535f7584e099488f65f2072264e) by fangzhangmnm is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/). Modified: extracted a single tree, downscaled textures; ground texture reused.
