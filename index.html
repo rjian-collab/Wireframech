@@ -26,12 +26,15 @@
   #result h2 { margin:0; font-size:clamp(28px, 9vmin, 54px); letter-spacing:.2em; } #result .sc { font-size:clamp(18px, 6vmin, 30px); color:#9fe4ff; }
   #result button { min-width:180px; min-height:48px; border-radius:12px; border:1px solid rgba(140,220,255,.5); background:rgba(60,170,230,.18); color:#eaf8ff; font-size:17px; }
   .go2 { background:linear-gradient(180deg,#ff9a50,#e0602a) !important; }
-  #tut { position:fixed; left:50%; top:calc(4px + var(--st)); transform:translateX(-50%); width:min(380px, 48vw); z-index:5; display:none;
-    background:rgba(8,16,24,.88); border:1px solid rgba(127,227,160,.6); border-radius:10px; padding:6px 10px; color:#e8f6ff; pointer-events:auto; }
-  #tut .tp { font-size:11px; color:#7fe3a0; letter-spacing:.1em; } #tut h3 { display:none; } #tut p { margin:0 0 5px; font-size:13px; line-height:1.4; color:#cfe6f2; }
-  #tut .bar { height:3px; background:rgba(255,255,255,.12); border-radius:2px; margin:3px 0 5px; } #tut .bar i { display:block; height:100%; background:#7fe3a0; border-radius:2px; width:0; transition:width .2s; }
-  #tut .row { display:flex; gap:8px; justify-content:flex-end; } #tut button { min-height:30px; padding:0 10px; border-radius:7px; font-size:12px !important; border:1px solid rgba(140,220,255,.4); background:rgba(140,220,255,.08); color:#dff; font-size:14px; }
-  #tut button.pri { background:rgba(127,227,160,.25); border-color:#7fe3a0; }
+  #tut { position:fixed; left:50%; top:calc(4px + var(--st)); transform:translateX(-50%); z-index:5; display:none; align-items:center; gap:8px;
+    background:rgba(8,16,24,.82); border:1px solid rgba(127,227,160,.55); border-radius:20px; padding:4px 6px 4px 12px; pointer-events:auto; }
+  #tut.on { display:flex; } #tut h3, #tut p { display:none; }
+  #tut .dots { display:flex; gap:5px; } #tut .dots i { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.22); } #tut .dots i.d { background:#7fe3a0; } #tut .dots i.c { background:#fff; box-shadow:0 0 0 3px rgba(127,227,160,.5); }
+  #tut button { width:34px; height:34px; border-radius:50%; border:1px solid rgba(140,220,255,.4); background:rgba(140,220,255,.08); color:#dff; font-size:15px; padding:0; }
+  #tut.fin { border-color:#7fe3a0; } #tut.fin .dots i { background:#7fe3a0; }
+  #tutHand { position:fixed; left:0; top:0; z-index:6; width:44px; height:44px; margin:-22px 0 0 -22px; pointer-events:none; display:none; }
+  #tutHand i { position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,.95) 0 30%, rgba(255,255,255,.35) 31% 60%, rgba(255,255,255,0) 61%); box-shadow:0 0 18px rgba(127,227,160,.9); }
+  #tutAim { position:fixed; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border:3px solid #ffd84a; border-radius:50%; z-index:4; pointer-events:none; display:none; animation:tutp .9s ease-in-out infinite; }
   #tutRing { position:fixed; z-index:4; pointer-events:none; border:3px solid #7fe3a0; border-radius:50%; display:none; animation:tutp 1.1s ease-in-out infinite; }
   @keyframes tutp { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.12); opacity:.45; } }
   #touch { position:fixed; inset:0; touch-action:none; }
@@ -61,6 +64,10 @@
   .btn.fire { --c:#ff5a40; }
   .btn.fire.none { --c:#6b7a88; color:#b9c4cf; }
   .btn.rope { --c:#3de0ff; }
+  .ropeic { display:flex; align-items:center; gap:1px; letter-spacing:0 !important; } .ropeic .side { font-style:normal; font-size:.55em; opacity:.75; }
+  .ic { width:clamp(22px, 6.4vmin, 30px); height:clamp(22px, 6.4vmin, 30px); fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; display:block; }
+  .ic.s { width:1.15em; height:1.15em; display:inline-block; vertical-align:-0.2em; stroke-width:2.4; }
+  #bView svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   .btn.rope.hooked { background:radial-gradient(circle, rgba(61,224,255,.35) 0%, rgba(4,30,44,.75) 70%); }
   .btn.rope.hooked::before { animation:spin 2.4s linear infinite; opacity:1; }
   .btn.rope.none { --c:#6b7a88; color:#b9c4cf; }
@@ -168,22 +175,22 @@
 <canvas id="hud"></canvas>
 <div id="frame"></div>
 <div id="flash"></div><div id="hurt"></div>
-<div id="tut"><div class="tp" id="tutStep"></div><div class="bar"><i id="tutBar"></i></div><h3 id="tutTitle"></h3><p id="tutText"></p><div class="row"><button id="tutSkipStep">跳過這步</button><button id="tutQuit">結束教學</button></div></div><div id="tutRing"></div>
+<div id="tut"><div class="dots" id="tutDots"></div><h3 id="tutTitle"></h3><p id="tutText"></p><button id="tutSkipStep" aria-label="跳過這步">⏭</button><button id="tutQuit" aria-label="結束教學">✕</button><span id="tutStep" hidden></span><i id="tutBar" hidden></i></div><div id="tutRing"></div><div id="tutHand"><i></i></div><div id="tutAim"></div>
 <div id="result"><h2 id="resTitle">勝利</h2><div class="sc" id="resScore"></div><button id="resAgain">再來一場</button><button id="resPractice">回到練習</button></div>
 <div id="touch">
   <div class="stick" id="stickBase"></div><div class="knob" id="stickKnob"></div>
   <div class="stick" id="stickBase2"></div><div class="knob" id="stickKnob2"></div>
-  <div class="btn rope" id="bRopeL"><b>左索</b><small id="sRopeL">—</small></div>
-  <div class="btn rope" id="bRopeR"><b>右索</b><small id="sRopeR">—</small></div>
-  <div class="btn fire" id="bFire"><b id="lFire">射擊</b><small id="sFire">1000</small></div>
+  <div class="btn rope" id="bRopeL"><b class="ropeic"><i class="side">◀</i><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v8.5"/><circle cx="12" cy="2.8" r="1.4"/><path d="M12 11c-3.6 0-5.8 2.6-5.8 5.6M12 11c3.6 0 5.8 2.6 5.8 5.6M12 11v9.5"/><path d="M4.3 15.4l1.9 1.2 1.2-1.9M19.7 15.4l-1.9 1.2-1.2-1.9M10.4 19.2l1.6 1.4 1.6-1.4"/></svg></b><small id="sRopeL">—</small></div>
+  <div class="btn rope" id="bRopeR"><b class="ropeic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v8.5"/><circle cx="12" cy="2.8" r="1.4"/><path d="M12 11c-3.6 0-5.8 2.6-5.8 5.6M12 11c3.6 0 5.8 2.6 5.8 5.6M12 11v9.5"/><path d="M4.3 15.4l1.9 1.2 1.2-1.9M19.7 15.4l-1.9 1.2-1.2-1.9M10.4 19.2l1.6 1.4 1.6-1.4"/></svg><i class="side">▶</i></b><small id="sRopeR">—</small></div>
+  <div class="btn fire" id="bFire"><b id="lFire"></b><small id="sFire">1000</small></div>
   <div id="swapHint" style="display:none"><span id="swapCur">主武</span></div>
   <div class="wslot" id="ws_main" data-s="main"></div><div class="wslot" id="ws_mg" data-s="mg"></div><div class="wslot" id="ws_sub" data-s="sub"></div>
 </div>
 <div id="topbar">
   <button class="small" id="bReset" aria-label="重生">↺</button>
-  <button class="small" id="bView" aria-label="切換視角" style="width:auto;padding:0 10px;border-radius:20px;font-size:13px">3P</button>
+  <button class="small" id="bView" aria-label="切換視角"></button>
   <button class="small" id="bSet" aria-label="設定">⚙</button>
-  <button class="small" id="bFS" aria-label="回到全螢幕" style="display:none;width:auto;padding:0 12px;border-radius:20px;font-size:14px">⛶ 全螢幕</button>
+  <button class="small" id="bFS" aria-label="回到全螢幕" style="display:none">⛶</button>
 </div>
 <div id="settings">
   <div class="panel">
@@ -204,6 +211,7 @@
       <label class="row"><span class="tx"><b>第三人稱</b><i>看得到機體；左上 3P／1P 也能切換</i></span><input type="checkbox" class="sw" id="optView3P" checked></label>
       <label class="row"><span class="tx"><b>鏡頭鎖定地形</b><i>擺盪時自動補正，準星穩定</i></span><input type="checkbox" class="sw" id="optStab" checked></label>
       <label class="row"><span class="tx"><b>鏡頭側傾</b><i>轉彎時畫面跟著傾斜</i></span><input type="checkbox" class="sw" id="optRoll"></label>
+      <label class="row"><span class="tx"><b>陰影</b><i>陽光投影；iPad 太卡可以關掉</i></span><input type="checkbox" class="sw" id="optShadows" checked></label>
       <label class="row"><span class="tx"><b>鏡頭震動</b><i>開砲、撞擊時畫面震動</i></span><input type="checkbox" class="sw" id="optShake" checked></label>
     </section>
     <section data-page="aid">
@@ -330,11 +338,48 @@ renderer.setPixelRatio(dpr);
 renderer.setSize(innerWidth, innerHeight);
 app.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x9cc4e4);
-scene.fog = new THREE.Fog(0x9cc4e4, 160, 520);
-const camera = new THREE.PerspectiveCamera(CONFIG.camera.fovBase, innerWidth/innerHeight, 0.1, 1000);
-scene.add(new THREE.HemisphereLight(0xdff0ff, 0x4a5560, 1.1));
-const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(-80, 150, 60); scene.add(sun);
+// v3.4 天空：漸層＋會飄的雲（著色器算的雲層）＋島下方的雲海；光影：陽光陰影跟著玩家、ACES 色調
+scene.background = new THREE.Color(0x9fc0e0);
+scene.fog = new THREE.Fog(0xa9c6e2, 220, 750);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+const skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uT: { value: 0 }, uSun: { value: new THREE.Vector3(-0.45, 0.75, 0.35).normalize() } },
+  vertexShader: `varying vec3 vD; void main(){ vD = normalize(position); vec4 p = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * p; gl_Position.z = gl_Position.w * 0.9999; }`,
+  fragmentShader: `varying vec3 vD; uniform float uT; uniform vec3 uSun;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+    float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int k = 0; k < 5; k++){ v += a * n(p); p = p * 2.03 + 7.1; a *= 0.5; } return v; }
+    void main(){
+      vec3 d = normalize(vD); float y = d.y;
+      vec3 zen = vec3(0.05, 0.20, 0.58), hor = vec3(0.50, 0.66, 0.84), low = vec3(0.42, 0.56, 0.72);
+      vec3 col = y > 0.0 ? mix(hor, zen, pow(y, 0.55)) : mix(hor, low, clamp(-y * 3.0, 0.0, 1.0));
+      float sd = max(dot(d, uSun), 0.0); col += vec3(1.0, 0.9, 0.7) * (pow(sd, 400.0) * 1.5 + pow(sd, 12.0) * 0.18);
+      if (y > 0.01){ vec2 uv = d.xz / (y + 0.12) * 1.3 + vec2(uT * 0.008, uT * 0.003);
+        float c = fbm(uv), m = smoothstep(0.42, 0.72, c) * smoothstep(0.0, 0.12, y);
+        vec3 cc = mix(vec3(0.55, 0.60, 0.68), vec3(0.95, 0.95, 0.97), smoothstep(0.35, 0.8, fbm(uv * 1.7 + 0.35)));
+        col = mix(col, cc, m * 0.9); }
+      gl_FragColor = vec4(col, 1.0);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }` });
+const skyDome = new THREE.Mesh(new THREE.SphereGeometry(800, 32, 16), skyMat); skyDome.renderOrder = -10; skyDome.frustumCulled = false; scene.add(skyDome);
+// 島下方的雲海（柔邊貼片，遠處被霧吃掉）
+{ const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+  for (let k = 0; k < 7; k++){ const x = 30 + Math.random() * 68, y = 40 + Math.random() * 48, r = 22 + Math.random() * 26; const gr = g.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({ map: tex, color: 0xf4f8fc, transparent: true, depthWrite: false, opacity: 0.85 });
+  const R = (a, b) => a + Math.random() * (b - a);
+  for (let k = 0; k < 46; k++){ const sp = new THREE.Sprite(mat); const a = R(0, 6.28), d = R(60, 520); sp.position.set(200 + Math.cos(a) * d, R(-95, -45), Math.sin(a) * d * 0.8); const sz = R(70, 160); sp.scale.set(sz, sz * 0.45, 1); scene.add(sp); }
+  for (let k = 0; k < 14; k++){ const sp = new THREE.Sprite(mat); const a = R(0, 6.28), d = R(420, 640); sp.position.set(200 + Math.cos(a) * d, R(40, 160), Math.sin(a) * d); const sz = R(120, 240); sp.scale.set(sz, sz * 0.4, 1); scene.add(sp); } }
+const camera = new THREE.PerspectiveCamera(CONFIG.camera.fovBase, innerWidth/innerHeight, 0.1, 1700);
+const hemi = new THREE.HemisphereLight(0xd8ecff, 0x5a5040, 0.55); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff0d8, 3.4); sun.position.set(-80, 150, 60); scene.add(sun); scene.add(sun.target);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.5;
+Object.assign(sun.shadow.camera, { left: -75, right: 75, top: 75, bottom: -75, near: 10, far: 420 }); sun.shadow.camera.updateProjectionMatrix();
+const SUN_OFF = new THREE.Vector3(-0.45, 0.75, 0.35).normalize().multiplyScalar(200);
+// 陰影：建好場景／模型載入後，把實體物件都設成會投影、會接受陰影（發光、線條、特效不用）
+function applyShadows(root = scene){ root.traverse(o => { if (!o.isMesh || o === skyDome) return; const m = Array.isArray(o.material) ? o.material[0] : o.material; if (!m || m.isMeshBasicMaterial || m.isShaderMaterial || m.transparent && !m.alphaTest) return; o.castShadow = true; o.receiveShadow = true; }); }
 
 const hud = document.getElementById('hud');
 const hctx = hud.getContext('2d');
@@ -393,10 +438,31 @@ const islands = [], supplyPads = [];
 const matIslandV = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
 // v3.3 地面材質（取自 “Pine Forest” by fangzhangmnm, CC BY 4.0）：島面蓋一層貼圖（每 9m 重複一次）
 const groundTex = new THREE.TextureLoader().load('assets/ground.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; t.needsUpdate = true; });
-const matGroundTex = new THREE.MeshLambertMaterial({ map: groundTex, color: 0xd8e8c8 });
-function addGroundCap(cx, top, cz, ring){
-  const pos = [], uv = [], T = 9, push = (x, z) => { pos.push(x, 0, z); uv.push((x + cx) / T, (z + cz) / T); };
+const matGroundTex = new THREE.MeshLambertMaterial({ map: groundTex, color: 0xd8e8c8, side: THREE.DoubleSide });
+// 去拼接感：同一張貼圖用兩種尺度＋旋轉各取一次，用低頻雜訊混合，再加一點明暗起伏，看不出一格一格的重複
+matGroundTex.onBeforeCompile = sh => {
+  sh.fragmentShader = sh.fragmentShader.replace('#include <map_pars_fragment>', `#include <map_pars_fragment>
+    vec4 gHash(vec2 p){ return fract(sin(vec4(1.0 + dot(p, vec2(37.0, 17.0)), 2.0 + dot(p, vec2(11.0, 47.0)), 3.0 + dot(p, vec2(41.0, 29.0)), 4.0 + dot(p, vec2(23.0, 31.0)))) * 103.0); }
+    // 每一格貼圖隨機平移＋旋轉，和周圍四格用柔和權重混在一起（看不到格線也看不到重複圖案）
+    vec4 noTile(sampler2D t, vec2 uv){
+      vec2 p = floor(uv), f = fract(uv), dx = dFdx(uv), dy = dFdy(uv); vec4 acc = vec4(0.0); float wt = 0.0;
+      for (int j = 0; j <= 1; j++) for (int i = 0; i <= 1; i++){
+        vec2 g = vec2(float(i), float(j)); vec4 o = gHash(p + g); vec2 r = g - f + o.xy - 0.5; float w = exp(-3.0 * dot(r, r));
+        float a = o.z * 6.2831; mat2 R = mat2(cos(a), -sin(a), sin(a), cos(a));
+        acc += w * textureGrad(t, R * uv + o.zw * 7.0, R * dx, R * dy); wt += w; }
+      return acc / wt; }`)
+  .replace('#include <map_fragment>', `
+  #ifdef USE_MAP
+    vec4 sampledDiffuseColor = noTile(map, vMapUv);
+    float nA = sin(vMapUv.x * 0.23 + 1.7) * sin(vMapUv.y * 0.19 + 0.4) + sin((vMapUv.x + vMapUv.y) * 0.11 + 2.3) * 0.6;
+    sampledDiffuseColor.rgb *= mix(0.86, 1.1, smoothstep(-1.0, 1.0, nA));   // 大範圍明暗起伏
+    diffuseColor *= sampledDiffuseColor;
+  #endif`); };
+function addGroundCap(cx, top, cz, ring, rim){
+  const pos = [], uv = [], T = 9, push = (x, z, y = 0) => { pos.push(x, y, z); uv.push((x + cx) / T, (z + cz) / T); };
   for (let i = 0; i < ring.length; i++){ const a = ring[i], b = ring[(i + 1) % ring.length]; push(0, 0); push(b.x, b.z); push(a.x, a.z); }
+  if (rim) for (let i = 0; i < ring.length; i++){ const j = (i + 1) % ring.length, a = ring[i], b = ring[j], c = rim[i].clone().multiplyScalar(1.004), d = rim[j].clone().multiplyScalar(1.004);   // 島緣斜面也鋪上（不然會有一圈亮綠邊）
+    push(a.x, a.z); push(b.x, b.z); push(d.x, d.z, d.y - 0.03); push(a.x, a.z); push(d.x, d.z, d.y - 0.03); push(c.x, c.z, c.y - 0.03); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
   const m = new THREE.Mesh(g, matGroundTex); m.position.set(cx, top + 0.04, cz); m.receiveShadow = true; scene.add(m);
 }
@@ -459,7 +525,7 @@ function addIsland(name, cx, top, cz, w, d, th, opt = {}){
   const m = new THREE.Mesh(sh.geo, matIslandV); m.position.set(cx, top, cz); scene.add(m);
   addHullBody(new THREE.Vector3(cx, top, cz), q, [sh.hullTop, sh.hullBot]);
   islands.push({ name, cx, top, cz, w, d });
-  if (opt.groundTex) addGroundCap(cx, top, cz, sh.R[0]);
+  if (opt.groundTex) addGroundCap(cx, top, cz, sh.R[0], sh.R[1]);
   if (opt.supply){ // 補給島：發光補給平台（站上去補燃料與彈藥）
     const pad = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 0.3, 24), matPad); pad.position.set(cx, top + 0.15, cz); scene.add(pad);
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 60, 8), new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.18 }));
@@ -667,6 +733,7 @@ addTarget(350, 13, 0, 'moving', 10);
   for (const [x, z] of [[110, -20], [290, -20], [170, 40], [230, 40], [200, -42]]) addTarget(x, 2.5, z, 'static', 0);
   addTarget(390, 28, 0, 'moving', 25);
 }
+applyShadows();
 
 // ---------- 玩家機體 ----------
 const S = CONFIG.map.spawn;
@@ -688,7 +755,7 @@ const newRopes = () => [
 const newWeapon = () => ({ active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0 });
 const state = { tick: 0, player: newPlayerState(S, CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon() };
 const events = []; // {type, ...} 給 render/hud/audio 用
-const opts = { paint: 'steel', view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true, autoLevel: true };
+const opts = { shadows: true, paint: 'steel', view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true, autoLevel: true };
 
 // =====================================================================
 // v3.0 玩家列表＋隊伍（LocalPlayer／BotPlayer；之後的 NetworkPlayer 用同樣欄位）
@@ -969,7 +1036,7 @@ function ensureBot(){
   bot = { pid: 'bot1', name: 'AI', team: 1, kind: 'bot', active: true, body, col, P: newPlayerState(sp, -CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon(),
     hp: CONFIG.pvp.hp, spawn: V(sp.x, sp.y, sp.z), spawnYaw: -CONFIG.map.spawnYaw, enemies: [local.tgt] };
   bot.tgt = makeActorTarget(bot); actors.push(bot);
-  bot.mech = createMech({ weapon: () => bot.weapon, paint: 'desert' }); bot.mech.loadModel().catch(() => { bot.mech.failed = true; });
+  bot.mech = createMech({ weapon: () => bot.weapon, paint: 'desert' }); bot.mech.loadModel().then(() => applyShadows(bot.mech.root)).catch(() => { bot.mech.failed = true; });
   bot.brain = createBotBrain(bot);
   return bot;
 }
@@ -1856,10 +1923,11 @@ async function loadPines(){
       const m = new THREE.Mesh(src.geometry, mt), sy = t.h * 1.04 / H, sxz = Math.max(t.maxR * 1.2 / Rm, sy * 0.42);
       m.scale.set(sxz, sy, sxz); m.rotation.y = t.rot; m.position.y = -bb.min.y * sy; t.grp.add(m);
     }
+    applyShadows();
   } catch (e){ console.warn('松樹模型載入失敗，改用簡化樹', e); }
 }
 loadPines();
-mech.loadModel().then(ok => { if (!ok){ mech.failed = true; console.warn('機體模型結構不符，改用過渡模型'); } }).catch(err => { mech.failed = true; console.warn('機體模型載入失敗，改用過渡模型', err); });
+mech.loadModel().then(ok => { applyShadows(mech.root); if (!ok){ mech.failed = true; console.warn('機體模型結構不符，改用過渡模型'); } }).catch(err => { mech.failed = true; console.warn('機體模型載入失敗，改用過渡模型', err); });
 function updateMech(dt, alpha){ const P = state.player; mech.update(dt, V().lerpVectors(P.prevPos, P.currPos, alpha), P, state.ropes);
   if (bot){ const on = bot.active && (bot.mech.loaded || bot.mech.failed); bot.mech.root.visible = on;
     if (on) withActor(bot, () => bot.mech.update(dt, V().lerpVectors(bot.P.prevPos, bot.P.currPos, alpha), bot.P, bot.ropes)); } }
@@ -2079,6 +2147,11 @@ const WICON = {
   main: 'M1 6h9v5H1z M10 7.1h16v2.3H10z M25.5 6h3.5v4.5h-3.5z M3 11h5v2.5H3z M4 4h4v2H4z',
   mg:   'M2 6h11v4.2H2z M13 7.3h11v1.5H13z M22.5 6.4h1.8v3.3h-1.8z M5 10.2h4.2v4H5z M2 4h3.5v2H2z M24.5 7.1h4v1.9h-4z',
   sub:  'M2 3.5h3.2v9H2z M5.2 7h15v2h-15z M20.2 6.4L28.5 8l-8.3 1.6z M8 5.2h1.4v5.6H8z M12 5.6h1.4v4.8H12z' };
+const IC_THRUST = '<svg class="ic s" viewBox="0 0 24 24"><path d="M12 3v11M7.5 7.5L12 3l4.5 4.5"/><path d="M9 17c0 2.2 1.4 3.6 3 4.5 1.6-.9 3-2.3 3-4.5"/></svg>';   // 推進（往上的箭頭＋火焰）
+const IC_REEL = '<svg class="ic s" viewBox="0 0 24 24"><path d="M12 20V6M7 10l5-5 5 5"/><path d="M5 21h14"/></svg>';   // 收索
+const IC_RELOAD = '<svg class="ic s" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>';   // 裝填
+const IC_3P = '<svg viewBox="0 0 24 24"><circle cx="15" cy="7" r="2.6"/><path d="M10.5 20l1.5-5.5 3-2 3 2 1.5 5.5"/><path d="M3 12h5M5.5 9.5v5"/></svg>';   // 第三人稱（看得到自己）
+const IC_1P = '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';   // 第一人稱（眼睛）
 const iconSVG = k => `<svg viewBox="0 0 30 16" aria-hidden="true"><path d="${WICON[k]}"/></svg>`;
 const WICON2D = {}; for (const k in WICON) WICON2D[k] = new Path2D(WICON[k]);
 const SLOT_ANG = { main: 80, mg: 106, sub: 132 };   // v2.5 三個位置排成扇形，在射擊鈕左上方（右邊是螢幕邊緣、左邊是右索鈕）
@@ -2227,6 +2300,7 @@ for (const t of setEl.querySelectorAll('.tabs button')) t.addEventListener('clic
   for (const o of setEl.querySelectorAll('.tabs button, section')) o.classList.toggle('on', o.dataset.tab === t.dataset.tab || o.dataset.page === t.dataset.tab); });
 document.getElementById('bReset').addEventListener('click', respawn);
 document.getElementById('optShake').addEventListener('change', e => opts.shake = e.target.checked);
+document.getElementById('optShadows').addEventListener('change', e => opts.shadows = e.target.checked);
 document.getElementById('optStab').addEventListener('change', e => opts.stab = e.target.checked);
 // v2.5 速度區間（像 86 一樣依駕駛習慣調整）：同時縮放地面速度、地面加速、推進水平上限、撲擊速度、最高速度
 const SPEED_BASE = { ground: CONFIG.ground.speed, accel: CONFIG.ground.accel, hCap: CONFIG.boost.hCap, cap: CONFIG.speedCap, pounce: CONFIG.spider.pounceSpeed };
@@ -2240,9 +2314,10 @@ document.getElementById('optSpeed').addEventListener('change', e => setSpeedK(e.
 document.getElementById('optSpeedK').addEventListener('input', e => setSpeedK(e.target.value));
 { let k0 = 1; try { k0 = +(localStorage.getItem('wfm.speedK') || 1); } catch(_){} setSpeedK(k0); }
 document.getElementById('optPaint').addEventListener('change', e => { opts.paint = e.target.value; mech.applyPaint(opts.paint); });
-function setView(on){ opts.view3P = on; document.getElementById('optView3P').checked = on; document.getElementById('bView').textContent = on ? '3P' : '1P'; }
+function setView(on){ opts.view3P = on; document.getElementById('optView3P').checked = on; document.getElementById('bView').innerHTML = on ? IC_3P : IC_1P; }
 document.getElementById('optView3P').addEventListener('change', e => setView(e.target.checked));
 document.getElementById('bView').addEventListener('click', e => { e.stopPropagation(); setView(!opts.view3P); });
+document.getElementById('bView').innerHTML = opts.view3P ? IC_3P : IC_1P;
 document.getElementById('optLockEnemy').addEventListener('change', e => opts.lockEnemy = e.target.checked);
 document.getElementById('optRopeBuffer').addEventListener('change', e => opts.ropeBuffer = e.target.checked);
 document.getElementById('optAutoLevel').addEventListener('change', e => opts.autoLevel = e.target.checked);
@@ -2449,18 +2524,18 @@ function updateButtons(){
   const hp = hookPreview[0];
   [[0, elRopeL, elSL], [1, elRopeR, elSR]].forEach(([i, el, sub]) => {
     const r = state.ropes[i];
-    const txt = r.hooked ? (r.reeling ? '收 ' : '') + r.L.toFixed(0) + 'm' : hp ? hp.toi.toFixed(0) + 'm' : '拖出＝推進';
+    const txt = r.hooked ? (r.reeling ? IC_REEL : '') + r.L.toFixed(0) + 'm' : hp ? hp.toi.toFixed(0) + 'm' : IC_THRUST;   // v3.4 全部改成圖示
     const cls = r.hooked ? 'hooked' : hp ? '' : 'none';
-    if (lastUI['t'+i] !== txt){ lastUI['t'+i] = txt; sub.textContent = txt; }
+    if (lastUI['t'+i] !== txt){ lastUI['t'+i] = txt; sub.innerHTML = txt; }
     if (lastUI['c'+i] !== cls){ lastUI['c'+i] = cls; el.classList.toggle('hooked', cls === 'hooked'); el.classList.toggle('none', cls === 'none'); el.classList.toggle('thrustmode', cls === 'thrustmode'); }
   });
   const w = state.weapon, sub = w.active === 'sub', mg = w.active === 'mg';
-  const ft = sub ? (w.nail.reloading > 0 ? '裝填' : w.nail.ammo + '/' + w.nail.reserve) : mg ? (w.reloading > 0 ? '裝填' : String(Math.floor(w.ammo))) : (w.cannon.reloading > 0 ? '裝填' : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
-  if (lastUI.f !== ft){ lastUI.f = ft; elSF.textContent = ft; }
+  const ft = sub ? (w.nail.reloading > 0 ? IC_RELOAD : w.nail.ammo + '/' + w.nail.reserve) : mg ? (w.reloading > 0 ? IC_RELOAD : String(Math.floor(w.ammo))) : (w.cannon.reloading > 0 ? IC_RELOAD : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
+  if (lastUI.f !== ft){ lastUI.f = ft; elSF.innerHTML = ft; }
   const fl = (w.blocked ? 'x' : '') + (sub ? 'sub' : mg ? 'mg' : 'main');
   if (lastUI.fl !== fl){ lastUI.fl = fl; document.getElementById('lFire').innerHTML = iconSVG(w.active); elFire.classList.toggle('none', !!w.blocked); }
   const sw = sub ? '腿部' : mg ? '副武' : '主武';
-  if (lastUI.sw !== sw){ lastUI.sw = sw; document.getElementById('swapCur').textContent = sw; for (const k of ['main', 'mg', 'sub']) document.getElementById('ws_' + k).classList.toggle('cur', k === w.active); }
+  if (lastUI.sw !== sw){ lastUI.sw = sw; document.getElementById('swapCur').innerHTML = iconSVG(w.active); for (const k of ['main', 'mg', 'sub']) document.getElementById('ws_' + k).classList.toggle('cur', k === w.active); }
 }
 function buzz(ms){ try { navigator.vibrate && navigator.vibrate(ms); } catch(_){} } // Android 有效，iOS 不支援會略過
 
@@ -2650,6 +2725,8 @@ function frame(now){
   if (hurtT > 0){ hurtT = Math.max(0, hurtT - dt); } hurtEl.style.opacity = Math.min(1, hurtT * 2.2);
   hitMarkT = Math.max(0, hitMarkT - dt); crossPulse = Math.max(0, crossPulse - dt*5);
 
+  skyDome.position.copy(camera.position); skyMat.uniforms.uT.value = now / 1000;
+  { const pp = state.player.currPos; sun.target.position.set(Math.round(pp.x / 4) * 4, Math.round(pp.y / 4) * 4, Math.round(pp.z / 4) * 4); sun.position.copy(sun.target.position).add(SUN_OFF); sun.castShadow = opts.shadows !== false; }
   renderer.render(scene, camera);
   drawHUD(dt);
   updateButtons();
@@ -2714,24 +2791,46 @@ const tutorial = (() => {
   let i = 0, t = 0, acc = 0, ref = null, flag = false;
   const P = () => state.player, seen = type => events.some(e => !e.by && e.type === type);
   const STEPS = [
-    { title: '移動', text: '推左下角的<b>藍色搖桿</b>走一段路。推得越遠跑越快。', hl: 'stickBase',
+    { title: '移動', g: 'move', text: '推左下角的<b>藍色搖桿</b>走一段路。推得越遠跑越快。', hl: 'stickBase',
       init(){ ref = P().currPos.clone(); }, done(){ return P().grounded && Math.hypot(P().currPos.x - ref.x, P().currPos.z - ref.z) > 15; } },
-    { title: '轉視角', text: '在畫面<b>空白處滑動</b>轉動視角，轉一圈看看四周。', hl: null,
+    { title: '轉視角', g: 'look', text: '在畫面<b>空白處滑動</b>轉動視角，轉一圈看看四周。', hl: null,
       init(){ ref = P().yaw; acc = 0; }, done(){ let d = P().yaw - ref; d = Math.atan2(Math.sin(d), Math.cos(d)); acc += Math.abs(d); ref = P().yaw; return acc > Math.PI * 1.2; } },
-    { title: '原地跳', text: '<b>輕點一下</b>搖桿＝原地往上跳。', hl: 'stickBase', init(){ tutSig.tap = false; }, done(){ return tutSig.tap; } },
-    { title: '方向跳', text: '在搖桿上<b>快速往一個方向滑出並放開</b>＝往那邊撲過去。滑越快跳越遠。', hl: 'stickBase', init(){ tutSig.flick = false; }, done(){ return tutSig.flick; } },
-    { title: '射鋼索', text: '準星中央的小圓變<b style="color:#ffd84a">黃色</b>＝有東西可以勾。這時<b>按住右索</b>就會勾上去。', hl: 'bRopeR', init(){}, done(){ return seen('hook'); } },
-    { title: '收索、甩出去', text: '勾住時把右索<b>往上推＝收索</b>把自己拉過去；<b>放開</b>就會帶著速度甩出去。', hl: 'bRopeR',
+    { title: '原地跳', g: 'tap', text: '<b>輕點一下</b>搖桿＝原地往上跳。', hl: 'stickBase', init(){ tutSig.tap = false; }, done(){ return tutSig.tap; } },
+    { title: '方向跳', g: 'flick', text: '在搖桿上<b>快速往一個方向滑出並放開</b>＝往那邊撲過去。滑越快跳越遠。', hl: 'stickBase', init(){ tutSig.flick = false; }, done(){ return tutSig.flick; } },
+    { title: '射鋼索', g: 'hold', aim: true, text: '準星中央的小圓變<b style="color:#ffd84a">黃色</b>＝有東西可以勾。這時<b>按住右索</b>就會勾上去。', hl: 'bRopeR', init(){}, done(){ return seen('hook'); } },
+    { title: '收索、甩出去', g: 'reel', text: '勾住時把右索<b>往上推＝收索</b>把自己拉過去；<b>放開</b>就會帶著速度甩出去。', hl: 'bRopeR',
       init(){ flag = false; }, done(){ if (state.ropes.some(r => r.hooked && r.reeling)) flag = true; return flag && !state.ropes.some(r => r.hooked) && P().vel.length() > 8; } },
-    { title: '推進器', text: '把鋼索鈕<b>拖出外圈</b>＝開推進往上飛（準星左邊的 BST 是燃料，站在地上會回復）。', hl: 'bRopeL',
+    { title: '推進器', g: 'thrust', text: '把鋼索鈕<b>拖出外圈</b>＝開推進往上飛（準星左邊的 BST 是燃料，站在地上會回復）。', hl: 'bRopeL',
       init(){ acc = 0; }, done(){ if (P().thrusting) acc += 1 / 60; return acc > 0.6; } },
-    { title: '射擊', text: '<b>按住射擊鈕</b>開火，打掉一個靶（紅白圓靶）。準星對到靶時射控會幫你補正。', hl: 'bFire', init(){}, done(){ return seen('kill'); } },
-    { title: '換武器', text: '在射擊鈕上<b>按住</b>，旁邊會出現三個武器圖示，<b>往圖示方向一甩</b>就換過去。', hl: 'bFire', init(){}, done(){ return seen('swap'); } },
-    { title: '腿部釘槍', text: '換到 03 釘槍：<b>靠牆開槍</b>＝釘在牆上（推搖桿可以沿牆爬）；<b>在空中開槍</b>＝急煞車。', hl: 'bFire', init(){}, done(){ return seen('pin') || seen('nailBrake'); } },
+    { title: '射擊', g: 'hold', text: '<b>按住射擊鈕</b>開火，打掉一個靶（紅白圓靶）。準星對到靶時射控會幫你補正。', hl: 'bFire', init(){}, done(){ return seen('kill'); } },
+    { title: '換武器', g: 'swap', text: '在射擊鈕上<b>按住</b>，旁邊會出現三個武器圖示，<b>往圖示方向一甩</b>就換過去。', hl: 'bFire', init(){}, done(){ return seen('swap'); } },
+    { title: '腿部釘槍', g: 'nail', text: '換到 03 釘槍：<b>靠牆開槍</b>＝釘在牆上（推搖桿可以沿牆爬）；<b>在空中開槍</b>＝急煞車。', hl: 'bFire', init(){}, done(){ return seen('pin') || seen('nailBrake'); } },
   ];
+  // v3.4 用動畫示範手勢（半透明指尖在要操作的按鈕上做一次動作，一直重播），不用文字
+  const hand = $('tutHand'), aim = $('tutAim'); let anim = null;
+  const GEST = {   // [dx, dy, 按下?, 時間比例]；座標相對於目標中心（px）
+    move:   [[0, 0, 0, 0], [0, 0, 1, .12], [0, -48, 1, .45], [0, -48, 1, .8], [0, -48, 0, .9], [0, 0, 0, 1]],
+    look:   [[60, 0, 0, 0], [60, 0, 1, .12], [-90, 10, 1, .6], [-90, 10, 0, .7], [60, 0, 0, 1]],
+    tap:    [[0, 0, 0, 0], [0, 0, 1, .15], [0, 0, 0, .25], [0, 0, 0, .55], [0, 0, 1, .65], [0, 0, 0, .75], [0, 0, 0, 1]],
+    flick:  [[0, 0, 0, 0], [0, 0, 1, .2], [70, -10, 1, .32], [90, -14, 0, .4], [0, 0, 0, 1]],
+    hold:   [[0, 0, 0, 0], [0, 0, 1, .15], [0, 0, 1, .85], [0, 0, 0, .95], [0, 0, 0, 1]],
+    reel:   [[0, 0, 0, 0], [0, 0, 1, .12], [0, 0, 1, .3], [0, -38, 1, .55], [0, -38, 1, .75], [0, -38, 0, .82], [0, 0, 0, 1]],
+    thrust: [[0, 0, 0, 0], [0, 0, 1, .12], [-70, -55, 1, .45], [-70, -55, 1, .85], [-70, -55, 0, .92], [0, 0, 0, 1]],
+    swap:   [[0, 0, 0, 0], [0, 0, 1, .12], [0, 0, 1, .4], [-22, -75, 1, .55], [-22, -75, 0, .62], [0, 0, 0, 1]],
+    nail:   [[0, 0, 0, 0], [0, 0, 1, .1], [0, 0, 1, .3], [-60, -58, 1, .42], [-60, -58, 0, .48], [0, 0, 0, .6], [0, 0, 1, .7], [0, 0, 0, .8], [0, 0, 0, 1]] };
+  function playHand(){
+    if (anim){ anim.onfinish = null; anim.cancel(); anim = null; }
+    const S2 = STEPS[i]; if (!api.on || !S2){ hand.style.display = 'none'; aim.style.display = 'none'; return; }
+    aim.style.display = S2.aim ? 'block' : 'none';
+    let cx = innerWidth * 0.66, cy = innerHeight * 0.45;
+    if (S2.hl){ const r = $(S2.hl).getBoundingClientRect(); if (r.width){ cx = r.left + r.width / 2; cy = r.top + r.height / 2; } }
+    const G = GEST[S2.g]; hand.style.display = 'block';
+    anim = hand.animate(G.map(([dx, dy, dn, o]) => ({ offset: o, transform: `translate(${cx + dx}px, ${cy + dy}px) scale(${dn ? .78 : 1})`, opacity: dn ? 1 : .55 })), { duration: S2.g === 'look' || S2.g === 'nail' ? 2200 : 1800, easing: 'ease-in-out' });
+    anim.onfinish = () => { if (api.on) playHand(); };
+  }
   function show(){
-    const S2 = STEPS[i]; $('tutStep').textContent = `新手教學 ${i + 1}/${STEPS.length}・${S2.title}`; $('tutTitle').textContent = S2.title; $('tutText').innerHTML = S2.text;
-    $('tutBar').style.width = (i / STEPS.length * 100) + '%'; t = 0; S2.init();
+    const S2 = STEPS[i]; $('tutDots').innerHTML = STEPS.map((_, k) => `<i class="${k < i ? 'd' : k === i ? 'c' : ''}"></i>`).join('');
+    $('tut').setAttribute('aria-label', S2.title); t = 0; S2.init(); playHand();
   }
   function place(){
     const S2 = STEPS[i]; const target = S2 && S2.hl ? $(S2.hl) : null;
@@ -2743,16 +2842,16 @@ const tutorial = (() => {
   const api = {
     on: false,
     done(){ try { return localStorage.getItem('wfm.tutDone') === '1'; } catch(_){ return false; } },
-    start(){ api.on = true; i = 0; el.style.display = 'block'; show(); place(); },
+    start(){ api.on = true; i = 0; el.classList.remove('fin'); el.classList.add('on'); show(); place(); },
     finish(complete){
-      api.on = false; ring.style.display = 'none'; try { localStorage.setItem('wfm.tutDone', '1'); } catch(_){}
-      if (complete){ $('tutStep').textContent = '新手教學完成'; $('tutBar').style.width = '100%'; $('tutTitle').textContent = '完成！';
-        $('tutText').innerHTML = '基本操作都會了。可以繼續在這裡練習，或回開始畫面選<b>對戰 AI</b>。教學隨時可以從開始畫面重看。';
-        setTimeout(() => { if (!api.on) el.style.display = 'none'; }, 6000); }
-      else el.style.display = 'none';
+      api.on = false; ring.style.display = 'none'; playHand(); try { localStorage.setItem('wfm.tutDone', '1'); } catch(_){}
+      if (complete){ el.classList.add('fin'); $('tutDots').innerHTML = STEPS.map(() => '<i></i>').join('') + ' ✓'; sfx('clank', 1); buzz(40);
+        setTimeout(() => { if (!api.on) el.classList.remove('on'); }, 3000); }
+      else el.classList.remove('on');
     },
     next(){ sfx('hook'); buzz(20); i++; if (i >= STEPS.length) api.finish(true); else { show(); place(); } },
     update(dt){ if (!api.on) return; t += dt; place(); if (t > 0.4 && STEPS[i].done()) api.next(); },
+    get step(){ return i; },
   };
   $('tutSkipStep').addEventListener('click', e => { e.stopPropagation(); if (api.on) api.next(); });
   $('tutQuit').addEventListener('click', e => { e.stopPropagation(); api.finish(false); });
@@ -2762,7 +2861,7 @@ const tutorial = (() => {
 
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
-window.__game = { MAP_ID, tutorial, tutSig, match, actors, local, get bot(){ return bot; }, ensureBot, withActor, buildNav, get NAV(){ return NAV; }, navPath, practiceTargets, mech, tpCam, buildCommand, castRay, rocks, islands, get targets(){ return targets; }, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
+window.__game = { sun, renderer, scene, MAP_ID, tutorial, tutSig, match, actors, local, get bot(){ return bot; }, ensureBot, withActor, buildNav, get NAV(){ return NAV; }, navPath, practiceTargets, mech, tpCam, buildCommand, castRay, rocks, islands, get targets(){ return targets; }, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
 </script>
 </body>
 </html>
