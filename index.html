@@ -639,10 +639,10 @@ function addBoulder(x, z, groundY, H, rnd){   // 寬的大巨石：露出地面�
 }
 const coverSpots = [];   // 掩體兩側的「躲藏點」（給 AI 用）
 function addCover(x, z, groundY, len, H, yaw, rnd){   // 長條巨石掩體：長 len（沿 z）、厚約 0.45 倍高、露出高度 H，表面凹凸
-  const g = new THREE.IcosahedronGeometry(1, 2), pa = g.attributes.position, jit = new Map(), hy = H * 0.8, rz = len * 0.5, rx = Math.max(2.8, H * 0.62);
+  const g = new THREE.IcosahedronGeometry(1, 2), pa = g.attributes.position, jit = new Map(), hy = H * 0.62, rz = len * 0.5, rx = Math.max(2.4, H * 0.42);
   for (let i = 0; i < pa.count; i++){ const key = [pa.getX(i), pa.getY(i), pa.getZ(i)].map(v => v.toFixed(3)).join(); if (!jit.has(key)) jit.set(key, 0.88 + rnd() * 0.24);
-    const j = jit.get(key), py = pa.getY(i), top = py > 0 ? 1 - 0.15 * py * py : 1;   // 頂部稍微壓平，方便判斷能不能探頭
-    pa.setXYZ(i, pa.getX(i) * rx * j, py * hy * j * top, pa.getZ(i) * rz * j * (1 - 0.15 * Math.abs(py))); }
+    const j = jit.get(key), sb = v => Math.sign(v) * Math.pow(Math.abs(v), 0.55);   // 球面往方塊推：側面接近垂直、頂面寬平（像一面石牆）
+    pa.setXYZ(i, sb(pa.getX(i)) * rx * j, sb(pa.getY(i)) * hy * j, sb(pa.getZ(i)) * rz * j); }
   g.computeVertexNormals(); const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
   let maxY = -1e9; for (let i = 0; i < pa.count; i++) maxY = Math.max(maxY, pa.getY(i));
   const y = groundY + H - maxY, m = new THREE.Mesh(g, matCover); m.position.set(x, y, z); m.quaternion.copy(q); scene.add(m);   // 最高點剛好在 H
@@ -725,11 +725,11 @@ function buildNoviceMap(){
   addTree(200, 48, BIG.top, 50, mulberry32(5));   // 中線上一棵最高的
   // 石陣：大島前半，左右各一圈立石，中間一小群石頭
   // v3.5 巨石掩體（砲戰用）：長條巨石長邊對著敵方基地方向（沿 z 排），三道錯開的防線＋中央一道；
-  //  多數高約 0.7 倍機體（躲在後面只露砲塔、可以越過石頭開砲），每道線有一塊 1.2 倍高的完全掩體（換彈、躲機槍）；左右鏡像
+  //  高 1.1～1.2 倍機體（整台躲得住），開砲靠跳射／側邊探頭，每道線有一塊 1.2 倍高的完全掩體（換彈、躲機槍）；左右鏡像
   const COVER = [   // [x（左半）, z, 長度, 高度倍數]
-    [100, -62, 12, 0.7], [100, -28, 14, 1.2], [100, 4, 10, 0.68],
-    [138, -46, 13, 0.72], [138, -10, 12, 0.7],
-    [172, -64, 11, 0.7], [172, -30, 14, 1.2], [174, 6, 10, 0.72] ];   // 砲口高度約 3.2m：0.7 倍（約 2.7m）剛好躲住機身、可以越過石頭開砲
+    [100, -62, 12, 1.25], [100, -28, 14, 1.35], [100, 4, 10, 1.25],
+    [138, -46, 13, 1.3], [138, -10, 12, 1.25],
+    [172, -64, 11, 1.25], [172, -30, 14, 1.35], [174, 6, 10, 1.3] ];   // v3.5b 比機體高（4.75～5.1m）：整台躲得住；開砲要輕點跳起來「跳射」（跳起來砲口約 5.6m）或從側邊探出去
   for (const side of [-1, 1]){ const R2 = mulberry32(31);
     for (const [x0, z, len, hk] of COVER){ const x = side < 0 ? x0 : 400 - x0, yaw = (R2() - 0.5) * 0.35 * side;
       addCover(x, z, BIG.top, len, MECH_H * hk, yaw, R2); vegBlockers.push([x, z - len * 0.35, 5.5], [x, z, 6], [x, z + len * 0.35, 5.5]); } }
@@ -1042,7 +1042,7 @@ function createBotBrain(a){
           const m = Math.tan(deg * DEG) * dist; st.err.set((rnd() - 0.5) * 2, (rnd() - 0.5) * 1.4, (rnd() - 0.5) * 2).multiplyScalar(m); }
         aim.add(st.err);
         const d = V().subVectors(aim, eye).normalize(); st.tYaw = Math.atan2(-d.x, -d.z); st.tPitch = Math.asin(clamp(d.y, -1, 1));
-        st.wantFire = st.seeT > 0.35 && !st.climb;   // 反應時間
+        st.wantFire = st.seeT > (st.atCover ? 0.12 : 0.35) && !st.climb;   // 反應時間（跳射時很短，不然跳到頂點還沒開砲）
         if (st.wantW === 'mg' && st.burst <= -0.5) st.burst = 0.8;   // 機槍點放
       } else if (ep){ const d = V().subVectors(ep, eye).normalize(); st.tYaw = Math.atan2(-d.x, -d.z); st.tPitch = clamp(Math.asin(d.y), -0.3, 0.3); }
       // ---- 卡住偵測 ----
@@ -1055,7 +1055,7 @@ function createBotBrain(a){
         let best = -1, bs = Infinity;
         for (const q of NAV.pts){ if (q.safe) continue;
           const dE = q.p.distanceTo(ep); if (dE < B.fightMin * 0.7 || dE > B.fightMax * 1.3) continue;
-          const e2 = V(q.p.x, q.p.y + 3.2, q.p.z), to = V().subVectors(ep, e2), L = to.length(); to.divideScalar(L);
+          const e2 = V(q.p.x, q.p.y + (q.cover ? 5.8 : 3.2), q.p.z), to = V().subVectors(ep, e2), L = to.length(); to.divideScalar(L);   // 掩體點：用「跳起來」的高度看得到你就算
           const h = castRay(e2, to, L - 2, false); if (h) continue;   // 從那裡看得到敵人
           if (q.isl === curIsl && rnd() < 0.75) continue;   // 大多換到別座島：一直移動、往你靠近
           let sc = q.p.distanceTo(pos) * 0.25 + Math.abs(dE - B.fightBest) * 0.9 - (q.p.y - ep.y) * 0.3 + rnd() * 20;
@@ -1069,7 +1069,7 @@ function createBotBrain(a){
       // ---- 移動 ----
       // AI 專用輔助：跨島時直接算一條「會落在目標落腳點上」的拋物線，射鋼索勾住落腳點並把速度設成那條拋物線的初速
       //  （畫面上看起來是 AI 射索甩過去；真的用擺盪物理去跨這張圖，AI 太常摔死）
-      st.moveX = 0; st.boost = false; st.travel = false; st.reel = 0; st.hold = false;
+      st.moveX = 0; st.boost = false; st.travel = false; st.reel = 0; st.hold = false; st.atCover = false;
       const F = st.flight;
       if (F){
         F.t += dt; st.travel = true; st.moveYaw = Math.atan2(-(F.to.x - pos.x), -(F.to.z - pos.z)); st.hold = false;
@@ -1097,6 +1097,8 @@ function createBotBrain(a){
         if (gq.cover){ const hd = Math.hypot(pos.x - gq.p.x, pos.z - gq.p.z);   // 掩體點：走到石頭後面站好（不左右亂跑），只露砲塔開砲
           if (hd > 2.5){ st.travel = true; st.moveYaw = Math.atan2(-(gq.p.x - pos.x), -(gq.p.z - pos.z)); st.reel = hd > 6 ? 1 : 0.45; }
           if (st.goalT < 2.5 && hd < 3) st.goalT = 2.5 + rnd() * 5;   // 在掩體後面多待一下
+          st.peekT = (st.peekT || 0) - dt; st.atCover = hd < 3.5;
+          if (hd < 3.5 && !see && P.grounded && st.peekT <= 0){ st.peekT = 1.6 + rnd() * 1.8; st.jump = true; st.jumpX = 0; st.jumpZ = 0; }   // 跳射：跳起來越過石頭開一砲
           return; }
         this.strafeOnIsland(pos, see); return; }
       if (!st.path.length){
