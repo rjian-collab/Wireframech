@@ -26,6 +26,13 @@
   #result h2 { margin:0; font-size:clamp(28px, 9vmin, 54px); letter-spacing:.2em; } #result .sc { font-size:clamp(18px, 6vmin, 30px); color:#9fe4ff; }
   #result button { min-width:180px; min-height:48px; border-radius:12px; border:1px solid rgba(140,220,255,.5); background:rgba(60,170,230,.18); color:#eaf8ff; font-size:17px; }
   .go2 { background:linear-gradient(180deg,#ff9a50,#e0602a) !important; }
+  .go3 { background:linear-gradient(180deg,#c78bff,#7a3fe0) !important; }
+  #netPanel { display:none; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; margin-top:10px; max-width:min(640px,94vw); }
+  #netPanel button { min-height:44px; padding:0 18px; border-radius:10px; border:1px solid rgba(200,160,255,.6); background:rgba(140,90,230,.25); color:#f2eaff; font-size:16px; }
+  #netPanel input { width:7.5em; min-height:42px; border-radius:10px; border:1px solid rgba(200,160,255,.6); background:#140f22; color:#f2eaff; font-size:18px; text-align:center; letter-spacing:.15em; text-transform:uppercase; -webkit-user-select:text; user-select:text; }
+  #netPanel .sep { color:#a89bc2; font-size:13px; } #netPanel .hint { width:100%; text-align:center; font-size:12px; color:#a89bc2; }
+  #netBar { position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 64px); transform:translateX(-50%); z-index:8; display:none; gap:10px; align-items:center; padding:8px 12px; border-radius:12px; background:rgba(20,12,36,.82); border:1px solid rgba(200,160,255,.5); color:#f2eaff; font-size:14px; max-width:92vw; }
+  #netBar button { min-height:36px; padding:0 14px; border-radius:9px; border:1px solid rgba(200,160,255,.6); background:rgba(140,90,230,.3); color:#fff; font-size:14px; }
   #tut { position:fixed; left:50%; top:calc(4px + var(--st)); transform:translateX(-50%); z-index:5; display:none; align-items:center; gap:8px;
     background:rgba(8,16,24,.82); border:1px solid rgba(127,227,160,.55); border-radius:20px; padding:4px 6px 4px 12px; pointer-events:auto; }
   #tut.on { display:flex; } #tut h3, #tut p { display:none; }
@@ -181,6 +188,7 @@
 <div id="frame"></div>
 <div id="flash"></div><div id="hurt"></div>
 <div id="tut"><div class="dots" id="tutDots"></div><h3 id="tutTitle"></h3><p id="tutText"></p><button id="tutSkipStep" aria-label="跳過這步">⏭</button><button id="tutQuit" aria-label="結束教學">✕</button><span id="tutStep" hidden></span><i id="tutBar" hidden></i></div><div id="tutRing"></div><div id="tutTrail"></div><div id="tutHand"><s></s><i></i></div><div id="tutAim"></div>
+<div id="netBar"><span id="netTxt"></span><button id="netBtn">取消</button></div>
 <div id="result"><h2 id="resTitle">勝利</h2><div class="sc" id="resScore"></div><button id="resAgain">再來一場</button><button id="resPractice">回到練習</button></div>
 <div id="touch">
   <div class="stick" id="stickBase"></div><div class="knob" id="stickKnob"></div>
@@ -245,10 +253,11 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵 v3.7</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵 v3.8</div>
   <details style="max-width:min(640px,92vw);margin:4px 0 8px"><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
+    <li><b style="color:#c99bff">線上對戰</b>（1v1，真人）：「快速配對」自動找人，20 秒沒找到就改打 AI；「建立房間」會在畫面上方顯示 5 碼代碼，對方在「加入」輸入同一組代碼。等待時可以先在練習場活動。房主從基地 A、加入者從基地 B 出發，規則和對戰 AI 相同</li>
     <li><b style="color:#ffb070">對戰 AI</b>：你從基地 A、AI 從基地 B 出發；先擊破 5 次或 5 分鐘內分數高的贏；掉下虛空算對方得分；橘色機體與橘色鋼索是 AI</li>
     <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），左上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>輕點＝原地跳；快速往任一方向滑出並放開＝往那邊跳</b>；推得越遠走越快（在地上、坡上、貼牆或釘在牆上時都能跳）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
@@ -265,7 +274,9 @@
   <p class="kb">鍵盤：X 切換主副武　WASD　F 智慧鋼索（勾住時 W/S 收放、A/D 擺盪）　Q E 左右索　Space／Shift 推進　R 裝填　滑鼠瞄準、左鍵射擊</p>
   <label id="gyroStartRow" style="display:none;margin-top:8px;font-size:15px"><input type="checkbox" id="gyroStart" checked style="width:20px;height:20px;vertical-align:middle"> 使用陀螺儀瞄準</label>
   <label style="margin:8px 0;font-size:15px">地圖 <select id="mapSel" style="font-size:15px;min-height:36px;border-radius:8px;background:#0f2230;color:#e6f6ff;border:1px solid rgba(140,220,255,.4)"><option value="novice">大島・樹林</option><option value="ring" disabled>環形空島戰場（之後更新）</option></select></label>
-  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="go" id="goBtn" disabled>載入中…</button><button class="go go2" id="goAI" disabled>對戰 AI</button><button class="go" id="goTut" style="background:linear-gradient(180deg,#7fe3a0,#2fa866)">新手教學</button></div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="go" id="goBtn" disabled>載入中…</button><button class="go go2" id="goAI" disabled>對戰 AI</button><button class="go go3" id="goNet">線上對戰</button><button class="go" id="goTut" style="background:linear-gradient(180deg,#7fe3a0,#2fa866)">新手教學</button></div>
+  <div id="netPanel"><button id="netQuick">快速配對</button><span class="sep">或</span><button id="netHost">建立房間</button><input id="netCodeIn" maxlength="6" placeholder="房間代碼" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="netJoin">加入</button>
+    <div class="hint">快速配對：20 秒內沒找到人會改打 AI。代碼約戰：一人建立房間，把畫面上方的代碼告訴對方。</div></div>
   <div id="status"></div>
   <a id="fullLink" href="https://wireframech.vercel.app" target="_blank" rel="noopener" style="display:none;margin-top:6px;padding:8px 14px;border-radius:10px;border:1px solid rgba(140,220,255,.5);color:#9fe8ff;text-decoration:none;font-size:14px">⛶ You can also play at wireframech.vercel.app（大畫面）</a>
   <div style="opacity:.7;font-size:11px;max-width:min(640px,92vw);text-align:center;margin-top:6px;line-height:1.5">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）<br>松樹與地面材質：<a href="https://sketchfab.com/3d-models/pine-forest-ece69535f7584e099488f65f2072264e" target="_blank" style="color:#9fe8ff">“Pine Forest”</a> by fangzhangmnm，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>（已拆出單棵樹、縮小貼圖）</div>
@@ -904,6 +915,7 @@ function placeActor(a, p, yaw){
 }
 function actorDamage(v, dmg){
   if (match.state !== 'live' || v.P.safe || curActor === v) return false;   // 保護區內不受傷；不會打到自己
+  if (match.mode === 'net'){ if (v.kind !== 'net') return false; NET.send('hit', { dmg: Math.round(dmg) }); events.push({ type: 'actorHit', victim: v.pid, dmg }); return true; }   // v3.8 連線：開槍方判定，傷害交給對方自己扣
   v.hp = Math.max(0, v.hp - dmg); v.lastHitBy = curActor; events.push({ type: 'actorHit', victim: v.pid, dmg });
   if (v.hp <= 0) match.died(v, curActor);
   return true;
@@ -914,16 +926,30 @@ const match = {
   start(mode){
     this.mode = mode; this.score = [0, 0]; this.timeLeft = CONFIG.pvp.timeLimit; this.feed = [];
     setPractice(mode === 'practice');
-    if (mode === 'ai'){ const b = ensureBot(); b.active = true; b.body.setEnabled(true); b.brain.reset(); }
+    if (mode !== 'net' && NET.state === 'match') netReset();   // 離開連線對戰
+    if (mode === 'ai' || mode === 'net'){ const b = ensureBot(); b.active = true; b.body.setEnabled(true); b.kind = mode === 'net' ? 'net' : 'bot'; b.name = mode === 'net' ? '對手' : 'AI'; b.weapon.shells.length = 0; if (mode === 'ai') b.brain.reset(); }
     else if (bot){ bot.active = false; bot.body.setEnabled(false); bot.mech.root.visible = false; }
+    { const guest = mode === 'net' && !NET.host, SA = V(S.x, S.y, S.z), SB = V(CONFIG.pvp.spawnB.x, CONFIG.pvp.spawnB.y, CONFIG.pvp.spawnB.z), ya = CONFIG.map.spawnYaw;   // v3.8 連線：房主＝基地 A、加入者＝基地 B
+      local.team = guest ? 1 : 0; local.spawn.copy(guest ? SB : SA); local.spawnYaw = guest ? -ya : ya;
+      if (bot){ bot.team = guest ? 0 : 1; bot.spawn.copy(guest ? SA : SB); bot.spawnYaw = guest ? ya : -ya; } }
     for (const a of actors) if (a.active){ a.hp = CONFIG.pvp.hp; Object.assign(a.weapon, newWeapon()); placeActor(a, a.spawn, a.spawnYaw); }
-    if (bot && bot.active) bot.brain.reset();
+    if (bot && bot.active && bot.kind === 'bot') bot.brain.reset();
     state.weapon = local.weapon;
-    this.state = mode === 'ai' ? 'live' : 'idle';
+    this.state = mode === 'ai' || mode === 'net' ? 'live' : 'idle';
     hudMatch();
   },
   died(v, killer){
     if (this.state !== 'live') return;
+    if (this.mode === 'net'){   // v3.8 連線：只有本機會在這裡死亡（受傷方宣告），比分由房主算
+      if (v !== local) return;
+      const k = !!(killer && killer !== v);
+      this.feed.unshift({ msg: k ? `${killer.name} 擊破 ${v.name}` : `${v.name} 墜落`, t: 4 });
+      events.push({ type: 'died', victim: v.pid, killer: k ? killer.pid : null, by: k ? 'net' : undefined });
+      v.hp = CONFIG.pvp.hp; placeActor(v, v.spawn, v.spawnYaw);
+      NET.send('died', { k: k ? 1 : 0 });
+      if (NET.host) this.score_(v);
+      hudMatch(); return;
+    }
     const other = v.team === 0 ? 1 : 0; this.score[other]++;
     const msg = killer && killer !== v ? `${killer.name} 擊破 ${v.name}` : `${v.name} 墜落（${other === 0 ? '你' : 'AI'} +1）`;
     this.feed.unshift({ msg, t: 4 }); events.push({ type: 'died', victim: v.pid, killer: killer ? killer.pid : null });
@@ -931,12 +957,16 @@ const match = {
     if (this.score[other] >= CONFIG.pvp.killLimit) this.end();
     hudMatch();
   },
+  score_(v){   // 房主：某台死亡 → 對方隊 +1
+    const other = v.team === 0 ? 1 : 0; this.score[other]++;
+    if (this.score[other] >= CONFIG.pvp.killLimit) this.end(); else netSendMs();
+  },
   tick(dt){
     if (this.state !== 'live') return;
     this.timeLeft -= dt; for (const f of this.feed) f.t -= dt; this.feed = this.feed.filter(f => f.t > 0).slice(0, 3);
-    if (this.timeLeft <= 0){ this.timeLeft = 0; this.end(); }
+    if (this.timeLeft <= 0){ this.timeLeft = 0; if (!(this.mode === 'net' && !NET.host)) this.end(); }   // 連線時只有房主能判結束
   },
-  end(){ this.state = 'over'; input.fire = false; showResult(); },
+  end(){ this.state = 'over'; input.fire = false; if (this.mode === 'net' && NET.host) netSendMs(); showResult(); },
 };
 function setPractice(on){
   practiceOn = on; for (const t of practiceTargets){ t.col.setEnabled(on && !t.dead); t.mesh.visible = on && !t.dead; }
@@ -1175,6 +1205,240 @@ function ensureBot(){
   bot.mech = createMech({ weapon: () => bot.weapon, paint: 'desert' }); bot.mech.loadModel().then(() => applyShadows(bot.mech.root)).catch(() => { bot.mech.failed = true; });
   bot.brain = createBotBrain(bot);
   return bot;
+}
+
+// =====================================================================
+// v3.8 PvP 連線（WebRTC 點對點，照專案文件「PvP連線規劃」）
+//  - 每台只算自己機體的物理；對手＝把 bot 那台機體改成 kind:'net'，位置由網路快照插值，不跑 AI、不跑物理
+//  - 命中由開槍方判定（hit 事件），受傷方自己扣血、自己宣告死亡（died 事件）
+//  - 裁判＝建房者（host）：比分、計時、勝負由 host 決定並廣播（ms 事件）
+//  - 配對：Trystero（公開 Nostr 中繼找人，資料走 P2P）；網址加 ?net=local 改用 BroadcastChannel（同一個瀏覽器兩個分頁測試，可加 &lag=80 模擬延遲）
+// =====================================================================
+const NETCFG = { ver: 'v3.8', appId: 'wireframech.vercel.app/pvp', snapHz: 30, interpMs: 110, extrapMs: 150, lobbyWaitS: 20, helloS: 1.2, inviteMs: 2500,
+  connectMs: 9000, codeWaitMs: 60000, lostS: 3, dropS: 10, msS: 0.5 };
+const NET_Q = new URLSearchParams(location.search), NET_LOCAL = NET_Q.get('net') === 'local', NET_LAG = +(NET_Q.get('lag') || 0);
+let trysteroMod = null;
+// ---- 傳輸層：join(roomId) → { id, send(type, data, target?), on('msg'|'join'|'leave', fn), leave() } ----
+async function netJoin(roomId){
+  if (NET_LOCAL) return netLocalTransport(roomId);
+  if (!trysteroMod) trysteroMod = await import('https://esm.run/trystero@0.27.0');
+  const room = trysteroMod.joinRoom({ appId: NETCFG.appId, identity: 'none' }, roomId);
+  const act = room.makeAction('m'), self = await room.getSelf();
+  const T = { id: self.peerId, h: { msg: [], join: [], leave: [] }, closed: false,
+    send(t, d, target){ if (this.closed) return; act.send({ t, d }, target ? { target } : undefined).catch(() => {}); },
+    on(k, fn){ this.h[k].push(fn); },
+    leave(){ this.closed = true; try { room.leave(); } catch (_){} } };
+  act.onMessage((m, ctx) => { if (!T.closed && m && m.t) for (const f of T.h.msg) f(m.t, m.d, ctx.peerId); });
+  room.onPeerJoin(ctx => { if (!T.closed) for (const f of T.h.join) f(ctx.peerId); });
+  room.onPeerLeave(ctx => { if (!T.closed) for (const f of T.h.leave) f(ctx.peerId); });
+  room.onError && room.onError(e => console.warn('[net]', e && e.code, e));
+  return T;
+}
+function netLocalTransport(roomId){
+  const id = Math.random().toString(36).slice(2, 10), bc = new BroadcastChannel('wfnet-' + roomId), peers = new Set();
+  const T = { id, h: { msg: [], join: [], leave: [] }, closed: false,
+    post(m){ if (!this.closed) bc.postMessage(m); },
+    send(t, d, target){ this.post({ from: id, to: target || null, t, d }); },
+    on(k, fn){ this.h[k].push(fn); },
+    leave(){ this.post({ from: id, bye: 1 }); this.closed = true; setTimeout(() => bc.close(), 50); } };
+  const deliver = m => {
+    if (T.closed || (m.to && m.to !== id)) return;
+    if (m.bye){ if (peers.delete(m.from)) T.h.leave.forEach(f => f(m.from)); return; }
+    if (!peers.has(m.from)){ peers.add(m.from); T.h.join.forEach(f => f(m.from)); }
+    if (m.hi){ if (m.hi === 1) T.post({ from: id, to: m.from, hi: 2 }); return; }
+    T.h.msg.forEach(f => f(m.t, m.d, m.from));
+  };
+  let lastAt = 0; bc.onmessage = e => { if (!NET_LAG) return deliver(e.data); const now = performance.now(), at = Math.max(lastAt, now + NET_LAG * (0.8 + Math.random() * 0.4)); lastAt = at; setTimeout(() => deliver(e.data), at - now); };   // 模擬延遲（保持順序，跟 WebRTC 可靠通道一樣）
+  const ann = setInterval(() => { if (T.closed) clearInterval(ann); else T.post({ from: id, hi: 1 }); }, 700);   // 像 Trystero 一樣定時廣播自己，晚進來的人也找得到
+  setTimeout(() => T.post({ from: id, hi: 1 }), 30);
+  return Promise.resolve(T);
+}
+
+// ---- 配對／連線狀態 ----
+//  IDLE → LOBBY（快速配對大廳）→ INVITING → CONNECTING（私人房間）→ IN_MATCH
+//  代碼約戰：CODE_WAIT（建房等人）／CONNECTING（輸入代碼加入）
+const NET = { state: 'idle', host: false, tr: null, peer: null, code: null, via: null, skip: new Set(), lobby: new Map(),
+  t0: 0, inviteTo: null, inviteT: 0, helloT: 0, snapT: 0, msT: 0, lastRecv: 0, fx: [], buf: [], off: null, lostShown: false, gotHi: false, sentGo: false,
+  send(t, d){ if (this.tr && this.peer) this.tr.send(t, d, this.peer); },
+  log: [], L(m){ this.log.push(Math.round(performance.now()) + ' ' + m); if (this.log.length > 60) this.log.shift(); },
+};
+window.__net = NET;
+addEventListener('pagehide', () => { if (NET.tr) NET.tr.leave(); });   // 關掉分頁時通知對方
+const netUI = { el: null, txt: null, btn: null };
+function netShow(msg, btnText = '取消', onBtn = netCancel){
+  if (!netUI.el){ netUI.el = document.getElementById('netBar'); netUI.txt = document.getElementById('netTxt'); netUI.btn = document.getElementById('netBtn');
+    netUI.el.addEventListener('pointerdown', e => e.stopPropagation()); netUI.el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true }); }
+  netUI.el.style.display = msg ? 'flex' : 'none'; netUI.txt.textContent = msg || ''; netUI.btn.textContent = btnText; netUI.btn.style.display = btnText ? '' : 'none'; netUI.btn.onclick = e => { e.stopPropagation(); onBtn(); };
+}
+const netCode = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += A[Math.floor(Math.random() * A.length)]; return s; };
+function netLeave(){ if (NET.tr){ NET.tr.leave(); NET.tr = null; } NET.peer = null; }
+function netReset(){ netLeave(); Object.assign(NET, { state: 'idle', host: false, code: null, via: null, inviteTo: null, buf: [], off: null, fx: [], lostShown: false, gotHi: false, sentGo: false }); NET.lobby.clear(); }
+function netCancel(){ const wasMatch = match.mode === 'net'; netReset(); netShow(null); if (wasMatch) match.start('practice'); }
+
+// 快速配對：所有人進同一個大廳；ID 小的一方才能邀請；20 秒沒人 → 改打 AI
+async function netQuick(){
+  netReset(); NET.state = 'joining'; NET.via = 'quick'; NET.t0 = performance.now(); netShow('連線到配對大廳…');
+  let tr; try { tr = await netJoin('lobby-' + NETCFG.ver); } catch (err){ console.warn(err); netShow('無法連線到配對服務，請檢查網路', '關閉', () => netShow(null)); NET.state = 'idle'; return; }
+  if (NET.state !== 'joining'){ tr.leave(); return; }   // 等待期間按了取消
+  NET.tr = tr; NET.state = 'lobby'; NET.helloT = 0;
+  tr.on('join', id => tr.send('hello', { s: NET.state === 'lobby' ? 'w' : 'b', ver: NETCFG.ver }, id));
+  tr.on('leave', id => { NET.lobby.delete(id); if (NET.tr === tr && NET.state === 'inviting' && NET.inviteTo === id){ NET.inviteTo = null; NET.state = 'lobby'; } });
+  tr.on('msg', (t, d, from) => {
+    if (NET.tr !== tr){ if (t === 'invite') tr.send('busy', {}, from); return; }   // 已經離開大廳（正在進房）
+    if (t === 'hello'){ if (d.ver === NETCFG.ver) NET.lobby.set(from, { s: d.s, seen: performance.now() }); return; }
+    if (t === 'invite'){
+      if (NET.state === 'lobby' && !NET.skip.has(from)){ tr.send('accept', { code: d.code }, from); netEnterRoom(d.code, false, from); }
+      else tr.send('busy', {}, from);
+      return; }
+    if (t === 'accept' && NET.state === 'inviting' && from === NET.inviteTo){ netEnterRoom(d.code, true, from); return; }
+    if (t === 'busy' && from === NET.inviteTo){ NET.lobby.set(from, { s: 'b', seen: performance.now() }); NET.inviteTo = null; NET.state = 'lobby'; }
+  });
+}
+function netLobbyTick(dt){
+  const now = performance.now();
+  NET.helloT -= dt; if (NET.helloT <= 0){ NET.helloT = NETCFG.helloS; NET.tr.send('hello', { s: NET.state === 'lobby' ? 'w' : 'b', ver: NETCFG.ver }); }
+  for (const [id, p] of NET.lobby) if (now - p.seen > 5000) NET.lobby.delete(id);
+  const waitS = (now - NET.t0) / 1000;
+  if (NET.state === 'inviting' && now - NET.inviteT > NETCFG.inviteMs){ NET.skip.add(NET.inviteTo); NET.inviteTo = null; NET.state = 'lobby'; }
+  if (NET.state === 'lobby'){
+    let best = null; for (const [id, p] of NET.lobby) if (p.s === 'w' && !NET.skip.has(id) && NET.tr.id < id && (!best || id < best)) best = id;
+    if (best){ NET.code = netCode(); NET.inviteTo = best; NET.inviteT = now; NET.state = 'inviting'; NET.tr.send('invite', { code: NET.code }, best); }
+  }
+  const others = [...NET.lobby.values()].filter(p => p.s === 'w').length;
+  netShow(`尋找對手… ${Math.ceil(Math.max(0, NETCFG.lobbyWaitS - waitS))} 秒${others ? `（大廳 ${others} 人）` : ''}　等待時可以先練習`);
+  if (waitS > NETCFG.lobbyWaitS && NET.state === 'lobby'){ netReset(); netShow(null); toast('沒有找到對手，先和 AI 對戰', 2500); match.start('ai'); }
+}
+// 代碼約戰
+async function netHostCode(){ netReset(); const code = netCode(); NET.via = 'code'; await netEnterRoom(code, true, null); if (NET.state === 'connecting') NET.state = 'codewait'; }
+async function netJoinCode(code){ code = (code || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (code.length < 4){ toast('請輸入 4–6 碼的房間代碼', 2000); return; } netReset(); NET.via = 'code'; await netEnterRoom(code, false, null); }
+// 進私人房間：雙方互送 hi（帶版本），host 收到後送 go，雙方開局
+async function netEnterRoom(code, host, peerHint){
+  NET.L(`enter ${code} host=${host}`);
+  const lobbyTr = NET.tr; NET.tr = null; if (lobbyTr) setTimeout(() => lobbyTr.leave(), 1500);   // 晚一點才離開大廳：先讓 accept 送到對方
+  NET.state = 'connecting'; NET.host = host; NET.code = code; NET.peer = null; NET.t0 = performance.now(); NET.gotHi = false; NET.sentGo = false; NET.peerHint = peerHint;
+  netShow(NET.via === 'code' ? (host ? `房間代碼：${code}　請對方在「代碼約戰」輸入` : `加入房間 ${code}…`) : '找到對手，連線中…');
+  let tr; try { tr = await netJoin('m-' + code); } catch (err){ console.warn(err); netShow('連線失敗', '關閉', () => netShow(null)); NET.state = 'idle'; return; }
+  if (NET.state !== 'connecting'){ tr.leave(); return; }
+  NET.tr = tr;
+  const hi = id => tr.send('hi', { ver: NETCFG.ver, host }, id);
+  tr.on('join', id => { if (!NET.peer) hi(id); });
+  tr.on('leave', id => { if (id === NET.peer) netPeerGone('對手離開了'); });
+  tr.on('msg', (t, d, from) => {
+    if (t !== 's') NET.L(`room ${t} from ${from} peer=${NET.peer} st=${NET.state}`);
+    if (NET.peer && from !== NET.peer) return;   // 只接受第一個對手
+    if (t === 'hi'){
+      if (d.ver !== NETCFG.ver){ netShow(`對方版本不同（${d.ver}），請兩邊都重新整理`, '關閉', netCancel); return; }
+      if (d.host === host){ if (host) return; netShow('這個代碼已有人建房但是設定衝突，請重新建房', '關閉', netCancel); return; }
+      NET.peer = from; NET.lastRecv = performance.now();
+      if (!NET.gotHi){ NET.gotHi = true; hi(from); }
+      if (host && !NET.sentGo){ NET.sentGo = true; tr.send('go', {}, from); netBegin(); }
+      return; }
+    if (t === 'go' && !host && NET.state !== 'match'){ NET.peer = from; netBegin(); return; }
+    netOnMsg(t, d);
+  });
+}
+function netBegin(){ NET.state = 'match'; NET.lastRecv = performance.now(); NET.buf = []; NET.off = null; netShow(null); match.start('net'); toast(NET.host ? '對手已連線！你從基地 A 出發' : '對手已連線！你從基地 B 出發', 2200); }
+function netPeerGone(msg){
+  if (NET.state === 'match' && match.mode === 'net'){ const live = match.state === 'live'; netLeave(); NET.state = 'idle'; if (live){ match.state = 'over'; input.fire = false; showResult(msg); } return; }
+  if (NET.state === 'connecting' || NET.state === 'codewait'){ if (NET.via === 'quick'){ NET.skip.add(NET.peerHint); netRequeue(); } else { netReset(); netShow(msg, '關閉', () => netShow(null)); } }
+}
+function netRequeue(){ netQuick(); }   // NET.skip 保留：這次配對中跳過連不上的人
+// 每幀
+function netFrame(dt){
+  const now = performance.now();
+  if (NET.state === 'lobby' || NET.state === 'inviting'){ if (NET.tr) netLobbyTick(dt); return; }
+  if (NET.state === 'connecting' && !NET.peer && now - NET.t0 > (NET.via === 'code' ? NETCFG.codeWaitMs : NETCFG.connectMs)){
+    if (NET.via === 'quick'){ NET.skip.add(NET.peerHint); netRequeue(); } else { netReset(); netShow('找不到這個房間（或對方網路連不上）', '關閉', () => netShow(null)); } return; }
+  if (NET.state !== 'match' || match.mode !== 'net') return;
+  // 快照（每秒 30 次）＋這段時間的特效
+  NET.snapT -= dt; if (NET.snapT <= 0){ NET.snapT += 1 / NETCFG.snapHz; if (NET.snapT < 0) NET.snapT = 0; NET.send('s', netSnap()); NET.fx = []; }
+  if (NET.host){ NET.msT -= dt; if (NET.msT <= 0){ NET.msT = NETCFG.msS; netSendMs(); } }
+  const quiet = (now - NET.lastRecv) / 1000;
+  if (quiet > NETCFG.dropS) netPeerGone('對手斷線了');
+  else if (quiet > NETCFG.lostS){ if (!NET.lostShown){ NET.lostShown = true; netShow('連線不穩，等待對手…', '離開', netCancel); } }
+  else if (NET.lostShown){ NET.lostShown = false; netShow(null); }
+  netShellsTick(dt);
+}
+const r2 = x => Math.round(x * 100) / 100, r3 = x => Math.round(x * 1000) / 1000;
+const v3a = (v, f = r2) => [f(v.x), f(v.y), f(v.z)];
+function netSnap(){
+  const P = state.player, p = P.currPos;
+  return { s: Math.round(performance.now()), p: v3a(p), v: v3a(P.vel), y: r3(P.yaw), pi: r3(P.pitch), g: P.grounded ? 1 : 0,
+    gn: P.grounded && P.groundN ? v3a(P.groundN, r3) : 0, pn: P.pinned && P.pinned.normal ? v3a(P.pinned.normal, r3) : 0,
+    r: state.ropes.map(r => r.hooked ? v3a(r.anchor) : 0), w: state.weapon.active, hp: Math.round(local.hp), sf: P.safe ? 1 : 0, fx: NET.fx };
+}
+function netSendMs(){ NET.send('ms', { sc: match.score, tl: Math.round(match.timeLeft * 10) / 10, st: match.state }); }
+// 收到對方的訊息
+function netOnMsg(t, d){
+  NET.lastRecv = performance.now();
+  if (t === 's'){ netOnSnap(d); return; }
+  if (match.mode !== 'net') return;
+  if (t === 'hit'){   // 對方判定打中我：我自己扣血（保護區內不受傷）
+    if (match.state !== 'live' || local.P.safe) return;
+    local.hp = Math.max(0, local.hp - d.dmg); local.lastHitBy = bot; events.push({ type: 'actorHit', victim: local.pid, dmg: d.dmg, by: 'net' });
+    if (local.hp <= 0) match.died(local, bot); return; }
+  if (t === 'died'){   // 對方宣告自己死亡（被我擊破或墜落）
+    match.feed.unshift({ msg: d.k ? `${local.name} 擊破 ${bot.name}` : `${bot.name} 墜落`, t: 4 });
+    events.push({ type: 'died', victim: bot.pid, killer: d.k ? local.pid : null, by: 'net' });
+    if (NET.host) match.score_(bot, d.k); return; }
+  if (t === 'ms' && !NET.host){   // 裁判（host）廣播的比賽狀態
+    match.score = d.sc; match.timeLeft = d.tl;
+    if (d.st === 'over' && match.state === 'live'){ match.state = 'over'; input.fire = false; showResult(); } return; }
+  if (t === 'again'){ if (NET.host && match.state === 'over'){ netSendMs(); match.start('net'); NET.send('restart', {}); } return; }
+  if (t === 'restart' && !NET.host){ match.start('net'); return; }
+}
+// ---- 對手快照：時間軸插值（約 110ms 前的位置），太新的資料不夠時短暫外推 ----
+function netOnSnap(s){
+  const now = performance.now(), o = now - s.s;
+  NET.off = NET.off == null ? o : (o < NET.off ? o : NET.off + (o - NET.off) * 0.002);
+  const b = NET.buf; if (b.length && s.s <= b[b.length - 1].s) return;
+  b.push(s); if (b.length > 40) b.shift();
+  if (match.mode === 'net' && s.fx) for (const f of s.fx) netFx(f);
+}
+const lerpAng = (a, b, k) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
+const _ns = { p: V(), v: V() };
+function netSample(){
+  const b = NET.buf; if (!b.length) return null;
+  const t = performance.now() - NET.off - NETCFG.interpMs;
+  let k = -1; for (let i = b.length - 1; i >= 0; i--) if (b[i].s <= t){ k = i; break; }
+  if (k < 0){ const s = b[0]; _ns.p.fromArray(s.p); _ns.v.fromArray(s.v); return { s, yaw: s.y, pitch: s.pi }; }
+  if (k === b.length - 1){ const s = b[k], dt2 = Math.min(t - s.s, NETCFG.extrapMs) / 1000; _ns.v.fromArray(s.v); _ns.p.fromArray(s.p).addScaledVector(_ns.v, dt2); return { s, yaw: s.y, pitch: s.pi }; }
+  const A = b[k], B = b[k + 1], q = (t - A.s) / Math.max(1, B.s - A.s);
+  _ns.p.set(A.p[0] + (B.p[0] - A.p[0]) * q, A.p[1] + (B.p[1] - A.p[1]) * q, A.p[2] + (B.p[2] - A.p[2]) * q);
+  _ns.v.set(A.v[0] + (B.v[0] - A.v[0]) * q, A.v[1] + (B.v[1] - A.v[1]) * q, A.v[2] + (B.v[2] - A.v[2]) * q);
+  if (k > 0) b.splice(0, k - 1);   // 丟掉太舊的
+  return { s: q < 0.5 ? A : B, yaw: lerpAng(A.y, B.y, q), pitch: A.pi + (B.pi - A.pi) * q };
+}
+// 每個物理 tick：把對手機體放到插值位置（剛體留著給子彈／砲彈判定）
+function netApplyRemote(){
+  const smp = netSample(), a = bot; if (!smp || !a) return;
+  const s = smp.s, P = a.P;
+  P.prevPos.copy(P.currPos); P.currPos.copy(_ns.p); P.vel.copy(_ns.v); P.yaw = smp.yaw; P.pitch = smp.pitch; P.grounded = !!s.g;
+  P.groundN = s.gn ? (P.groundN && P.groundN.isVector3 ? P.groundN : V()).fromArray(s.gn) : null;
+  P.pinned = s.pn ? { normal: V().fromArray(s.pn), pos: _ns.p.clone() } : null; P.safe = !!s.sf;
+  s.r.forEach((r, i) => { a.ropes[i].hooked = !!r; if (r) a.ropes[i].anchor.fromArray(r); });
+  a.weapon.active = s.w; a.hp = s.hp;
+  a.body.setTranslation({ x: _ns.p.x, y: _ns.p.y, z: _ns.p.z }, true); a.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+  a.tgt.mesh.position.copy(_ns.p);
+}
+// ---- 特效同步：開槍、開砲（只有畫面與聲音；傷害一律走 hit 事件）----
+function netQueueFx(ev){
+  if (match.mode !== 'net' || NET.state !== 'match') return;
+  if (ev.type === 'shot') NET.fx.push({ k: ev.nail ? 'n' : 's', f: v3a(ev.from), to: v3a(ev.to), h: ev.hit ? 1 : 0, n: ev.normal ? v3a(ev.normal, r3) : 0 });
+  else if (ev.type === 'cannon'){ const sh = state.weapon.shells[state.weapon.shells.length - 1]; if (sh) NET.fx.push({ k: 'c', p: v3a(sh.p), v: v3a(sh.v) }); }
+  if (NET.fx.length > 40) NET.fx.shift();
+}
+function netFx(f){
+  if (!bot || !bot.active) return;
+  if (f.k === 's' || f.k === 'n'){ const n = f.n ? V().fromArray(f.n) : null; remoteEvent({ type: 'shot', from: V().fromArray(f.f), to: V().fromArray(f.to), hit: !!f.h, normal: n, nail: f.k === 'n', by: 'net' }); }
+  else if (f.k === 'c'){ bot.weapon.shells.push({ p: V().fromArray(f.p), v: V().fromArray(f.v), life: CONFIG.cannon.range / CONFIG.cannon.speed + 0.5, net: true }); remoteEvent({ type: 'cannon', from: V().fromArray(f.p), by: 'net' }); }
+}
+function netShellsTick(dt){   // 對手的砲彈：只做飛行與爆炸外觀
+  if (!bot) return; const sh = bot.weapon.shells;
+  for (let i = sh.length - 1; i >= 0; i--){ const s = sh[i]; if (!s.net) continue; s.life -= dt;
+    const sp = s.v.length(), hit = castRay(s.p, s.v.clone().divideScalar(sp), sp * dt, false);
+    if (hit || s.life <= 0){ if (hit) remoteEvent({ type: 'boom', at: hit.point.clone(), normal: hit.normal, by: 'net' }); sh.splice(i, 1); continue; }
+    s.p.addScaledVector(s.v, dt); s.v.y += CONFIG.physics.gravity * dt; }
 }
 
 // =====================================================================
@@ -2095,7 +2359,7 @@ function remoteEvent(ev){
     case 'cannon': { const mz = M2 ? M2.muzzle('cannon', V()) : null, shl = bot.weapon.shells[bot.weapon.shells.length - 1];
       if (mz){ spawnSparks(mz, null); if (shl && !shl.voff){ shl.voff = mz.clone().sub(shl.p); shl.vt = 0.2; } } if (M2) M2.recoil(); sfx(vol > 0.5 ? 'cannon' : 'boom', vol); break; }
     case 'boom': sfx('boom', 0.6); spawnBoom(ev.at, ev.normal); break;
-    case 'died': if (ev.victim === local.pid){ toast(ev.killer ? '被 AI 擊破！回到基地 A' : '墜落！對方 +1', 1800); flashT = 0.08; } else if (!ev.killer) toast('AI 墜落！你 +1', 1500); break;
+    case 'died': { const nm = bot ? bot.name : 'AI'; if (ev.victim === local.pid){ toast(ev.killer ? `被 ${nm} 擊破！回到基地` : '墜落！對方 +1', 1800); flashT = 0.08; } else if (!ev.killer) toast(`${nm} 墜落！你 +1`, 1500); else { toast(`擊破 ${nm}！`, 1500); sfx('clank', 1); } break; }
     case 'actorHit': if (ev.victim === local.pid){ hurtT = Math.min(0.6, hurtT + ev.dmg / 1500); sfx('clank', 0.5); buzz(30); } break;
   }
 }
@@ -2657,8 +2921,8 @@ function drawHUD(dt){
   const fs = clamp(h / 700, 0.75, 1), wst = state.weapon;
   const acc = wst.fired ? Math.round(wst.hits / wst.fired * 100) : 0;
   c.textAlign = 'center'; c.font = `600 ${Math.round(15*fs)}px sans-serif`;
-  if (match.mode === 'ai'){   // v3.0 對戰：比分、時間、雙方血條、擊破訊息
-    const tl = Math.ceil(match.timeLeft), line = `你 ${match.score[0]}  :  ${match.score[1]} AI      ${Math.floor(tl / 60)}:${String(tl % 60).padStart(2, '0')}`;
+  if (match.mode === 'ai' || match.mode === 'net'){   // v3.0 對戰：比分、時間、雙方血條、擊破訊息
+    const tl = Math.ceil(match.timeLeft), line = `你 ${match.score[local.team]}  :  ${match.score[1 - local.team]} ${bot ? bot.name : 'AI'}      ${Math.floor(tl / 60)}:${String(tl % 60).padStart(2, '0')}`;
     const tw = c.measureText(line).width, bw = Math.max(tw + 40, 260 * fs), by = 8 + 24 * fs + 8;
     c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(cx - bw/2, 6, bw, 24*fs + 22);
     c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs);
@@ -2718,10 +2982,11 @@ function frame(now){
   acc += dt; let ticks = 0; const DT = CONFIG.physics.dt;
   while (acc >= DT && ticks < CONFIG.physics.maxTicksPerFrame){
     const P = state.player;
+    if (bot && bot.active && bot.kind === 'net') netApplyRemote();   // v3.8 對手放到網路插值的位置
     P.prevPos.copy(P.currPos);
     simTick(buildCommand());
     const tr = playerBody.translation(); P.currPos.set(tr.x, tr.y, tr.z);
-    if (bot && bot.active && match.state === 'live'){   // v3.0 AI 跟玩家跑同一套物理與武器
+    if (bot && bot.active && bot.kind === 'bot' && match.state === 'live'){   // v3.0 AI 跟玩家跑同一套物理與武器
       const n0 = events.length;
       const gr = G.range; G.range = BOTCFG.ropeRange;   // AI 輔助：鋼索射程 90m（玩家 60m），不然這張圖它很難自己跨島
       try { withActor(bot, () => { bot.P.prevPos.copy(bot.P.currPos); simTick(bot.brain.command(DT), true); const tb = bot.body.translation(); bot.P.currPos.set(tb.x, tb.y, tb.z); }); } finally { G.range = gr; }
@@ -2732,11 +2997,13 @@ function frame(now){
   }
   if (ticks >= CONFIG.physics.maxTicksPerFrame && acc >= DT) acc = 0;
   const alpha = acc / DT;
+  netFrame(dt);
 
   // 事件處理
   tutorial.update(dt);
   for (const ev of events){
     if (ev.by){ remoteEvent(ev); continue; }
+    netQueueFx(ev);
     switch (ev.type){
       case 'hook': sfx('hook'); buzz(20); break;
       case 'bottomFling': sfx('clank', 0.4); buzz(15); flashT = 0.06; break;
@@ -2758,7 +3025,7 @@ function frame(now){
       case 'died': if (ev.victim === local.pid){ toast('墜落！對方 +1', 1800); flashT = 0.08; } else { toast('擊破 AI！', 1500); sfx('clank', 1); } break;
       case 'actorHit': break;
       case 'nailBrake': sfx('clank', 1); buzz(35); if (opts.shake){ shakeT = CONFIG.camera.shakeDur * 0.5; shakeAmp = 0.18 * CONFIG.camera.shakeScale; } break;
-      case 'void': toast('墜入虛空！已傳送回基地 A', 2000); flashT = 0.08; break;
+      case 'void': toast(local.team ? '墜入虛空！已傳送回基地 B' : '墜入虛空！已傳送回基地 A', 2000); flashT = 0.08; break;
     }
   }
   events.length = 0;
@@ -2909,7 +3176,7 @@ function updateFSBtn(){ document.getElementById('bFS').style.display = (running 
 document.getElementById('bFS').addEventListener('click', e => { e.stopPropagation(); goFS(); });
 for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => { setTimeout(() => { resize(); calcStick(); idleStick(); updateFSBtn(); }, 50); });
 addEventListener('resize', updateFSBtn);
-async function startClick(mode){
+async function startClick(mode, noTut = false){
   startMode = mode; unlockAudio();
   const wantGyro = matchMedia('(pointer:coarse)').matches && document.getElementById('gyroStart').checked;
   if (wantGyro && needsMotionPerm() && !motionGranted && !goBtn.dataset.asked){
@@ -2922,20 +3189,30 @@ async function startClick(mode){
   document.getElementById('start').style.display = 'none';
   goFS();
   match.start(mode);
-  if (mode === 'practice' && !tutorial.done() && !tutorial.on) setTimeout(() => tutorial.start(), 600);   // 第一次玩：自動開始教學（可以跳過）
+  if (mode === 'practice' && !noTut && !tutorial.done() && !tutorial.on) setTimeout(() => tutorial.start(), 600);   // 第一次玩：自動開始教學（可以跳過）
   last = performance.now(); running = true; idleStick(); setTimeout(updateFSBtn, 400);
 }
 goBtn.addEventListener('click', () => startClick('practice'));
 goAI.addEventListener('click', () => startClick('ai'));
+// v3.8 線上對戰：先進練習場（等待時可以先練），再開始配對
+const netPanel = document.getElementById('netPanel');
+document.getElementById('goNet').addEventListener('click', () => { netPanel.style.display = netPanel.style.display === 'flex' ? 'none' : 'flex'; });
+document.getElementById('netQuick').addEventListener('click', async () => { await startClick('practice', true); if (running) netQuick(); });
+document.getElementById('netHost').addEventListener('click', async () => { await startClick('practice', true); if (running) netHostCode(); });
+document.getElementById('netJoin').addEventListener('click', async () => { const c = document.getElementById('netCodeIn').value; if ((c || '').replace(/[^A-Za-z0-9]/g, '').length < 4){ toast('請輸入 4–6 碼的房間代碼', 2000); return; } await startClick('practice', true); if (running) netJoinCode(c); });
 document.getElementById('goTut').addEventListener('click', async () => { await startClick('practice'); if (running) tutorial.start(); });
-function showResult(){ const win = match.score[0] > match.score[1], draw = match.score[0] === match.score[1];
+function showResult(msg){ const me = match.score[local.team], op = match.score[1 - local.team], win = me > op, draw = me === op;
   document.getElementById('resTitle').textContent = draw ? '平手' : win ? '勝利' : '敗北';
   document.getElementById('resTitle').style.color = draw ? '#e8f6ff' : win ? '#63e6ff' : '#ff8a6a';
-  document.getElementById('resScore').textContent = `你 ${match.score[0]} ： ${match.score[1]} AI`;
+  document.getElementById('resScore').textContent = `你 ${me} ： ${op} ${bot ? bot.name : 'AI'}` + (msg ? `（${msg}）` : '');
+  document.getElementById('resAgain').textContent = match.mode === 'net' ? (NET.state === 'match' ? '再來一場' : '再找一場') : '再來一場';
   document.getElementById('result').style.display = 'flex'; }
 function hudMatch(){ if (match.state !== 'over') document.getElementById('result').style.display = 'none'; }
-document.getElementById('resAgain').addEventListener('click', e => { e.stopPropagation(); match.start('ai'); });
-document.getElementById('resPractice').addEventListener('click', e => { e.stopPropagation(); match.start('practice'); });
+document.getElementById('resAgain').addEventListener('click', e => { e.stopPropagation();
+  if (match.mode !== 'net') return match.start('ai');
+  if (NET.state !== 'match'){ match.start('practice'); netQuick(); return; }
+  if (NET.host){ match.start('net'); NET.send('restart', {}); } else { NET.send('again', {}); toast('已通知房主，等待開始…', 2500); } });
+document.getElementById('resPractice').addEventListener('click', e => { e.stopPropagation(); if (match.mode === 'net') netCancel(); else match.start('practice'); });
 document.getElementById('result').addEventListener('pointerdown', e => e.stopPropagation());
 
 // =====================================================================
@@ -3046,6 +3323,7 @@ const tutorial = (() => {
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
 window.__game = { sun, renderer, scene, MAP_ID, tutorial, tutSig, match, actors, local, get bot(){ return bot; }, ensureBot, withActor, buildNav, get NAV(){ return NAV; }, navPath, practiceTargets, mech, tpCam, buildCommand, castRay, rocks, islands, get targets(){ return targets; }, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
+Object.assign(window.__game, { actorDamage, damageTarget, netQuick, netHostCode, netJoinCode, netCancel, NET }); Object.defineProperty(window.__game, 'running', { get: () => running });   // v3.8 連線測試用
 </script>
 </body>
 </html>
