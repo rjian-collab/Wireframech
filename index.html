@@ -373,13 +373,13 @@ const skyDome = new THREE.Mesh(new THREE.SphereGeometry(800, 32, 16), skyMat); s
   for (let k = 0; k < 46; k++){ const sp = new THREE.Sprite(mat); const a = R(0, 6.28), d = R(60, 520); sp.position.set(200 + Math.cos(a) * d, R(-95, -45), Math.sin(a) * d * 0.8); const sz = R(70, 160); sp.scale.set(sz, sz * 0.45, 1); scene.add(sp); }
   for (let k = 0; k < 14; k++){ const sp = new THREE.Sprite(mat); const a = R(0, 6.28), d = R(420, 640); sp.position.set(200 + Math.cos(a) * d, R(40, 160), Math.sin(a) * d); const sz = R(120, 240); sp.scale.set(sz, sz * 0.4, 1); scene.add(sp); } }
 const camera = new THREE.PerspectiveCamera(CONFIG.camera.fovBase, innerWidth/innerHeight, 0.1, 1700);
-const hemi = new THREE.HemisphereLight(0xd8ecff, 0x5a5040, 0.55); scene.add(hemi);
+const hemi = new THREE.HemisphereLight(0xd8ecff, 0x8a7d66, 0.6); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff0d8, 3.4); sun.position.set(-80, 150, 60); scene.add(sun); scene.add(sun.target);
 sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.5;
 Object.assign(sun.shadow.camera, { left: -75, right: 75, top: 75, bottom: -75, near: 10, far: 420 }); sun.shadow.camera.updateProjectionMatrix();
 const SUN_OFF = new THREE.Vector3(-0.45, 0.75, 0.35).normalize().multiplyScalar(200);
 // 陰影：建好場景／模型載入後，把實體物件都設成會投影、會接受陰影（發光、線條、特效不用）
-function applyShadows(root = scene){ root.traverse(o => { if (!o.isMesh || o === skyDome) return; const m = Array.isArray(o.material) ? o.material[0] : o.material; if (!m || m.isMeshBasicMaterial || m.isShaderMaterial || m.transparent && !m.alphaTest) return; o.castShadow = true; o.receiveShadow = true; }); }
+function applyShadows(root = scene){ root.traverse(o => { if (!o.isMesh || o === skyDome) return; const m = Array.isArray(o.material) ? o.material[0] : o.material; if (!m || m.isMeshBasicMaterial || m.isShaderMaterial || m.transparent && !m.alphaTest) return; o.castShadow = !o.userData.noCast; o.receiveShadow = true; }); }
 
 const hud = document.getElementById('hud');
 const hctx = hud.getContext('2d');
@@ -440,6 +440,23 @@ const matIslandV = new THREE.MeshLambertMaterial({ vertexColors: true, flatShadi
 const groundTex = new THREE.TextureLoader().load('assets/ground.jpg', t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; t.needsUpdate = true; });
 const matGroundTex = new THREE.MeshLambertMaterial({ map: groundTex, color: 0xd8e8c8, side: THREE.DoubleSide });
 // 去拼接感：同一張貼圖用兩種尺度＋旋轉各取一次，用低頻雜訊混合，再加一點明暗起伏，看不出一格一格的重複
+// 島的側面／底部：同一張地面貼圖用「三向投影」（依世界座標從 X/Y/Z 三個方向貼，再依法線混合），乘上原本的頂點色（側面偏土色）
+function makeTriMat(vertexColors, rock = [0.60, 0.53, 0.44], moss = 1){   // 三向投影：朝上的面＝林地貼圖（苔／草），側面＝去飽和偏岩土色
+  const m = new THREE.MeshLambertMaterial({ vertexColors, flatShading: true, map: groundTex });
+  m.onBeforeCompile = sh => {
+    sh.vertexShader = 'varying vec3 vWP; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vWP = (modelMatrix * vec4(position, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * normal);');
+    sh.fragmentShader = 'varying vec3 vWP; varying vec3 vWN;\n' + sh.fragmentShader.replace('#include <map_fragment>', `
+      vec3 bw = pow(abs(vWN), vec3(4.0)); bw /= (bw.x + bw.y + bw.z);
+      vec4 tx = texture2D(map, vWP.zy / 11.0), ty = texture2D(map, vWP.xz / 9.0), tz = texture2D(map, vWP.xy / 11.0);
+      vec3 tri = (tx * bw.x + ty * bw.y + tz * bw.z).rgb; float L = dot(tri, vec3(0.3, 0.55, 0.15));
+      float up = smoothstep(0.35, 0.8, vWN.y) * ${moss.toFixed(2)};
+      vec3 rockC = vec3(${rock.map(v => v.toFixed(2)).join(', ')}) * (0.55 + L * 1.7);
+      vec3 topC = ${vertexColors ? 'diffuseColor.rgb * tri * 1.9' : 'tri * 1.25'};
+      diffuseColor.rgb = mix(rockC, topC, up);`); };
+  return m;
+}
+const matIslandTex = makeTriMat(true);
+const matBoulder = makeTriMat(false, [0.50, 0.49, 0.46], 0.8);   // 巨石：灰岩＋頂面長苔
 matGroundTex.onBeforeCompile = sh => {
   sh.fragmentShader = sh.fragmentShader.replace('#include <map_pars_fragment>', `#include <map_pars_fragment>
     vec4 gHash(vec2 p){ return fract(sin(vec4(1.0 + dot(p, vec2(37.0, 17.0)), 2.0 + dot(p, vec2(11.0, 47.0)), 3.0 + dot(p, vec2(41.0, 29.0)), 4.0 + dot(p, vec2(23.0, 31.0)))) * 103.0); }
@@ -522,7 +539,7 @@ function addOutcrops(cx, top, cz, w, d, n, q, rnd = mrng){   // 島緣的岩塊�
     const p = new THREE.Vector3(Math.cos(a) * w / 2 * r, sz * 0.25, Math.sin(a) * d / 2 * r); if (q) p.applyQuaternion(q); addRock(cx + p.x, top + p.y, cz + p.z, sz, q); } }
 function addIsland(name, cx, top, cz, w, d, th, opt = {}){
   const sh = islandShape(w / 2, d / 2, th, th * 1.6 + Math.min(w, d) * 0.25, opt.style, opt.pal || 0), q = new THREE.Quaternion();
-  const m = new THREE.Mesh(sh.geo, matIslandV); m.position.set(cx, top, cz); scene.add(m);
+  const m = new THREE.Mesh(sh.geo, opt.groundTex ? matIslandTex : matIslandV); m.position.set(cx, top, cz); scene.add(m);
   addHullBody(new THREE.Vector3(cx, top, cz), q, [sh.hullTop, sh.hullBot]);
   islands.push({ name, cx, top, cz, w, d });
   if (opt.groundTex) addGroundCap(cx, top, cz, sh.R[0], sh.R[1]);
@@ -603,9 +620,77 @@ function addMenhir(x, z, groundY, h, yaw){   // 石陣的立石（掩體）
   const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw), b = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(x, groundY + h / 2 - 0.3, z).setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }));
   const c = world.createCollider(RAPIER.ColliderDesc.cuboid(w / 2, h / 2, d / 2).setFriction(0), b); hookable.add(c.handle);
 }
+const MECH_H = 3.8;   // 機體實際高度（腳到頂）約 3.8m
+function addBoulder(x, z, groundY, H, rnd){   // 寬的大巨石：露出地面的高度 H，寬度約 H 的 2.4～3.6 倍，下面埋一截
+  const g = new THREE.IcosahedronGeometry(1, 1), pa = g.attributes.position, jit = new Map();
+  const hy = H * 0.75, rx = H * (1.2 + rnd() * 0.6), rz = H * (1.0 + rnd() * 0.5);
+  for (let i = 0; i < pa.count; i++){ const key = [pa.getX(i), pa.getY(i), pa.getZ(i)].map(v => v.toFixed(3)).join(); if (!jit.has(key)) jit.set(key, 0.85 + rnd() * 0.3);
+    const j = jit.get(key); pa.setXYZ(i, pa.getX(i) * rx * j, pa.getY(i) * hy * j, pa.getZ(i) * rz * j); }
+  g.computeVertexNormals(); const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), rnd() * 6.28);
+  const y = groundY + H - hy, m = new THREE.Mesh(g, matBoulder); m.position.set(x, y, z); m.quaternion.copy(q); scene.add(m);
+  const pts = new Float32Array(pa.array.length); pts.set(pa.array); addHullBody(new THREE.Vector3(x, y, z), q, [pts]);
+  return Math.max(rx, rz);
+}
 function addPad(x, y, z){ const pad = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 0.3, 24), matPad); pad.position.set(x, y + 0.15, z); scene.add(pad);
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 60, 8), new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.18 })); beam.position.set(x, y + 30, z); scene.add(beam);
   supplyPads.push({ x, y, z, r: 6 }); }
+// =====================================================================
+// v3.4 植被：草叢（程式畫的草葉貼圖、十字交叉薄片、數千叢一次畫完、會隨風擺）＋灌木（用松樹貼圖的枝葉拼成）
+// =====================================================================
+const vegWind = { value: 0 };
+function grassTexture(){
+  const c = document.createElement('canvas'); c.width = 128; c.height = 128; const g = c.getContext('2d'), R = mulberry32(42);
+  for (let k = 0; k < 26; k++){
+    const x0 = 10 + R() * 108, h = 55 + R() * 70, bend = (R() - 0.5) * 34, w = 2.2 + R() * 2.6;
+    const gr = g.createLinearGradient(0, 128, 0, 128 - h); gr.addColorStop(0, '#22361a'); gr.addColorStop(0.55, '#4a6a30'); gr.addColorStop(1, R() < 0.35 ? '#9a9a5a' : '#6f8f48');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(x0 - w, 128); g.quadraticCurveTo(x0 + bend * 0.3, 128 - h * 0.6, x0 + bend, 128 - h); g.quadraticCurveTo(x0 + bend * 0.3 + w * 0.4, 128 - h * 0.6, x0 + w, 128); g.closePath(); g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function windify(mat, amp){   // 頂點越高擺越多；每叢相位不同
+  mat.onBeforeCompile = sh => { sh.uniforms.uWind = vegWind;
+    sh.vertexShader = 'uniform float uWind;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      #ifdef USE_INSTANCING
+        vec3 ip = vec3(instanceMatrix[3][0], instanceMatrix[3][1], instanceMatrix[3][2]);
+      #else
+        vec3 ip = vec3(0.0);
+      #endif
+      float sw = sin(uWind * 1.7 + ip.x * 0.13 + ip.z * 0.09) + 0.4 * sin(uWind * 3.1 + ip.x * 0.4);
+      transformed.x += sw * ${amp.toFixed(2)} * max(position.y, 0.0); transformed.z += sw * ${(amp * 0.5).toFixed(2)} * max(position.y, 0.0);`); };
+}
+function vegSpots(n, rnd, ok){ const out = []; for (let t = 0; out.length < n && t < n * 8; t++){ const a = rnd() * 6.283, r = Math.sqrt(rnd()) * 0.9, x = 200 + Math.cos(a) * 150 * r, z = Math.sin(a) * 80 * r; if (ok(x, z)) out.push([x, z]); } return out; }
+const vegBlockers = [];   // [x, z, r]：樹幹、立石、補給台附近不長
+function vegFree(x, z){ for (const [bx, bz, br] of vegBlockers) if ((x - bx) ** 2 + (z - bz) ** 2 < br * br) return false; return true; }
+function addGrass(groundY){
+  const tex = grassTexture(), rnd = mulberry32(99);
+  const mat = new THREE.MeshLambertMaterial({ map: tex, alphaTest: 0.45, side: THREE.DoubleSide, color: 0xffffff }); windify(mat, 0.12);
+  const geo = new THREE.BufferGeometry(), P = [], U = [], N = [];
+  for (let q = 0; q < 3; q++){ const a = q / 3 * Math.PI, cx = Math.cos(a), cz = Math.sin(a);   // 三片交叉
+    const v = [[-cx, 0, -cz, 0, 0], [cx, 0, cz, 1, 0], [cx, 1, cz, 1, 1], [-cx, 0, -cz, 0, 0], [cx, 1, cz, 1, 1], [-cx, 1, -cz, 0, 1]];
+    for (const [x, y, z, u, w] of v){ P.push(x * 0.5, y, z * 0.5); U.push(u, w); N.push(0, 1, 0); } }   // 法線朝上：光線跟地面一致，不會一片亮一片暗
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+  const spots = vegSpots(4200, rnd, vegFree), im = new THREE.InstancedMesh(geo, mat, spots.length), m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), c3 = new THREE.Color();
+  spots.forEach(([x, z], k) => { const w = 1.6 + rnd() * 1.8, h = 0.9 + rnd() * 1.1; q4.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rnd() * 6.28);
+    m4.compose(new THREE.Vector3(x, groundY, z), q4, new THREE.Vector3(w, h, w)); im.setMatrixAt(k, m4);
+    c3.setHSL(0.2 + rnd() * 0.07, 0.2 + rnd() * 0.15, 0.5 + rnd() * 0.15); im.setColorAt(k, c3); });
+  im.receiveShadow = true; im.userData.noCast = true; im.frustumCulled = false; scene.add(im);
+}
+function addBushes(map, groundY){   // 用松樹貼圖右半邊的枝葉圖，拼成一叢叢矮灌木（放在樹林邊、石陣旁、島緣）
+  const rnd = mulberry32(7), P = [], U = [], N = [];
+  const card = (a, tilt, len, wid, y0) => { const dx = Math.cos(a), dz = Math.sin(a), px = -dz, pz = dx, ux = dx * Math.cos(tilt), uy = Math.sin(tilt), uz = dz * Math.cos(tilt);
+    const p0 = [px * -wid, y0, pz * -wid], p1 = [px * wid, y0, pz * wid], p2 = [px * wid + ux * len, y0 + uy * len, pz * wid + uz * len], p3 = [px * -wid + ux * len, y0 + uy * len, pz * -wid + uz * len];
+    for (const [p, u, v] of [[p0, 0.52, 0.02], [p1, 0.98, 0.02], [p2, 0.98, 0.98], [p0, 0.52, 0.02], [p2, 0.98, 0.98], [p3, 0.52, 0.98]]){ P.push(...p); U.push(u, v); N.push(0, 1, 0); } };
+  for (let k = 0; k < 11; k++) card(k / 11 * 6.28 + rnd() * 0.4, 0.35 + rnd() * 0.75, 2.2 + rnd() * 1.2, 0.55, 0.1);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+  const mat = new THREE.MeshLambertMaterial({ map, alphaTest: 0.5, side: THREE.DoubleSide, color: 0x9ab38a }); windify(mat, 0.05);
+  const spots = [];
+  for (const [x, z] of vegSpots(900, rnd, (x, z) => vegFree(x, z))){
+    const nearTree = treeSpots.some(t => { const p = t.grp.position; return (p.x - x) ** 2 + (p.z - z) ** 2 < 15 * 15; }), edge = ((x - 200) / 150) ** 2 + (z / 80) ** 2 > 0.62;
+    if (nearTree || edge || rnd() < 0.08) spots.push([x, z]); if (spots.length >= 170) break; }
+  const im = new THREE.InstancedMesh(geo, mat, spots.length), m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), c3 = new THREE.Color();
+  spots.forEach(([x, z], k) => { const s2 = 0.8 + rnd() * 1.1; q4.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rnd() * 6.28); m4.compose(new THREE.Vector3(x, groundY, z), q4, new THREE.Vector3(s2, s2 * (0.8 + rnd() * 0.4), s2)); im.setMatrixAt(k, m4);
+    c3.setHSL(0.27 + rnd() * 0.05, 0.3 + rnd() * 0.2, 0.55 + rnd() * 0.2); im.setColorAt(k, c3); });
+  im.castShadow = true; im.receiveShadow = true; scene.add(im);
+}
 function buildNoviceMap(){
   const BIG = { x: 200, top: 0, z: 0, w: 300, d: 160 };
   addIsland('大島', BIG.x, BIG.top, BIG.z, BIG.w, BIG.d, 16, { chains: 5, style: 'round', pal: 0, outcrops: 0, groundTex: true });
@@ -618,14 +703,20 @@ function buildNoviceMap(){
     const x = 78 + rnd() * 116, z = 20 + rnd() * 42;
     if (trees.some(t => Math.hypot(t[0] - x, t[1] - z) < 13)) continue;
     trees.push([x, z, 30 + rnd() * 18]); n++; }
-  for (const [x, z, h] of trees){ const s2 = rnd() * 1e9; addTree(x, z, BIG.top, h, mulberry32(s2)); addTree(400 - x, z, BIG.top, h, mulberry32(s2)); }
+  for (const [x, z, h] of trees){ const s2 = rnd() * 1e9; addTree(x, z, BIG.top, h, mulberry32(s2)); addTree(400 - x, z, BIG.top, h, mulberry32(s2)); vegBlockers.push([x, z, 2.5], [400 - x, z, 2.5]); }
   addTree(200, 48, BIG.top, 50, mulberry32(5));   // 中線上一棵最高的
   // 石陣：大島前半，左右各一圈立石，中間一小群石頭
-  for (const cx of [135, 265]){ const n = 8; for (let k = 0; k < n; k++){ const a = k / n * Math.PI * 2 + 0.2, hh = 5 + (k % 3) * 1.6;
-      addMenhir(cx + Math.cos(a) * 13, -42 + Math.sin(a) * 13, BIG.top, hh, -a); } addRock(cx, BIG.top + 1.2, -42, 4.5); }
+  // 石陣：左右各一群寬大的巨石（機體可以整台躲在後面）
+  for (const side of [-1, 1]){ const R2 = mulberry32(31);
+    for (let k = 0; k < 7; k++){ const a = k / 7 * Math.PI * 2 + 0.3 + R2() * 0.3, d = 14 + R2() * 8, H = MECH_H * (0.5 + R2() * 0.5);   // 機體的 0.5～1 倍高
+      const x = 200 + side * (65 + Math.cos(a) * d), z = -42 + Math.sin(a) * d * 0.8;
+      const r = addBoulder(x, z, BIG.top, H, R2); vegBlockers.push([x, z, r]); }
+    const r0 = addBoulder(200 + side * 65, -42, BIG.top, MECH_H, R2); vegBlockers.push([200 + side * 65, -42, r0]); }
   for (const [x, z, sz] of [[200, -20, 5], [188, -34, 3.5], [212, -34, 3.5], [200, -56, 4]]) addRock(x, BIG.top + sz * 0.3, z, sz);
   for (const [x, z] of [[95, -10], [305, -10], [160, 5], [240, 5]]) addRock(x, BIG.top + 1, z, 3.2 + rnd());
-  addPad(200, BIG.top, 10);
+  addPad(200, BIG.top, 10); vegBlockers.push([200, 10, 7.5]);
+  for (const cx of [135, 265]) vegBlockers.push([cx, -42, 5]);   // 石陣中心的大石頭
+  addGrass(BIG.top);
   // 基地前方高處的浮游岩：出生點平視就勾得到，甩下大島用
   for (const [x, z] of [[48, 0], [352, 0], [40, 45], [360, 45], [40, -45], [360, -45]]){ rocks.push({ x, y: 42, z }); addRock(x, 42, z, 6); }
 }
@@ -1923,6 +2014,7 @@ async function loadPines(){
       const m = new THREE.Mesh(src.geometry, mt), sy = t.h * 1.04 / H, sxz = Math.max(t.maxR * 1.2 / Rm, sy * 0.42);
       m.scale.set(sxz, sy, sxz); m.rotation.y = t.rot; m.position.y = -bb.min.y * sy; t.grp.add(m);
     }
+    if (MAP_ID === 'novice') addBushes(mt.map, 0);
     applyShadows();
   } catch (e){ console.warn('松樹模型載入失敗，改用簡化樹', e); }
 }
@@ -2725,7 +2817,7 @@ function frame(now){
   if (hurtT > 0){ hurtT = Math.max(0, hurtT - dt); } hurtEl.style.opacity = Math.min(1, hurtT * 2.2);
   hitMarkT = Math.max(0, hitMarkT - dt); crossPulse = Math.max(0, crossPulse - dt*5);
 
-  skyDome.position.copy(camera.position); skyMat.uniforms.uT.value = now / 1000;
+  skyDome.position.copy(camera.position); skyMat.uniforms.uT.value = now / 1000; vegWind.value = now / 1000;
   { const pp = state.player.currPos; sun.target.position.set(Math.round(pp.x / 4) * 4, Math.round(pp.y / 4) * 4, Math.round(pp.z / 4) * 4); sun.position.copy(sun.target.position).add(SUN_OFF); sun.castShadow = opts.shadows !== false; }
   renderer.render(scene, camera);
   drawHUD(dt);
