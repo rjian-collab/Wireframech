@@ -34,8 +34,13 @@
   #tut.fin { border-color:#7fe3a0; } #tut.fin .dots i { background:#7fe3a0; }
   #tutHand { position:fixed; left:0; top:0; z-index:6; width:44px; height:44px; margin:-22px 0 0 -22px; pointer-events:none; display:none; }
   #tutHand i { position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,.95) 0 30%, rgba(255,255,255,.35) 31% 60%, rgba(255,255,255,0) 61%); box-shadow:0 0 18px rgba(127,227,160,.9); }
+  #tutHand s { position:absolute; inset:-4px; border-radius:50%; border:2px solid rgba(127,227,160,.9); opacity:0; }
+  #tutTrail { position:fixed; z-index:4; height:0; border-top:2px dashed rgba(255,255,255,.32); transform-origin:0 50%; pointer-events:none; display:none; }
+  #tutTrail::after { content:attr(data-l); position:absolute; right:-7px; top:-8px; width:0; height:0; border-left:9px solid rgba(255,255,255,.4); border-top:6px solid transparent; border-bottom:6px solid transparent; }
+  #tutTrail[data-l]:not([data-l=""])::after { right:-14px; top:-15px; width:28px; height:28px; border:2px solid rgba(255,215,112,.7); border-radius:50%; box-sizing:border-box;
+    color:#ffd770; font:700 11px/24px sans-serif; text-align:center; transform:rotate(var(--ar)); background:rgba(15,30,45,.35); }
   #tutAim { position:fixed; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border:3px solid #ffd84a; border-radius:50%; z-index:4; pointer-events:none; display:none; animation:tutp .9s ease-in-out infinite; }
-  #tutRing { position:fixed; z-index:4; pointer-events:none; border:3px solid #7fe3a0; border-radius:50%; display:none; animation:tutp 1.1s ease-in-out infinite; }
+  #tutRing { position:fixed; z-index:4; pointer-events:none; box-sizing:border-box; border:3px solid #7fe3a0; border-radius:50%; display:none; animation:tutp 1.1s ease-in-out infinite; }
   @keyframes tutp { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.12); opacity:.45; } }
   #touch { position:fixed; inset:0; touch-action:none; }
   /* 按鈕：圓形，外圈填色＝張力／燃料 */
@@ -175,7 +180,7 @@
 <canvas id="hud"></canvas>
 <div id="frame"></div>
 <div id="flash"></div><div id="hurt"></div>
-<div id="tut"><div class="dots" id="tutDots"></div><h3 id="tutTitle"></h3><p id="tutText"></p><button id="tutSkipStep" aria-label="跳過這步">⏭</button><button id="tutQuit" aria-label="結束教學">✕</button><span id="tutStep" hidden></span><i id="tutBar" hidden></i></div><div id="tutRing"></div><div id="tutHand"><i></i></div><div id="tutAim"></div>
+<div id="tut"><div class="dots" id="tutDots"></div><h3 id="tutTitle"></h3><p id="tutText"></p><button id="tutSkipStep" aria-label="跳過這步">⏭</button><button id="tutQuit" aria-label="結束教學">✕</button><span id="tutStep" hidden></span><i id="tutBar" hidden></i></div><div id="tutRing"></div><div id="tutTrail"></div><div id="tutHand"><s></s><i></i></div><div id="tutAim"></div>
 <div id="result"><h2 id="resTitle">勝利</h2><div class="sc" id="resScore"></div><button id="resAgain">再來一場</button><button id="resPractice">回到練習</button></div>
 <div id="touch">
   <div class="stick" id="stickBase"></div><div class="knob" id="stickKnob"></div>
@@ -2601,7 +2606,7 @@ function drawHUD(dt){
     const hb = (x, k, col, right) => { const w = bw/2 - 14; c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(x, by, w, 6); c.fillStyle = col; c.fillRect(right ? x + w * (1 - k) : x, by, w * k, 6); };
     hb(cx - bw/2 + 8, local.hp / CONFIG.pvp.hp, '#5fe0ff', false); if (bot) hb(cx + 6, bot.hp / CONFIG.pvp.hp, '#ffa040', true);
     c.font = `600 ${Math.round(13*fs)}px sans-serif`; match.feed.forEach((f2, i) => { c.fillStyle = `rgba(255,220,180,${Math.min(1, f2.t)})`; c.fillText(f2.msg, cx, by + 24*fs + i * 18*fs); });
-  } else {
+  } else if (!tutorial.on) {   // 教學進行中：上方讓給教學進度列
   c.fillStyle = 'rgba(0,0,0,.35)'; const line = `${sp.toFixed(0)} m/s   命中 ${acc}%   墜落 ${P.falls || 0}`;
   const tw = c.measureText(line).width; c.fillRect(cx - tw/2 - 10, 8, tw + 20, 24*fs + 4);
   c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs); }
@@ -2899,26 +2904,52 @@ const tutorial = (() => {
     { title: '腿部釘槍', g: 'nail', text: '換到 03 釘槍：<b>靠牆開槍</b>＝釘在牆上（推搖桿可以沿牆爬）；<b>在空中開槍</b>＝急煞車。', hl: 'bFire', init(){}, done(){ return seen('pin') || seen('nailBrake'); } },
   ];
   // v3.4 用動畫示範手勢（半透明指尖在要操作的按鈕上做一次動作，一直重播），不用文字
-  const hand = $('tutHand'), aim = $('tutAim'); let anim = null;
-  const GEST = {   // [dx, dy, 按下?, 時間比例]；座標相對於目標中心（px）
-    move:   [[0, 0, 0, 0], [0, 0, 1, .12], [0, -48, 1, .45], [0, -48, 1, .8], [0, -48, 0, .9], [0, 0, 0, 1]],
-    look:   [[60, 0, 0, 0], [60, 0, 1, .12], [-90, 10, 1, .6], [-90, 10, 0, .7], [60, 0, 0, 1]],
-    tap:    [[0, 0, 0, 0], [0, 0, 1, .15], [0, 0, 0, .25], [0, 0, 0, .55], [0, 0, 1, .65], [0, 0, 0, .75], [0, 0, 0, 1]],
-    flick:  [[0, 0, 0, 0], [0, 0, 1, .2], [70, -10, 1, .32], [90, -14, 0, .4], [0, 0, 0, 1]],
-    hold:   [[0, 0, 0, 0], [0, 0, 1, .15], [0, 0, 1, .85], [0, 0, 0, .95], [0, 0, 0, 1]],
-    reel:   [[0, 0, 0, 0], [0, 0, 1, .12], [0, 0, 1, .3], [0, -38, 1, .55], [0, -38, 1, .75], [0, -38, 0, .82], [0, 0, 0, 1]],
-    thrust: [[0, 0, 0, 0], [0, 0, 1, .12], [-70, -55, 1, .45], [-70, -55, 1, .85], [-70, -55, 0, .92], [0, 0, 0, 1]],
-    swap:   [[0, 0, 0, 0], [0, 0, 1, .12], [0, 0, 1, .4], [-22, -75, 1, .55], [-22, -75, 0, .62], [0, 0, 0, 1]],
-    nail:   [[0, 0, 0, 0], [0, 0, 1, .1], [0, 0, 1, .3], [-60, -58, 1, .42], [-60, -58, 0, .48], [0, 0, 0, .6], [0, 0, 1, .7], [0, 0, 0, .8], [0, 0, 0, 1]] };
+  const hand = $('tutHand'), aim = $('tutAim'), trail = $('tutTrail'), rip = hand.querySelector('s'); let anim = null, anim2 = null;
+  // 手勢關鍵影格 [dx, dy, 按下?, 時間比例]，座標相對於目標中心（px）。每輪重播時依目前的搖桿半徑／射擊鈕大小重算（轉向、縮放都不會跑掉）
+  const slotVec = (k, F) => { const a = SLOT_ANG[k] * DEG, R = F * 1.08; return [Math.cos(a) * R, -Math.sin(a) * R]; };   // 與 layoutSlots 同一套幾何
+  const GEST = {
+    move:   R => [[0, 0, 0, 0], [0, 0, 1, .12], [0, -R * .85, 1, .45], [0, -R * .85, 1, .8], [0, -R * .85, 0, .9], [0, 0, 0, 1]],
+    look:   () => { const a = innerWidth * .07, b = -innerWidth * .1; return [[a, 0, 0, 0], [a, 0, 1, .12], [b, 8, 1, .6], [b, 8, 0, .7], [a, 0, 0, 1]]; },
+    tap:    () => [[0, 0, 0, 0], [0, 0, 1, .15], [0, 0, 0, .25], [0, 0, 0, .55], [0, 0, 1, .65], [0, 0, 0, .75], [0, 0, 0, 1]],
+    // 方向跳：0.25 秒內滑出 >0.8 倍半徑再放開（右前方）
+    flick:  R => [[0, 0, 0, 0], [0, 0, 1, .2], [R * 1.1, -R * .7, 1, .3], [R * 1.35, -R * .85, 0, .33], [R * 1.35, -R * .85, 0, .5], [0, 0, 0, 1]],
+    hold:   () => [[0, 0, 0, 0], [0, 0, 1, .15], [0, 0, 1, .85], [0, 0, 0, .95], [0, 0, 0, 1]],
+    // 收索：圈內往上推（不能超過推進門檻 1.35R），放開
+    reel:   R => [[0, 0, 0, 0], [0, 0, 1, .12], [0, 0, 1, .3], [0, -R * .75, 1, .55], [0, -R * .75, 1, .75], [0, -R * .75, 0, .82], [0, 0, 0, 1]],
+    // 推進：左索往上（略偏外側＝左）拖出外圈
+    thrust: R => { const L = R * CONFIG.touch.thrustOvershoot * 1.3, a = 110 * DEG, x = Math.cos(a) * L, y = -Math.sin(a) * L;
+      return [[0, 0, 0, 0], [0, 0, 1, .12], [x, y, 1, .45], [x, y, 1, .85], [x, y, 0, .92], [0, 0, 0, 1]]; },
+    // 換武器：按下後 0.25 秒內往 02 的方向甩（圖示一按就會出現）
+    swap:   (R, F) => { const [x, y] = slotVec('mg', F); return [[0, 0, 0, 0], [0, 0, 1, .15], [0, 0, 1, .17], [x, y, 1, .25], [x, y, 0, .3], [x, y, 0, .45], [0, 0, 0, .6], [0, 0, 0, 1]]; },
+    // 腿部釘槍：甩到 03，再輕點開槍
+    nail:   (R, F) => { const [x, y] = slotVec('sub', F); return [[0, 0, 0, 0], [0, 0, 1, .1], [0, 0, 1, .12], [x, y, 1, .19], [x, y, 0, .23], [x, y, 0, .33], [0, 0, 0, .45], [0, 0, 1, .55], [0, 0, 0, .62], [0, 0, 0, 1]]; } };
+  const SLOT_LBL = { swap: '02', nail: '03' };
+  function hideHand(){ hand.style.display = trail.style.display = aim.style.display = 'none'; }
   function playHand(){
-    if (anim){ anim.onfinish = null; anim.cancel(); anim = null; }
-    const S2 = STEPS[i]; if (!api.on || !S2){ hand.style.display = 'none'; aim.style.display = 'none'; return; }
+    if (anim){ anim.onfinish = null; anim.cancel(); anim = null; } if (anim2){ anim2.cancel(); anim2 = null; }
+    const S2 = STEPS[i]; if (!api.on || !S2){ hideHand(); return; }
     aim.style.display = S2.aim ? 'block' : 'none';
     let cx = innerWidth * 0.66, cy = innerHeight * 0.45;
     if (S2.hl){ const r = $(S2.hl).getBoundingClientRect(); if (r.width){ cx = r.left + r.width / 2; cy = r.top + r.height / 2; } }
-    const G = GEST[S2.g]; hand.style.display = 'block';
-    anim = hand.animate(G.map(([dx, dy, dn, o]) => ({ offset: o, transform: `translate(${cx + dx}px, ${cy + dy}px) scale(${dn ? .78 : 1})`, opacity: dn ? 1 : .55 })), { duration: S2.g === 'look' || S2.g === 'nail' ? 2200 : 1800, easing: 'ease-in-out' });
+    const fr = $('bFire').getBoundingClientRect(), F = fr.width || 80;
+    const G = GEST[S2.g](R_STICK, F), dur = S2.g === 'look' || S2.g === 'nail' ? 2200 : 1800;
+    hand.style.display = 'block';
+    anim = hand.animate(G.map(([dx, dy, dn, o]) => ({ offset: o, transform: `translate(${cx + dx}px, ${cy + dy}px) scale(${dn ? .78 : 1})`, opacity: dn ? 1 : .55, easing: 'ease-in-out' })), { duration: dur });   // 每段各自緩動（整體線性），按下／甩出的時間點才會跟真實門檻一致
     anim.onfinish = () => { if (api.on) playHand(); };
+    // 按下的瞬間：一圈短漣漪
+    const rk = [{ offset: 0, transform: 'scale(.4)', opacity: 0 }];
+    G.forEach(([, , dn, o], k) => { if (dn && !(k && G[k - 1][2]) && o + .1 < 1 && o > rk[rk.length - 1].offset){
+      rk.push({ offset: o, transform: 'scale(.4)', opacity: .9 }, { offset: o + .1, transform: 'scale(1.9)', opacity: 0 }); } });
+    rk.push({ offset: 1, transform: 'scale(.4)', opacity: 0 });
+    if (rip) anim2 = rip.animate(rk, { duration: dur });
+    // 淡淡的拖曳方向虛線：從按下點到按住時最遠的點
+    const p0 = G.find(g => g[2]); let far = null, fd = 0;
+    if (p0) for (const g of G) if (g[2]){ const d = Math.hypot(g[0] - p0[0], g[1] - p0[1]); if (d > fd){ fd = d; far = g; } }
+    if (far && fd > 16){
+      const x0 = cx + p0[0], y0 = cy + p0[1], ang = Math.atan2(far[1] - p0[1], far[0] - p0[0]);
+      Object.assign(trail.style, { display: 'block', left: x0 + 'px', top: y0 + 'px', width: fd + 'px', transform: `rotate(${ang}rad)` });
+      trail.dataset.l = SLOT_LBL[S2.g] || ''; trail.style.setProperty('--ar', (-ang) + 'rad');
+    } else trail.style.display = 'none';
   }
   function show(){
     const S2 = STEPS[i]; $('tutDots').innerHTML = STEPS.map((_, k) => `<i class="${k < i ? 'd' : k === i ? 'c' : ''}"></i>`).join('');
@@ -2948,6 +2979,7 @@ const tutorial = (() => {
   $('tutSkipStep').addEventListener('click', e => { e.stopPropagation(); if (api.on) api.next(); });
   $('tutQuit').addEventListener('click', e => { e.stopPropagation(); api.finish(false); });
   el.addEventListener('pointerdown', e => e.stopPropagation());
+  addEventListener('resize', () => setTimeout(() => { if (api.on){ playHand(); place(); } }, 120));   // 轉向／縮放後立刻改用新的按鈕位置
   return api;
 })();
 
