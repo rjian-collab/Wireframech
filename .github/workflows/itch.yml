@@ -1,0 +1,30 @@
+# 每次推到 main：自動把遊戲（index.html + assets）發佈到 itch.io
+# 需要先在 GitHub 專案設定好：
+#   Secrets  → BUTLER_API_KEY（itch.io 的 API 金鑰）
+#   Variables → ITCH_USER（itch.io 帳號名稱）、ITCH_GAME（專案網址最後那段，例如 wireframech）
+# 沒設定 Variables 時這個流程會自動略過，不會失敗
+name: Publish to itch.io
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  itch:
+    runs-on: ubuntu-latest
+    if: ${{ vars.ITCH_USER != '' && vars.ITCH_GAME != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package web build
+        run: |
+          mkdir -p build/web
+          cp index.html build/web/
+          cp -r assets build/web/
+      - name: Install butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip -d butler && chmod +x butler/butler
+          ./butler/butler -V
+      - name: Push to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: ./butler/butler push build/web "${{ vars.ITCH_USER }}/${{ vars.ITCH_GAME }}:html5" --userversion "${GITHUB_SHA::7}"
