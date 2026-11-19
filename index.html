@@ -242,6 +242,7 @@
   </ul>
   <p class="kb">鍵盤：X 切換主副武　WASD　F 智慧鋼索（勾住時 W/S 收放、A/D 擺盪）　Q E 左右索　Space／Shift 推進　R 裝填　滑鼠瞄準、左鍵射擊</p>
   <label id="gyroStartRow" style="display:none;margin-top:8px;font-size:15px"><input type="checkbox" id="gyroStart" checked style="width:20px;height:20px;vertical-align:middle"> 使用陀螺儀瞄準</label>
+  <label style="margin:8px 0;font-size:15px">地圖 <select id="mapSel" style="font-size:15px;min-height:36px;border-radius:8px;background:#0f2230;color:#e6f6ff;border:1px solid rgba(140,220,255,.4)"><option value="ring">環形空島戰場</option><option value="novice">新手地圖（大島＋樹林）</option></select></label>
   <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="go" id="goBtn" disabled>載入中…</button><button class="go go2" id="goAI" disabled>對戰 AI</button></div>
   <div id="status"></div>
 </div>
@@ -375,6 +376,7 @@ const matIsland = new THREE.MeshLambertMaterial({ color: 0x6d6255 });
 const matGrass  = new THREE.MeshLambertMaterial({ color: 0x5f8a4f });
 const matRock   = new THREE.MeshLambertMaterial({ color: 0x7a8494 });
 const matClutter= new THREE.MeshLambertMaterial({ color: 0x8b8072 });
+const matTrunk = new THREE.MeshLambertMaterial({ color: 0x5a4632, flatShading: true }), matLeaf = new THREE.MeshLambertMaterial({ color: 0x2f6b3a, flatShading: true }), matLeaf2 = new THREE.MeshLambertMaterial({ color: 0x3b7d45, flatShading: true });
 const matPad    = new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.55 });
 const islands = [], supplyPads = [];
 // ===== v2.5 真正的空島外型：不規則平頂草地＋往下收的岩石倒錐＋垂下的石筍；碰撞用凸包（站立、鋼索判定照舊）=====
@@ -474,6 +476,55 @@ function addTiltIsland(name, cx, top, cz, w, d, th, tiltDeg, opt = {}){
   addOutcrops(cx, top, cz, w, d, opt.outcrops || 0, q, rnd);
   islands.push({ name, cx, top, cz, w, d, tilt: tiltDeg, bottom: top + sh.bottomY });
 }
+// v3.2 新手地圖（玩家草圖）：一座 300×160m 的大島（平坦、可全速跑）＋後半一片高樹林（可勾、當掩體）＋前半石陣（掩體），
+//  兩隊出生在左右兩座小空島（比大島高 25m），先甩索／跳下大島再開打；左右以 x=200 鏡像對稱
+function addTree(x, z, groundY, h, rnd = mrng){
+  const r0 = 1.3 + rnd() * 0.5, trunk = new THREE.Mesh(new THREE.CylinderGeometry(r0 * 0.7, r0, h, 7), matTrunk); trunk.position.set(x, groundY + h / 2, z); scene.add(trunk);
+  const tb = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(x, groundY + h / 2, z));
+  const tc = world.createCollider(RAPIER.ColliderDesc.cylinder(h / 2, r0).setFriction(0), tb); hookable.add(tc.handle);
+  for (let k = 0; k < 3; k++){   // 低多邊形針葉：三層圓錐（可勾）
+    const cr = (6.5 - k * 1.7) * (0.85 + rnd() * 0.3), ch = 9 - k * 1.5, cy = groundY + h * (0.55 + k * 0.17);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(cr, ch, 7), k % 2 ? matLeaf2 : matLeaf); cone.position.set(x, cy, z); cone.rotation.y = rnd() * 6; scene.add(cone);
+    const pa = cone.geometry.attributes.position, pts = new Float32Array(pa.array.length); pts.set(pa.array);
+    addHullBody(new THREE.Vector3(x, cy, z), new THREE.Quaternion(), [pts]); }
+}
+function addMenhir(x, z, groundY, h, yaw){   // 石陣的立石（掩體）
+  const w = 2.2, d = 1.4, m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matRockF); m.position.set(x, groundY + h / 2 - 0.3, z); m.rotation.y = yaw; scene.add(m);
+  const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw), b = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(x, groundY + h / 2 - 0.3, z).setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }));
+  const c = world.createCollider(RAPIER.ColliderDesc.cuboid(w / 2, h / 2, d / 2).setFriction(0), b); hookable.add(c.handle);
+}
+function addPad(x, y, z){ const pad = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 0.3, 24), matPad); pad.position.set(x, y + 0.15, z); scene.add(pad);
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 60, 8), new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.18 })); beam.position.set(x, y + 30, z); scene.add(beam);
+  supplyPads.push({ x, y, z, r: 6 }); }
+function buildNoviceMap(){
+  const BIG = { x: 200, top: 0, z: 0, w: 300, d: 160 };
+  addIsland('大島', BIG.x, BIG.top, BIG.z, BIG.w, BIG.d, 16, { chains: 5, style: 'round', pal: 0, outcrops: 0 });
+  addIsland('基地 A', 10, 25, 0, 40, 40, 10, { supply: true, chains: 2, style: 'mesa', pal: 2, outcrops: 2 });
+  addIsland('基地 B', 390, 25, 0, 40, 40, 10, { supply: true, chains: 2, style: 'mesa', pal: 2, outcrops: 2 });
+  const rnd = mulberry32(777);
+  // 樹林：大島後半（z 20～62），x 75～195 隨機、鏡像到另一半
+  const trees = [];
+  for (let n = 0, tries = 0; n < 13 && tries < 400; tries++){
+    const x = 78 + rnd() * 116, z = 20 + rnd() * 42;
+    if (trees.some(t => Math.hypot(t[0] - x, t[1] - z) < 13)) continue;
+    trees.push([x, z, 30 + rnd() * 18]); n++; }
+  for (const [x, z, h] of trees){ const s2 = rnd() * 1e9; addTree(x, z, BIG.top, h, mulberry32(s2)); addTree(400 - x, z, BIG.top, h, mulberry32(s2)); }
+  addTree(200, 48, BIG.top, 50, mulberry32(5));   // 中線上一棵最高的
+  // 石陣：大島前半，左右各一圈立石，中間一小群石頭
+  for (const cx of [135, 265]){ const n = 8; for (let k = 0; k < n; k++){ const a = k / n * Math.PI * 2 + 0.2, hh = 5 + (k % 3) * 1.6;
+      addMenhir(cx + Math.cos(a) * 13, -42 + Math.sin(a) * 13, BIG.top, hh, -a); } addRock(cx, BIG.top + 1.2, -42, 4.5); }
+  for (const [x, z, sz] of [[200, -20, 5], [188, -34, 3.5], [212, -34, 3.5], [200, -56, 4]]) addRock(x, BIG.top + sz * 0.3, z, sz);
+  for (const [x, z] of [[95, -10], [305, -10], [160, 5], [240, 5]]) addRock(x, BIG.top + 1, z, 3.2 + rnd());
+  addPad(200, BIG.top, 10);
+  // 基地前方高處的浮游岩：出生點平視就勾得到，甩下大島用
+  for (const [x, z] of [[48, 0], [352, 0], [40, 45], [360, 45], [40, -45], [360, -45]]){ rocks.push({ x, y: 42, z }); addRock(x, 42, z, 6); }
+}
+// ---------- v3.2 地圖選擇：環形戰場（預設）／新手地圖（開始畫面切換，會重新載入）----------
+const MAP_ID = (() => { try { return new URLSearchParams(location.search).get('map') || localStorage.getItem('wfm.map') || 'ring'; } catch(_){ return 'ring'; } })();
+const safeZones = [], rocks = [];
+const byName = n => islands.find(i => i.name === n);
+if (MAP_ID === 'novice'){ Object.assign(CONFIG.map.spawn, { x: 6, y: 27.2, z: 0 }); Object.assign(CONFIG.pvp.spawnB, { x: 394, y: 27.2, z: 0 }); }
+if (MAP_ID !== 'novice'){
 // 兩邊基地（平的、有補給、有出生保護區）
 addIsland('基地 A', 50, 10, 0, 40, 40, 10, { supply: true, chains: 2, style: 'mesa', pal: 2, outcrops: 3 });
 addIsland('基地 B', 350, 10, 0, 40, 40, 10, { supply: true, chains: 2, style: 'mesa', pal: 2, outcrops: 3 });
@@ -496,17 +547,8 @@ for (let deg = MAPC.ringStepDeg; deg < 360; deg += MAPC.ringStepDeg){
 }
 // 中央大平台：全場最低、平的，有掩體與補給
 addIsland('中央平台', MC.x, -20, MC.z, 110, 60, 12, { supply: true, boulders: 5, chains: 3, style: 'lobed', pal: 0 });   // v2.5 中央淨空，只留 5 顆石頭
-// 出生保護區（兩邊基地各一）：區內不能開火，日後 PvP 區內不受傷
-const safeZones = [{ x: 50, y: 10, z: 0, r: CONFIG.safeZone.radius }, { x: 350, y: 10, z: 0, r: CONFIG.safeZone.radius }];
-for (const sz of safeZones){
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(sz.r, 24, 12, 0, Math.PI*2, 0, Math.PI/2),
-    new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.10, depthWrite: false, side: THREE.DoubleSide }));
-  dome.position.set(sz.x, sz.y, sz.z); scene.add(dome);
-  const rg = new THREE.Mesh(new THREE.TorusGeometry(sz.r, 0.25, 6, 48), new THREE.MeshBasicMaterial({ color: 0x40ffb0 }));
-  rg.rotation.x = Math.PI/2; rg.position.set(sz.x, sz.y + 0.3, sz.z); scene.add(rg);
-}
+
 // 鋼索中繼的浮游岩：外圈相鄰兩島之間、基地與外圈、外圈到中央（四條放射線）
-const byName = n => islands.find(i => i.name === n);
 const routes = [];
 const loop = ['基地 A', ...ring.filter(n => +n.split(' ')[1].replace('°','') > 180), '基地 B', ...ring.filter(n => +n.split(' ')[1].replace('°','') < 180)];
 // 順序：A(180°) → 200…340 → B(0°) → 20…160 → 回到 A
@@ -514,7 +556,6 @@ loop.sort((a, b) => { const ang = n => n === '基地 A' ? 180 : n === '基地 B'
 for (let i = 0; i < loop.length; i++) routes.push([loop[i], loop[(i + 1) % loop.length]]);
 for (const d of [60, 120, 240, 300]) routes.push(['外圈 ' + d + '°', '中央平台']);
 routes.push(['基地 A', '中央平台'], ['基地 B', '中央平台']);
-const rocks = [];
 // 兩邊基地正前方高處各一顆（新手平視就勾得到；夠高，不擋兩基地對射）
 for (const [fx, fz] of [[MAPC.spawn.x + 40, 0], [350 - 44, 0]]){ rocks.push({ x: fx, y: 44, z: fz }); addRock(fx, 44, fz, 6.5); }
 for (const [a, b] of routes){
@@ -534,6 +575,17 @@ for (const [a, b] of routes){
 const voidPlane = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.MeshBasicMaterial({ color: 0x1a2030, transparent: true, opacity: 0.85 }));
 voidPlane.rotation.x = -Math.PI/2; voidPlane.position.set(200, -90, 0); scene.add(voidPlane);
 
+}
+else buildNoviceMap();
+// 出生保護區（兩邊基地各一）：區內不能開火，日後 PvP 區內不受傷
+for (const nm of ['基地 A', '基地 B']){ const I = byName(nm); safeZones.push({ x: I.cx, y: I.top, z: I.cz, r: CONFIG.safeZone.radius }); }
+for (const sz of safeZones){
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(sz.r, 24, 12, 0, Math.PI*2, 0, Math.PI/2),
+    new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.10, depthWrite: false, side: THREE.DoubleSide }));
+  dome.position.set(sz.x, sz.y, sz.z); scene.add(dome);
+  const rg = new THREE.Mesh(new THREE.TorusGeometry(sz.r, 0.25, 6, 48), new THREE.MeshBasicMaterial({ color: 0x40ffb0 }));
+  rg.rotation.x = Math.PI/2; rg.position.set(sz.x, sz.y + 0.3, sz.z); scene.add(rg);
+}
 // ---------- 靶子 ----------
 const practiceTargets = [];   // v3.0 練習靶
 let targets = practiceTargets;   // v3.0「目前這台機體的敵人清單」：本機＝練習靶或 AI；跑 AI 那一格時換成 AI 的敵人
@@ -562,10 +614,15 @@ function addTarget(x, y, z, kind, groundY = 0){
   return t;
 }
 // 靶子：外圈四座各一、中央平台兩個、敵方基地一個（左右移動）、吊在最高點下方一個
+if (MAP_ID !== 'novice'){
 for (const d of [60, 120, 240, 300]){ const I = byName('外圈 ' + d + '°'); addTarget(I.cx, I.top + 2.5, I.cz, 'static', I.top - 1); }
 addTarget(185, -17, -14, 'static', -20); addTarget(215, -17, 14, 'static', -20);
 addTarget(350, 13, 0, 'moving', 10);
 { const I = byName('外圈 100°'); addTarget(I.cx, I.bottom - 6, I.cz, 'air'); }
+} else {
+  for (const [x, z] of [[110, -20], [290, -20], [170, 40], [230, 40], [200, -42]]) addTarget(x, 2.5, z, 'static', 0);
+  addTarget(390, 28, 0, 'moving', 25);
+}
 
 // ---------- 玩家機體 ----------
 const S = CONFIG.map.spawn;
@@ -659,6 +716,8 @@ function buildNav(){
   const pts = [], up = { x: 0, y: -1, z: 0 };
   islands.forEach((I, ii) => {
     const offs = [[0, 0], [0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3], [0.22, 0.22], [-0.22, 0.22], [0.22, -0.22], [-0.22, -0.22]];
+    if ((I.w || 0) > 80){ offs.length = 0; const nx = Math.round(I.w / 32), nz = Math.round((I.d || I.w) / 32);   // 大島：每 ~32m 一個落腳點
+      for (let ix = 0; ix <= nx; ix++) for (let iz = 0; iz <= nz; iz++) offs.push([(ix / nx - 0.5) * 0.84, (iz / nz - 0.5) * 0.84]); }
     for (const [fx, fz] of offs){
       const x = I.cx + fx * (I.w || 10), z = I.cz + fz * (I.d || I.w || 10);
       const h = castRay({ x, y: I.top + 30, z }, up, 80, false);
@@ -670,25 +729,44 @@ function buildNav(){
   });
   const d = V();
   for (const a of pts) for (const b of pts){
-    if (a.id >= b.id || a.isl === b.isl) continue;
+    if (a.id >= b.id) continue;
+    if (a.isl === b.isl){ const dw = a.p.distanceTo(b.p); if (dw < 46 && Math.abs(a.p.y - b.p.y) < 4){ a.nb.push([b.id, dw * 0.7, 1]); b.nb.push([a.id, dw * 0.7, 1]); } continue; }   // 同一座（大）島：用走的
     const dist = a.p.distanceTo(b.p); if (dist > BOTCFG.ropeRange - 2 || dist < 4) continue;
     const e = V(a.p.x, a.p.y + 2.5, a.p.z), e2 = V(b.p.x, b.p.y + 2.5, b.p.z);
     // 看得到目標島的「任何一處」（島面或側面，島範圍內、不低於島面 12m）就算可達：勾側面後靠收索＋推進＋甩出去／爬牆上島
     const onIsl = (h, q) => { const J = islands[q.isl], rJ = Math.max(J.w || 10, J.d || 10) * 0.5; return h && Math.hypot(h.point.x - J.cx, h.point.z - J.cz) < rJ + 3 && h.point.y > J.top - 12; };
     const ok1 = (() => { d.subVectors(b.p, e); const L = d.length(); d.divideScalar(L); return onIsl(castRay(e, d, L + 1, false), b); })();
     const ok2 = (() => { d.subVectors(a.p, e2); const L = d.length(); d.divideScalar(L); return onIsl(castRay(e2, d, L + 1, false), a); })();
-    if (ok1) a.nb.push([b.id, dist]); if (ok2) b.nb.push([a.id, dist]);
+    const hc = CONFIG.body.halfHeight + CONFIG.body.radius + 0.3;
+    if (ok1 || arcSolve(V(a.p.x, a.p.y + hc, a.p.z), b.p)) a.nb.push([b.id, dist]);
+    if (ok2 || arcSolve(V(b.p.x, b.p.y + hc, b.p.z), a.p)) b.nb.push([a.id, dist]);
   }
   NAV = { pts };
   return NAV;
 }
+// 拋物線：飛行時間依距離決定，被地形擋住就試更高的弧線（AI 跨島用；導航圖也用它判斷兩點能不能跳過去）
+function arcSolve(p0, qp){
+      const g = CONFIG.physics.gravity, to = V(qp.x, qp.y + CONFIG.body.halfHeight + CONFIG.body.radius + 1.2, qp.z), d = Math.hypot(to.x - p0.x, to.z - p0.z);
+      for (const k of [1, 1.35, 1.7]){
+        const T = clamp(d / 26, 0.9, 2.6) * k, v = V((to.x - p0.x) / T, (to.y - p0.y - 0.5 * g * T * T) / T, (to.z - p0.z) / T);
+        let ok = true; const a0 = V().copy(p0);
+        for (let i = 1; i <= 12 && ok; i++){ const t = T * i / 12, b0 = V(p0.x + v.x * t, p0.y + v.y * t + 0.5 * g * t * t, p0.z + v.z * t);
+          const dd = V().subVectors(b0, a0), L = dd.length(); dd.divideScalar(L);
+          const sx = -dd.z, sz = dd.x, sl = Math.hypot(sx, sz) || 1;
+          for (const [ox, oy, oz] of [[0, -1.3, 0], [0, 0, 0], [0, 1.3, 0], [sx / sl * 1.3, 0, sz / sl * 1.3], [-sx / sl * 1.3, 0, -sz / sl * 1.3]]){ const h = castRay(V(a0.x + ox, a0.y + oy, a0.z + oz), dd, L); if (h && h.point.distanceTo(to) > 3.5){ ok = false; break; } }   // 機體有厚度：上下各多掃一條
+          a0.copy(b0); }
+        if (v.y + g * T > -2) ok = false;   // 必須是「往下落」到落腳點上，不能從下面撞上去   // 中途撞到東西（不是落點本身）就不行
+        if (ok && v.length() < 60) return { v, T, to };
+      }
+      return null;
+    }
 function navPath(from, to){   // Dijkstra（點數少，直接掃）
   const n = NAV.pts.length, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), done = new Uint8Array(n);
   dist[from] = 0;
   for (;;){
     let u = -1, bd = Infinity; for (let i = 0; i < n; i++) if (!done[i] && dist[i] < bd){ bd = dist[i]; u = i; }
     if (u < 0 || u === to) break; done[u] = 1;
-    for (const [v, w] of NAV.pts[u].nb){ const nd = dist[u] + w + 8; if (nd < dist[v]){ dist[v] = nd; prev[v] = u; } }   // 每跳 +8：少跳幾次比較好
+    for (const [v, w, walk] of NAV.pts[u].nb){ const nd = dist[u] + w + (walk ? 0 : 8); if (nd < dist[v]){ dist[v] = nd; prev[v] = u; } }   // 每跳 +8：少跳幾次比較好
   }
   if (!isFinite(dist[to])) return null;
   const path = []; for (let v = to; v !== from && v >= 0; v = prev[v]) path.unshift(v);
@@ -770,6 +848,7 @@ function createBotBrain(a){
         F.t += dt; st.travel = true; st.moveYaw = Math.atan2(-(F.to.x - pos.x), -(F.to.z - pos.z)); st.hold = false;
         if (a.weapon.active === 'main') st.wantFire = false;   // 飛行中不開砲（空中後座力會把弧線推歪）
         const arrived = P.grounded && Math.hypot(pos.x - F.to.x, pos.z - F.to.z) < 8;
+        if (!P.grounded && P.vel.y < -20 && pos.y < F.to.y - 5){ st.flight = null; st.rescueT = 0; return; }   // 撞到東西掉下去了：放棄這一跳，馬上自救
         if (arrived || F.t > F.T + 1.2){ st.flight = null; st.hold = false;
           if (arrived && st.path.length && st.path[0] === F.id) st.path.shift(); else { if (!arrived) st.bad.set(F.id, (st.bad.get(F.id) || 0) + 1); st.path = []; } }
         return;
@@ -786,32 +865,29 @@ function createBotBrain(a){
       }
       if (here < 0){ let best = null, bs = Infinity; for (const q of NAV.pts){ const L = q.p.distanceTo(pos); if (L < bs && L < B.ropeRange - 2){ bs = L; best = q; } } if (best && this.canFly(pos, best)) this.fly(pos, best); return; }
       if (st.goal < 0) return;
-      if (NAV.pts[here].isl === NAV.pts[st.goal].isl){ st.path = []; this.strafeOnIsland(pos, see); return; }
-      if (!st.path.length || NAV.pts[st.path[0]].isl === NAV.pts[here].isl){
+      const gq = NAV.pts[st.goal];
+      if (gq.isl === NAV.pts[here].isl && Math.hypot(pos.x - gq.p.x, pos.z - gq.p.z) < 20){ st.path = []; this.strafeOnIsland(pos, see); return; }
+      if (!st.path.length){
         st.path = navPath(here, st.goal) || [];
-        while (st.path.length && NAV.pts[st.path[0]].isl === NAV.pts[here].isl) st.path.shift();
         if (!st.path.length || (st.bad.get(st.path[0]) || 0) >= 2){ st.goal = -1; st.path = []; st.bad.clear(); return; }
       }
+      // 下一個點在同一座島上：用跑的過去（卡住就跳一下，再卡就改用跳的）
+      { const nq = NAV.pts[st.path[0]];
+        if (nq.isl === NAV.pts[here].isl){
+          const hd = Math.hypot(pos.x - nq.p.x, pos.z - nq.p.z);
+          if (hd < 6){ st.path.shift(); st.walkT = 0; return; }
+          st.travel = true; st.moveYaw = Math.atan2(-(nq.p.x - pos.x), -(nq.p.z - pos.z)); st.reel = 1;
+          st.walkT = (st.walkT || 0) + dt;
+          if (P.vel.length() < 2 && st.walkT > 1){ st.jump = true; st.jumpX = 0; st.jumpZ = 1; }
+          if (st.walkT > 5){ st.walkT = 0; if (!this.fly(pos, nq)){ st.bad.set(nq.id, (st.bad.get(nq.id) || 0) + 1); st.path = []; } }
+          return; } }
       st.waitT = (st.waitT || 0) + dt; if (st.waitT < 0.6) return;   // 落地後停一下再跳，看起來比較像在找下一個點
       st.waitT = 0;
       const nx = NAV.pts[st.path[0]];
       if (this.canFly(pos, nx)) this.fly(pos, nx); else { st.bad.set(nx.id, (st.bad.get(nx.id) || 0) + 1); st.path = []; }
     },
     // 拋物線：飛行時間依距離決定，被地形擋住就試更高的弧線
-    solve(p0, q){
-      const g = CONFIG.physics.gravity, to = V(q.p.x, q.p.y + CONFIG.body.halfHeight + CONFIG.body.radius + 0.3, q.p.z), d = Math.hypot(to.x - p0.x, to.z - p0.z);
-      for (const k of [1, 1.35, 1.7]){
-        const T = clamp(d / 26, 0.9, 2.6) * k, v = V((to.x - p0.x) / T, (to.y - p0.y - 0.5 * g * T * T) / T, (to.z - p0.z) / T);
-        let ok = true; const a0 = V().copy(p0);
-        for (let i = 1; i <= 12 && ok; i++){ const t = T * i / 12, b0 = V(p0.x + v.x * t, p0.y + v.y * t + 0.5 * g * t * t, p0.z + v.z * t);
-          const dd = V().subVectors(b0, a0), L = dd.length(); dd.divideScalar(L);
-          for (const oy of [-1.3, 0, 1.3]){ const h = castRay(V(a0.x, a0.y + oy, a0.z), dd, L); if (h && h.point.distanceTo(to) > 3.5){ ok = false; break; } }   // 機體有厚度：上下各多掃一條
-          a0.copy(b0); }
-        if (v.y + g * T > -2) ok = false;   // 必須是「往下落」到落腳點上，不能從下面撞上去   // 中途撞到東西（不是落點本身）就不行
-        if (ok && v.length() < 60) return { v, T, to };
-      }
-      return null;
-    },
+    solve(p0, q){ return arcSolve(p0, q.p); },
     canFly(p0, q){ return p0.distanceTo(q.p) < BOTCFG.ropeRange - 2 && !!this.solve(p0, q); },
     fly(p0, q){
       const sol = this.solve(p0, q); if (!sol) return false;
@@ -2526,6 +2602,8 @@ requestAnimationFrame(frame);
 const goBtn = document.getElementById('goBtn');
 goBtn.disabled = false; goBtn.textContent = '練習（打靶）';
 const goAI = document.getElementById('goAI'); goAI.disabled = false;
+const mapSel = document.getElementById('mapSel'); mapSel.value = MAP_ID;
+mapSel.addEventListener('change', () => { try { localStorage.setItem('wfm.map', mapSel.value); } catch(_){} const u = new URL(location.href); u.searchParams.set('map', mapSel.value); location.href = u.toString(); });
 let startMode = 'practice';
 // v1.3.1：iPad 的陀螺儀權限對話框會讓全螢幕跳掉（對話框不能和進入全螢幕同時發生）
 //  → 第一下只要求權限，第二下才進全螢幕並開始；遊戲中掉出全螢幕時顯示「⛶ 全螢幕」鈕
@@ -2565,7 +2643,7 @@ document.getElementById('result').addEventListener('pointerdown', e => e.stopPro
 
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
-window.__game = { match, actors, local, get bot(){ return bot; }, ensureBot, withActor, buildNav, get NAV(){ return NAV; }, navPath, practiceTargets, mech, tpCam, buildCommand, castRay, rocks, islands, get targets(){ return targets; }, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
+window.__game = { MAP_ID, match, actors, local, get bot(){ return bot; }, ensureBot, withActor, buildNav, get NAV(){ return NAV; }, navPath, practiceTargets, mech, tpCam, buildCommand, castRay, rocks, islands, get targets(){ return targets; }, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
 </script>
 </body>
 </html>
