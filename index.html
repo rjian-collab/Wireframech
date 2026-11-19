@@ -245,7 +245,7 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵 v3.6</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵 v3.7</div>
   <details style="max-width:min(640px,92vw);margin:4px 0 8px"><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
@@ -384,6 +384,9 @@ const sun = new THREE.DirectionalLight(0xfff0d8, 3.4); sun.position.set(-80, 150
 sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.5;
 Object.assign(sun.shadow.camera, { left: -75, right: 75, top: 75, bottom: -75, near: 10, far: 420 }); sun.shadow.camera.updateProjectionMatrix();
 const SUN_OFF = new THREE.Vector3(-0.45, 0.75, 0.35).normalize().multiplyScalar(200);
+// v3.7 逆光（輪廓光）：從太陽對面低角度打一道冷色光，讓機體邊緣亮起來、跟背景分開
+const rim = new THREE.DirectionalLight(0xa8ccff, 1.3); scene.add(rim); scene.add(rim.target);
+const RIM_OFF = new THREE.Vector3(0.6, 0.35, -0.55).normalize().multiplyScalar(100);
 // 陰影：建好場景／模型載入後，把實體物件都設成會投影、會接受陰影（發光、線條、特效不用）
 function applyShadows(root = scene){ root.traverse(o => { if (!o.isMesh || o === skyDome) return; const m = Array.isArray(o.material) ? o.material[0] : o.material; if (!m || m.isMeshBasicMaterial || m.isShaderMaterial || m.transparent && !m.alphaTest) return; o.castShadow = !o.userData.noCast; o.receiveShadow = true; }); }
 
@@ -847,6 +850,14 @@ addTarget(350, 13, 0, 'moving', 10);
   addTarget(390, 28, 0, 'moving', 25);
 }
 applyShadows();
+// v3.7 宣傳片模式（?promo=1）：泛光、較細的陰影、隱藏重生點綠圈；一般遊玩不受影響
+const PROMO = (() => { try { return new URLSearchParams(location.search).get('promo') === '1'; } catch(_){ return false; } })();
+let composer = null;
+if (PROMO){ sun.shadow.mapSize.set(4096, 4096);
+  scene.traverse(o => { if (o.isMesh && o.material && o.material.isMeshBasicMaterial && o.material.color.getHex() === 0x40ffb0) o.visible = false; });
+  Promise.all([import('three/addons/postprocessing/EffectComposer.js'), import('three/addons/postprocessing/RenderPass.js'), import('three/addons/postprocessing/UnrealBloomPass.js'), import('three/addons/postprocessing/OutputPass.js')])
+    .then(([{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }]) => { const c = new EffectComposer(renderer); c.addPass(new RenderPass(scene, camera));
+      c.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.55, 0.45, 0.92)); c.addPass(new OutputPass()); c.setSize(innerWidth, innerHeight); composer = c; window.__composer = c; }); }
 
 // ---------- 玩家機體 ----------
 const S = CONFIG.map.spawn;
@@ -1193,6 +1204,7 @@ function buildCommand(){
     jump: input.jumpQueued, jumpPow: input.jumpPow || 1, jumpX: input.jumpX || 0, jumpZ: input.jumpZ == null ? 0 : input.jumpZ, boost: input.boost || k.has('ShiftLeft') || k.has('ShiftRight') || k.has('Space'), thrust: input.thrust, reload: input.reloadQueued };
   // v2.1 第三人稱：鏡頭在機體後上方，從鏡頭中心射線打到的點反推槍口方向，子彈才會打在準星上
   { const a3 = aim3P(); if (a3){ cmd.aimYaw = a3[0]; cmd.aimPitch = a3[1]; if (cmd.gunYaw == null){ cmd.gunYaw = a3[0]; cmd.gunPitch = a3[1]; } } }
+  if (window.__aimOverride){ const o = window.__aimOverride; cmd.aimYaw = cmd.gunYaw = o[0]; cmd.aimPitch = cmd.gunPitch = o[1]; }   // 測試／宣傳片用：直接指定瞄準方向
   input.jumpQueued = false; input.jumpPow = 1; input.jumpX = 0; input.jumpZ = 0; input.reloadQueued = false; input.swapQueued = false; input.swapTo = null; input.fireTap = false;
   if (input.ropeLatch && !state.ropes[1].hooked && state.ropes[1].wasHeld){ input.ropeLatch = false; input.hookR = false; }   // 右索自己脫鉤／沒勾到 → 解除鎖定
   else if (input.ropeLatch) input.hookR = true;
@@ -1780,6 +1792,7 @@ const predLine = (()=>{ const g = new THREE.BufferGeometry(); g.setAttribute('po
 let wasInWin = false;
 const ropeMeshes = state.ropes.map(()=>{ const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1,6,1,true), new THREE.MeshBasicMaterial({ color: 0x9fe8ff })); m.visible = false; scene.add(m); return m; });
 const botRopeMeshes = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1,6,1,true), new THREE.MeshBasicMaterial({ color: 0xffa040 })); m.visible = false; scene.add(m); return m; });
+if (PROMO) for (const m of [...ropeMeshes, ...botRopeMeshes]){ m.geometry = new THREE.CylinderGeometry(0.12, 0.12, 1, 8, 1, true); m.material.color.multiplyScalar(2.6); }   // v3.7 宣傳片：鋼索粗一點、發光
 const anchorMeshes = state.ropes.map(()=>{ const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), new THREE.MeshBasicMaterial({ color: 0x40e0ff })); m.visible = false; scene.add(m); return m; });
 const UP = V(0,1,0), _q = new THREE.Quaternion();
 // =====================================================================
@@ -1918,7 +1931,15 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     const [{ GLTFLoader }, { MeshoptDecoder }, { RoomEnvironment }] = await Promise.all([
       import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js'), import('three/addons/environments/RoomEnvironment.js')]);
     // 環境光照：讓模型的金屬與烤漆有反光（只影響物理材質，地形不受影響）
-    const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.7;
+    if (!scene.environment){   // v3.7 改用「戶外天空」環境貼圖：上方藍天、地平線亮、下方草地色、加一顆太陽 → 金屬反光像在戶外
+      const pm = new THREE.PMREMGenerator(renderer), es = new THREE.Scene();
+      es.add(new THREE.Mesh(new THREE.SphereGeometry(50, 48, 24), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false,
+        uniforms: { uSun: { value: SUN_OFF.clone().normalize() } },
+        vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: 'uniform vec3 uSun; varying vec3 vD; void main(){ float y = vD.y; vec3 zen = vec3(0.16,0.32,0.62), hor = vec3(0.85,0.9,0.95), gnd = vec3(0.16,0.18,0.1);' +
+          'vec3 c = y > 0.0 ? mix(hor, zen, pow(y, 0.55)) : mix(hor * 0.55, gnd, pow(-y, 0.35));' +
+          'float s = max(dot(vD, uSun), 0.0); c += vec3(1.0,0.92,0.8) * (pow(s, 900.0) * 60.0 + pow(s, 24.0) * 0.6); gl_FragColor = vec4(c, 1.0); }' })));
+      scene.environment = pm.fromScene(es, 0.02).texture; scene.environmentIntensity = 1.0; }
     const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
     const gltf = await loader.loadAsync('assets/mech.glb');
     const mdl = new THREE.Group(); mdl.add(gltf.scene); mdl.rotation.y = Math.PI;   // 模型正面是 +z，遊戲正面是 -z
@@ -1947,6 +1968,11 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     // v2.5 結構：右臂拿掉原作的長刀刃，只留臂座當格鬥臂（機槍裝在上面）
     gltf.scene.traverse(o => { if (o.isMesh && /^Blade_R_(Metal_with_leaks|Stainless)/.test(o.name)) o.visible = false; });
     M.applyPaint(cfg.paint || opts.paint);
+    // v3.7 材質：裝甲更像烤漆金屬（金屬感↑、粗糙度略降、凹凸貼圖加深），點綴色更亮
+    { const seen = new Set(); gltf.scene.traverse(o => { if (!o.isMesh) return; const m = o.material; if (!m || seen.has(m) || !m.isMeshStandardMaterial) return; seen.add(m);
+        if (M.paintMats.accent.includes(m)) { m.emissiveIntensity *= 1.6; return; }
+        m.metalness = Math.min(1, Math.max(m.metalness, 0.25) * 1.9); m.roughness = Math.min(m.roughness, 1) * 0.72; m.envMapIntensity = 1.25;
+        if (m.normalMap) m.normalScale.multiplyScalar(1.6); m.needsUpdate = true; }); }
     // 隱藏基本幾何的過渡零件
     for (const ch of [...M.body.children]) if (ch !== mdl && ch !== M.dish) ch.visible = false;
     // 找一個金屬材質給加裝零件用，風格才一致
@@ -2093,14 +2119,14 @@ const shellMeshes = []; { const g = new THREE.SphereGeometry(0.22, 8, 6), m = ne
 const booms = []; { const g = new THREE.SphereGeometry(1, 12, 8);
   for (let i = 0; i < 6; i++){ const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.8, depthWrite: false })); m.visible = false; scene.add(m); booms.push({ m, life: 0 }); } }
 let boomIdx = 0;
-function spawnBoom(p, n){ const b = booms[boomIdx++ % booms.length]; b.m.position.copy(p); b.life = 0.35; b.m.visible = true; for (let k = 0; k < 3; k++) spawnSparks(p, n); }
+function spawnBoom(p, n){ const b = booms[boomIdx++ % booms.length]; b.m.position.copy(p); b.life = PROMO ? 0.55 : 0.35; b.m.visible = true; if (PROMO) b.m.material.color.setRGB(4, 1.6, 0.35); for (let k = 0; k < (PROMO ? 7 : 3); k++) spawnSparks(p, n); }
 function drawShells(dt){
   const sh = bot && bot.active ? state.weapon.shells.concat(bot.weapon.shells) : state.weapon.shells;
   shellMeshes.forEach((o, i) => { const s2 = sh[i]; o.me.visible = o.tl.visible = !!s2; if (!s2) return;
     const vp = V().copy(s2.p); if (s2.voff && s2.vt > 0){ vp.addScaledVector(s2.voff, s2.vt / 0.2); s2.vt -= dt; }
     o.me.position.copy(vp); const a = o.tl.geometry.attributes.position, L = 6 / s2.v.length();
     a.setXYZ(0, vp.x, vp.y, vp.z); a.setXYZ(1, vp.x - s2.v.x * L, vp.y - s2.v.y * L, vp.z - s2.v.z * L); a.needsUpdate = true; });
-  for (const b of booms) if (b.life > 0){ b.life -= dt; const k = 1 - b.life / 0.35; b.m.scale.setScalar(0.5 + k * CONFIG.cannon.splashR); b.m.material.opacity = 0.8 * (1 - k); if (b.life <= 0) b.m.visible = false; }
+  for (const b of booms) if (b.life > 0){ b.life -= dt; const BL = PROMO ? 0.55 : 0.35, k = 1 - b.life / BL; b.m.scale.setScalar((0.5 + k * CONFIG.cannon.splashR) * (PROMO ? 1.7 : 1)); b.m.material.opacity = 0.8 * (1 - k); if (b.life <= 0) b.m.visible = false; }
 }
 function spawnSparks(p, n){ for (let i=0;i<6;i++){ const s = sparks[sparkIdx++ % sparks.length]; s.m.position.copy(p); s.v.set((Math.random()-.5)*8, Math.random()*6, (Math.random()-.5)*8); if (n) s.v.addScaledVector(n, 4); s.life = 0.3; s.m.visible = true; } }
 
@@ -2856,8 +2882,8 @@ function frame(now){
   hitMarkT = Math.max(0, hitMarkT - dt); crossPulse = Math.max(0, crossPulse - dt*5);
 
   skyDome.position.copy(camera.position); skyMat.uniforms.uT.value = now / 1000; vegWind.value = now / 1000;
-  { const pp = state.player.currPos; sun.target.position.set(Math.round(pp.x / 4) * 4, Math.round(pp.y / 4) * 4, Math.round(pp.z / 4) * 4); sun.position.copy(sun.target.position).add(SUN_OFF); sun.castShadow = opts.shadows !== false; }
-  renderer.render(scene, camera);
+  { const pp = state.player.currPos; sun.target.position.set(Math.round(pp.x / 4) * 4, Math.round(pp.y / 4) * 4, Math.round(pp.z / 4) * 4); sun.position.copy(sun.target.position).add(SUN_OFF); rim.target.position.copy(sun.target.position); rim.position.copy(sun.target.position).add(RIM_OFF); sun.castShadow = opts.shadows !== false; }
+  if (composer) composer.render(); else renderer.render(scene, camera);
   drawHUD(dt);
   updateButtons();
 }
