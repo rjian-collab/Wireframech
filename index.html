@@ -32,6 +32,7 @@
   #netPanel input { width:7.5em; min-height:42px; border-radius:10px; border:1px solid rgba(200,160,255,.6); background:#140f22; color:#f2eaff; font-size:18px; text-align:center; letter-spacing:.15em; text-transform:uppercase; -webkit-user-select:text; user-select:text; }
   #netPanel .sep { color:#a89bc2; font-size:13px; } #netPanel .hint { width:100%; text-align:center; font-size:12px; color:#a89bc2; }
   #netBar { position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 64px); transform:translateX(-50%); z-index:8; display:none; gap:10px; align-items:center; padding:8px 12px; border-radius:12px; background:rgba(20,12,36,.82); border:1px solid rgba(200,160,255,.5); color:#f2eaff; font-size:14px; max-width:92vw; }
+  #netBar { flex-wrap:wrap; justify-content:center; } #netDiag { display:none; width:100%; font-size:12px; color:#ffcf80; text-align:center; }
   #netBar button { min-height:36px; padding:0 14px; border-radius:9px; border:1px solid rgba(200,160,255,.6); background:rgba(140,90,230,.3); color:#fff; font-size:14px; }
   #tut { position:fixed; left:50%; top:calc(4px + var(--st)); transform:translateX(-50%); z-index:5; display:none; align-items:center; gap:8px;
     background:rgba(8,16,24,.82); border:1px solid rgba(127,227,160,.55); border-radius:20px; padding:4px 6px 4px 12px; pointer-events:auto; }
@@ -188,7 +189,7 @@
 <div id="frame"></div>
 <div id="flash"></div><div id="hurt"></div>
 <div id="tut"><div class="dots" id="tutDots"></div><h3 id="tutTitle"></h3><p id="tutText"></p><button id="tutSkipStep" aria-label="跳過這步">⏭</button><button id="tutQuit" aria-label="結束教學">✕</button><span id="tutStep" hidden></span><i id="tutBar" hidden></i></div><div id="tutRing"></div><div id="tutTrail"></div><div id="tutHand"><s></s><i></i></div><div id="tutAim"></div>
-<div id="netBar"><span id="netTxt"></span><button id="netBtn">取消</button></div>
+<div id="netBar"><span id="netTxt"></span><button id="netBtn">取消</button><div id="netDiag"></div></div>
 <div id="result"><h2 id="resTitle">勝利</h2><div class="sc" id="resScore"></div><button id="resAgain">再來一場</button><button id="resPractice">回到練習</button></div>
 <div id="touch">
   <div class="stick" id="stickBase"></div><div class="knob" id="stickKnob"></div>
@@ -253,7 +254,7 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵 v3.8</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵 v3.8b（連線測試版）</div>
   <details style="max-width:min(640px,92vw);margin:4px 0 8px"><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
@@ -1231,7 +1232,7 @@ async function netJoin(roomId){
   act.onMessage((m, ctx) => { if (!T.closed && m && m.t) for (const f of T.h.msg) f(m.t, m.d, ctx.peerId); });
   room.onPeerJoin(ctx => { if (!T.closed) for (const f of T.h.join) f(ctx.peerId); });
   room.onPeerLeave(ctx => { if (!T.closed) for (const f of T.h.leave) f(ctx.peerId); });
-  room.onError && room.onError(e => console.warn('[net]', e && e.code, e));
+  room.onError && room.onError(e => netDiag(e && e.code, e && (e.peerId || '')));
   return T;
 }
 function netLocalTransport(roomId){
@@ -1268,11 +1269,22 @@ const netUI = { el: null, txt: null, btn: null };
 function netShow(msg, btnText = '取消', onBtn = netCancel){
   if (!netUI.el){ netUI.el = document.getElementById('netBar'); netUI.txt = document.getElementById('netTxt'); netUI.btn = document.getElementById('netBtn');
     netUI.el.addEventListener('pointerdown', e => e.stopPropagation()); netUI.el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true }); }
-  netUI.el.style.display = msg ? 'flex' : 'none'; netUI.txt.textContent = msg || ''; netUI.btn.textContent = btnText; netUI.btn.style.display = btnText ? '' : 'none'; netUI.btn.onclick = e => { e.stopPropagation(); onBtn(); };
+  netUI.el.style.display = msg ? 'flex' : 'none'; netDiagShow(); netUI.txt.textContent = msg || ''; netUI.btn.textContent = btnText; netUI.btn.style.display = btnText ? '' : 'none'; netUI.btn.onclick = e => { e.stopPropagation(); onBtn(); };
 }
 const netCode = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += A[Math.floor(Math.random() * A.length)]; return s; };
+// v3.8b 連線診斷：把 Trystero 的錯誤翻成看得懂的話，顯示在紫色提示列下方
+const NET_DIAG_TXT = { 'peer-connect-failed': '找到對手，但兩台裝置無法直接連線（網路擋住了，需要轉傳伺服器 TURN）',
+  'relay-failed': '連不到配對服務（Nostr 中繼），可能是網路擋住了', 'handshake-failed': '找到對手，但交換連線資料失敗',
+  'decrypt-failed': '連線資料解不開（兩邊版本可能不同）', 'identity-failed': '瀏覽器無法建立連線身分（無痕模式？）', 'peer-error': '和對手的連線發生錯誤' };
+function netDiag(code, peer){
+  NET.diag = NET.diag || {}; NET.diag[code] = (NET.diag[code] || 0) + 1; NET.lastDiag = code;
+  NET.L(`錯誤 ${code} ${peer ? peer.slice(0, 8) : ''}`); console.warn('[net]', code, peer);
+  netDiagShow();
+}
+function netDiagShow(){ const el = document.getElementById('netDiag'); if (!el) return; const c = NET.lastDiag;
+  el.textContent = c ? `⚠ ${NET_DIAG_TXT[c] || c}（${NET.diag[c]} 次）` : ''; el.style.display = c ? 'block' : 'none'; }
 function netLeave(){ if (NET.tr){ NET.tr.leave(); NET.tr = null; } NET.peer = null; }
-function netReset(){ netLeave(); Object.assign(NET, { state: 'idle', host: false, code: null, via: null, inviteTo: null, buf: [], off: null, fx: [], lostShown: false, gotHi: false, sentGo: false }); NET.lobby.clear(); }
+function netReset(){ netLeave(); Object.assign(NET, { diag: {}, lastDiag: null, state: 'idle', host: false, code: null, via: null, inviteTo: null, buf: [], off: null, fx: [], lostShown: false, gotHi: false, sentGo: false }); NET.lobby.clear(); }
 function netCancel(){ const wasMatch = match.mode === 'net'; netReset(); netShow(null); if (wasMatch) match.start('practice'); }
 
 // 快速配對：所有人進同一個大廳；ID 小的一方才能邀請；20 秒沒人 → 改打 AI
@@ -1306,7 +1318,7 @@ function netLobbyTick(dt){
   }
   const others = [...NET.lobby.values()].filter(p => p.s === 'w').length;
   netShow(`尋找對手… ${Math.ceil(Math.max(0, NETCFG.lobbyWaitS - waitS))} 秒${others ? `（大廳 ${others} 人）` : ''}　等待時可以先練習`);
-  if (waitS > NETCFG.lobbyWaitS && NET.state === 'lobby'){ netReset(); netShow(null); toast('沒有找到對手，先和 AI 對戰', 2500); match.start('ai'); }
+  if (waitS > NETCFG.lobbyWaitS && NET.state === 'lobby'){ const blocked = NET.diag && NET.diag['peer-connect-failed']; netReset(); netShow(null); toast(blocked ? '有找到對手，但網路擋住了直連，先和 AI 對戰' : '沒有找到對手，先和 AI 對戰', 3500); match.start('ai'); }
 }
 // 代碼約戰
 async function netHostCode(){ netReset(); const code = netCode(); NET.via = 'code'; await netEnterRoom(code, true, null); if (NET.state === 'connecting') NET.state = 'codewait'; }
@@ -3323,7 +3335,7 @@ const tutorial = (() => {
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
 window.__game = { sun, renderer, scene, MAP_ID, tutorial, tutSig, match, actors, local, get bot(){ return bot; }, ensureBot, withActor, buildNav, get NAV(){ return NAV; }, navPath, practiceTargets, mech, tpCam, buildCommand, castRay, rocks, islands, get targets(){ return targets; }, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
-Object.assign(window.__game, { actorDamage, damageTarget, netQuick, netHostCode, netJoinCode, netCancel, NET }); Object.defineProperty(window.__game, 'running', { get: () => running });   // v3.8 連線測試用
+Object.assign(window.__game, { actorDamage, damageTarget, netQuick, netHostCode, netJoinCode, netCancel, NET, netDiag }); Object.defineProperty(window.__game, 'running', { get: () => running });   // v3.8 連線測試用
 </script>
 </body>
 </html>
