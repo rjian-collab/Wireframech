@@ -27,10 +27,6 @@
   #result button { min-width:180px; min-height:48px; border-radius:12px; border:1px solid rgba(140,220,255,.5); background:rgba(60,170,230,.18); color:#eaf8ff; font-size:17px; }
   .go2 { background:linear-gradient(180deg,#ff9a50,#e0602a) !important; }
   .go3 { background:linear-gradient(180deg,#c78bff,#7a3fe0) !important; }
-  #netPanel { display:none; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; margin-top:10px; max-width:min(640px,94vw); }
-  #netPanel button { min-height:44px; padding:0 18px; border-radius:10px; border:1px solid rgba(200,160,255,.6); background:rgba(140,90,230,.25); color:#f2eaff; font-size:16px; }
-  #netPanel input { width:7.5em; min-height:42px; border-radius:10px; border:1px solid rgba(200,160,255,.6); background:#140f22; color:#f2eaff; font-size:18px; text-align:center; letter-spacing:.15em; text-transform:uppercase; -webkit-user-select:text; user-select:text; }
-  #netPanel .sep { color:#a89bc2; font-size:13px; } #netPanel .hint { width:100%; text-align:center; font-size:12px; color:#a89bc2; }
   #netBar { position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 64px); transform:translateX(-50%); z-index:8; display:none; gap:10px; align-items:center; padding:8px 12px; border-radius:12px; background:rgba(20,12,36,.82); border:1px solid rgba(200,160,255,.5); color:#f2eaff; font-size:14px; max-width:92vw; }
   #netBar { flex-wrap:wrap; justify-content:center; } #netDiag { display:none; width:100%; font-size:12px; color:#ffcf80; text-align:center; }
   #netBar button { min-height:36px; padding:0 14px; border-radius:9px; border:1px solid rgba(200,160,255,.6); background:rgba(140,90,230,.3); color:#fff; font-size:14px; }
@@ -117,7 +113,7 @@
   .small { pointer-events:auto; width:40px; height:40px; border-radius:50%; background:rgba(15,30,45,.6); border:1px solid rgba(140,220,255,.5);
     color:#cfefff; font-size:18px; padding:0; }
   /* v2.9 設定面板：置中視窗＋左側分頁＋開關樣式 */
-  #settings { position:fixed; inset:0; z-index:6; display:none; align-items:center; justify-content:center; background:rgba(2,6,10,.55);
+  #settings { position:fixed; inset:0; z-index:20; display:none; align-items:center; justify-content:center; background:rgba(2,6,10,.55);
     padding:calc(8px + var(--st)) calc(8px + var(--sl)); font-size:15px; }
   #settings.open { display:flex; }
   #settings .panel { width:min(720px, 96vw); height:min(440px, calc(100dvh - 24px)); display:grid; grid-template-columns:118px 1fr; grid-template-rows:auto 1fr;
@@ -140,8 +136,70 @@
   #settings input.sw::after { content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#cfdbe2; transition:transform .15s; }
   #settings input.sw:checked { background:#2fb6e8; } #settings input.sw:checked::after { transform:translateX(20px); background:#fff; }
   #gyroStatus { font-size:12px; color:#9fc3dd; min-height:16px; padding-top:8px; }
-  #start, #rotate { position:fixed; inset:0; background:rgba(5,10,16,.94); display:flex; flex-direction:column; align-items:center;
+  #rotate { position:fixed; inset:0; background:rgba(5,10,16,.94); display:flex; flex-direction:column; align-items:center;
     justify-content:center; z-index:10; text-align:center; padding:calc(12px + var(--st)) 16px 12px; box-sizing:border-box; overflow:auto; touch-action:pan-y; }
+  #start { position:fixed; inset:0; z-index:10; color:#e8f6ff; font-family:inherit; overflow:hidden; touch-action:none;
+    background:radial-gradient(ellipse 70% 75% at 52% 55%, rgba(5,12,20,0) 40%, rgba(5,12,20,.55) 100%), linear-gradient(90deg, rgba(4,10,18,.78) 0%, rgba(4,10,18,.15) 38%, rgba(4,10,18,0) 60%, rgba(4,10,18,.35) 100%);
+    --mh:clamp(52px, 11vh, 68px); --mw:clamp(220px, 30vw, 320px); --edge:calc(14px + var(--sl)); --redge:calc(14px + var(--sr)); }
+  body.inMenu #touch, body.inMenu #topbar, body.inMenu #hud, body.inMenu #netBar { visibility:hidden; }
+  #start.loading { background:#050b12; } #start.loading .m-btn, #start.loading .m-hangar-btn, #start.loading .m-sub button { opacity:.4; pointer-events:none; }
+  #start button { font-family:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .m-profile { position:absolute; left:0; top:0; display:flex; gap:12px; align-items:center; padding:calc(10px + var(--st)) 34px 12px calc(14px + var(--sl)); min-width:min(300px, 44vw); box-sizing:border-box;
+    background:linear-gradient(180deg, rgba(10,30,46,.92), rgba(6,18,30,.88)); clip-path:polygon(0 0, 100% 0, 100% 62%, calc(100% - 26px) 100%, 0 100%);
+    border-bottom:2px solid rgba(99,230,255,.6); cursor:pointer; }
+  .m-av { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; background:rgba(99,230,255,.15); border:1px solid rgba(99,230,255,.6); color:#63e6ff; font-size:18px; }
+  .m-pt b { display:block; font-size:16px; letter-spacing:.06em; } .m-pt small { color:#8fb9cf; font-size:11.5px; }
+  .m-title { position:absolute; left:50%; top:calc(12px + var(--st)); transform:translateX(-50%); text-align:center; pointer-events:none; }
+  .m-title b { display:block; font-size:clamp(16px, 3.4vh, 22px); letter-spacing:.32em; text-shadow:0 0 14px rgba(99,230,255,.6); } .m-title span { font-size:11.5px; color:#7fd8ff; }
+  .m-icon { position:absolute; right:var(--redge); top:calc(10px + var(--st)); width:48px; height:48px; border-radius:12px; border:1px solid rgba(140,220,255,.45); background:rgba(8,22,34,.75); color:#dff; font-size:22px; }
+  .m-scr { display:none; } .m-scr.on { display:block; }
+  .m-left { position:absolute; left:0; bottom:calc(46px + var(--sb)); display:flex; flex-direction:column; align-items:flex-start; gap:10px; }
+  .m-btn { width:var(--mw); height:var(--mh); padding:0 40px 0 calc(16px + var(--sl)); border:none; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; color:#fff;
+    clip-path:polygon(0 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 0 100%); transition:transform .12s, filter .12s; text-align:left; }
+  .m-btn b { font-size:clamp(17px, 3.4vh, 21px); letter-spacing:.12em; } .m-btn small { font-size:12px; opacity:.85; margin-top:2px; }
+  .m-btn:active { transform:translateX(6px); filter:brightness(1.2); } .m-btn:disabled { filter:grayscale(.8) brightness(.6); }
+  .c-cyan { background:linear-gradient(90deg, #0d6f8f, #19a7c9); box-shadow:inset 0 -3px 0 rgba(0,0,0,.25); }
+  .c-violet { background:linear-gradient(90deg, #4b2a8f, #7a4fe0); }
+  .c-red { background:linear-gradient(90deg, #8f2a2a, #e0573f); }
+  .m-btn.busy { background:linear-gradient(90deg, #6a4a10, #d08a20); }
+  .m-sub { display:none; flex-wrap:wrap; gap:8px; padding-left:calc(14px + var(--sl)); max-width:min(560px, 70vw); } .m-sub.on { display:flex; }
+  .m-sub button, .m-sub input { min-height:48px; padding:0 16px; border-radius:10px; border:1px solid rgba(140,220,255,.55); background:rgba(8,26,40,.88); color:#eaf8ff; font-size:16px; }
+  .m-sub input { width:7.5em; text-align:center; letter-spacing:.18em; text-transform:uppercase; font-size:18px; -webkit-user-select:text; user-select:text; }
+  .m-msg { padding-left:calc(16px + var(--sl)); max-width:min(460px, 60vw); font-size:13px; color:#ffd59a; min-height:0; text-shadow:0 1px 2px #000; }
+  .m-hangar-btn { position:absolute; right:var(--redge); bottom:calc(46px + var(--sb)); width:clamp(150px, 22vw, 210px); height:var(--mh); border:none; color:#04281c;
+    background:linear-gradient(180deg, #6ff0bd, #2fcf8e); clip-path:polygon(18px 0, 100% 0, 100% 100%, 0 100%, 0 18px); display:flex; flex-direction:column; justify-content:center; align-items:center; }
+  .m-hangar-btn b { font-size:clamp(18px, 3.6vh, 23px); letter-spacing:.14em; } .m-hangar-btn small { font-size:12px; opacity:.8; }
+  #start[data-scr="hangar"] .m-hangar-btn { display:none; }
+  .m-exit { position:absolute; right:var(--redge); top:50%; transform:translateY(-50%); min-width:120px; height:52px; border-radius:12px; border:1px solid rgba(255,255,255,.35); background:rgba(8,18,28,.7); color:#eaf6ff; font-size:17px; letter-spacing:.12em; }
+  .m-exit span { font-size:20px; margin-left:6px; }
+  .m-slot { position:absolute; width:clamp(48px, 8vh, 60px); height:clamp(48px, 8vh, 60px); border-radius:12px; border:2px dashed rgba(140,220,255,.6); background:rgba(8,22,34,.55); color:#9fe8ff; font-size:26px; }
+  .m-opp { left:auto; right:calc(var(--redge) + 6px); top:auto; bottom:calc(50% + 38px); width:clamp(120px, 18vw, 170px); height:auto; min-height:clamp(70px, 14vh, 96px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:8px; }
+  .m-opp small { font-size:12px; color:#b9d8e8; } .m-opp.full { border-style:solid; border-color:#ff9a6a; color:#ffb48a; background:rgba(40,16,8,.6); } .m-opp.full small { color:#ffe2cf; font-size:14px; }
+  .m-roomno { position:absolute; left:50%; top:calc(58px + var(--st)); transform:translateX(-50%); display:flex; gap:10px; align-items:center; padding:6px 8px 6px 16px; border-radius:12px;
+    background:rgba(8,22,34,.8); border:1px solid rgba(140,220,255,.5); font-size:14px; letter-spacing:.14em; color:#9fd8ee; }
+  .m-roomno b { font-size:22px; color:#fff; letter-spacing:.24em; } .m-roomno button { min-height:38px; padding:0 12px; border-radius:9px; border:1px solid rgba(140,220,255,.5); background:rgba(99,230,255,.12); color:#e6fbff; font-size:13px; letter-spacing:0; }
+  .m-panel { background:rgba(6,16,26,.92); border:1px solid rgba(140,220,255,.4); border-radius:16px; padding:16px 18px; box-sizing:border-box; color:#e6f4ff; }
+  .m-panel h3 { margin:0 0 10px; font-size:17px; letter-spacing:.1em; color:#9fe8ff; }
+  .m-hangar { position:absolute; right:var(--redge); top:calc(64px + var(--st)); width:min(330px, 40vw); max-height:calc(100% - 64px - var(--st) - 46px - var(--sb) - 52px - 22px); overflow:auto; touch-action:pan-y; }
+  #start[data-scr="hangar"] .m-exit { top:auto; bottom:calc(46px + var(--sb)); transform:none; }
+  .m-h { font-size:12px; color:#8fb9cf; margin:10px 0 6px; letter-spacing:.1em; }
+  .m-paints { display:flex; flex-wrap:wrap; gap:8px; } .m-paints button { min-height:44px; padding:0 12px; border-radius:10px; border:1px solid rgba(140,220,255,.4); background:rgba(255,255,255,.05); color:#e6f4ff; font-size:14px; }
+  .m-paints button.on { border-color:#6ff0bd; background:rgba(111,240,189,.16); color:#bff8e2; }
+  .m-load { list-style:none; margin:0; padding:0; font-size:14px; line-height:2; } .m-load b { color:#63e6ff; display:inline-block; width:2em; }
+  .m-note { font-size:12px; color:#8fa9bb; margin-top:8px; }
+  .m-foot { position:absolute; left:50%; bottom:calc(8px + var(--sb)); transform:translateX(-50%); display:flex; gap:12px; align-items:center; white-space:nowrap; }
+  .m-foot button { background:none; border:none; color:#8fb9cf; font-size:12.5px; text-decoration:underline; min-height:32px; }
+  .m-foot #fullLink { font-size:12px !important; padding:6px 10px !important; margin:0 !important; }
+  #status { color:#ffb070; font-size:13px; }
+  .m-modal { position:absolute; inset:0; z-index:3; display:none; align-items:center; justify-content:center; background:rgba(2,6,10,.6); padding:calc(10px + var(--st)) 12px 10px; box-sizing:border-box; }
+  .m-modal.on { display:flex; } .m-modal .m-panel { position:relative; width:min(680px, 94vw); max-height:100%; overflow:auto; touch-action:pan-y; }
+  .m-modal[data-v="help"] #mProfBody, .m-modal[data-v="prof"] #mHelpBody { display:none; }
+  .m-x { position:sticky; float:right; top:0; width:40px; height:40px; border-radius:10px; border:1px solid rgba(140,220,255,.35); background:rgba(140,220,255,.08); color:#dff; font-size:18px; }
+  #mHelpBody ul { list-style:none; padding:0; margin:4px 0; font-size:13.5px; color:#a9cbe2; line-height:1.7; } #mHelpBody ul b { color:#e6f1ff; } #mHelpBody summary { cursor:pointer; color:#9fe4ff; }
+  #mHelpBody .kb { font-size:12px; color:#7e9bb0; } #mHelpBody label { display:block; margin:8px 0; font-size:14px; } .m-legacy { display:none; }
+  .m-field { display:flex; gap:10px; align-items:center; font-size:14px; } .m-field input { flex:1; min-height:44px; border-radius:10px; border:1px solid rgba(140,220,255,.5); background:#0b1a26; color:#fff; font-size:17px; padding:0 12px; -webkit-user-select:text; user-select:text; }
+  .m-recs { display:grid; grid-template-columns:auto 1fr 1fr 1fr; gap:6px 16px; margin-top:14px; font-size:14px; } .m-recs b { color:#9fe8ff; font-weight:600; }
+  @media (max-height:430px){ .m-title span { display:none; } .m-left { gap:7px; } .m-msg { font-size:12px; } .m-opp { min-height:60px; padding:4px 8px; } .m-opp small { font-size:11px; } .m-roomno { top:calc(48px + var(--st)); } }
   #start h1 { margin:0 0 6px; font-size:clamp(18px, 5.5vmin, 26px); letter-spacing:1px; }
   #start ul { list-style:none; padding:0; margin:4px 0; font-size:clamp(12px, 3.6vmin, 15px); color:#a9cbe2; line-height:1.7; }
   #start ul b { color:#e6f1ff; }
@@ -190,7 +248,7 @@
 <div id="flash"></div><div id="hurt"></div>
 <div id="tut"><div class="dots" id="tutDots"></div><h3 id="tutTitle"></h3><p id="tutText"></p><button id="tutSkipStep" aria-label="跳過這步">⏭</button><button id="tutQuit" aria-label="結束教學">✕</button><span id="tutStep" hidden></span><i id="tutBar" hidden></i></div><div id="tutRing"></div><div id="tutTrail"></div><div id="tutHand"><s></s><i></i></div><div id="tutAim"></div>
 <div id="netBar"><span id="netTxt"></span><button id="netBtn">取消</button><div id="netDiag"></div></div>
-<div id="result"><h2 id="resTitle">勝利</h2><div class="sc" id="resScore"></div><button id="resAgain">再來一場</button><button id="resPractice">回到練習</button></div>
+<div id="result"><h2 id="resTitle">勝利</h2><div class="sc" id="resScore"></div><button id="resAgain">再來一場</button><button id="resPractice">回到首頁</button></div>
 <div id="touch">
   <div class="stick" id="stickBase"></div><div class="knob" id="stickKnob"></div>
   <div class="stick" id="stickBase2"></div><div class="knob" id="stickKnob2"></div>
@@ -252,13 +310,56 @@
   <button id="portraitOK">直式繼續</button>
 </div>
 <div id="toast"></div>
-<div id="start">
-  <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵 v3.8c（連線測試版）</div>
-  <details style="max-width:min(640px,92vw);margin:4px 0 8px"><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
+<div id="start" class="loading">
+  <div id="mProfile" class="m-profile" role="button" aria-label="個人資料"><div class="m-av">◆</div><div class="m-pt"><b id="mName">PILOT</b><small id="mRec">對戰紀錄</small></div></div>
+  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v3.9（連線測試版）</span></div>
+  <button id="mSet" class="m-icon" aria-label="設定">⚙</button>
+  <div class="m-scr on" data-scr="home">
+    <div class="m-left">
+      <div id="mOffSub" class="m-sub"><button data-play="practice">練習（打靶）</button><button data-play="ai">對戰 AI</button><button data-play="tut">新手教學</button></div>
+      <button class="m-btn c-cyan" id="mOffline"><b>PLAY OFFLINE</b><small>單機遊玩</small></button>
+      <button class="m-btn c-violet" id="mToLobby"><b>MAIN LOBBY</b><small>線上大廳</small></button>
+    </div>
+  </div>
+  <div class="m-scr" data-scr="lobby">
+    <button class="m-slot m-party" style="left:33%;top:38%" aria-label="邀請隊友">＋</button><button class="m-slot m-party" style="left:61%;top:38%" aria-label="邀請隊友">＋</button>
+    <div class="m-left">
+      <div class="m-msg" id="mLobbyMsg"></div>
+      <button class="m-btn c-violet" id="mRoom"><b>ROOM</b><small>建立房間・找朋友</small></button>
+      <button class="m-btn c-violet" id="mQuick"><b id="mQuickT">QUICK MATCH</b><small id="mQuickS">快速配對（20 秒沒人改打 AI）</small></button>
+    </div>
+    <button class="m-exit" data-back="home">EXIT <span>⇥</span></button>
+  </div>
+  <div class="m-scr" data-scr="room">
+    <div class="m-roomno">ROOM <b id="mCode">·····</b><button id="mCopy">分享代碼</button></div>
+    <button class="m-slot m-opp" id="mOpp"><span id="mOppIcon">＋</span><small id="mOppTxt">等待對手</small></button>
+    <div class="m-left">
+      <div class="m-msg" id="mRoomMsg"></div>
+      <div id="mJoinRow" class="m-sub"><input id="mCodeIn" maxlength="6" placeholder="輸入代碼" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="mJoinGo">加入</button></div>
+      <button class="m-btn c-violet" id="mJoin"><b>JOIN</b><small>加入朋友的房間</small></button>
+      <button class="m-btn c-red" id="mBattle" disabled><b>BATTLE</b><small id="mBattleS">等待對手加入</small></button>
+    </div>
+    <button class="m-exit" id="mRoomExit">EXIT <span>⇥</span></button>
+  </div>
+  <div class="m-scr" data-scr="hangar">
+    <div class="m-panel m-hangar">
+      <h3>機庫 HANGAR</h3>
+      <div class="m-h">塗裝</div><div id="mPaints" class="m-paints"></div>
+      <div class="m-h">武裝（目前固定）</div>
+      <ul class="m-load"><li><b>01</b> 主武　57mm 滑膛炮</li><li><b>02</b> 副武　14.5mm 機槍</li><li><b>03</b> 腿部　釘槍</li><li><b>＋</b> 雙鋼索（固定配備）</li></ul>
+      <div class="m-note">出擊前換武器（選裝）之後開放</div>
+    </div>
+    <button class="m-exit" data-back="BACKTO" id="mHangarBack">BACK <span>⇥</span></button>
+  </div>
+  <button class="m-hangar-btn" id="mHangar"><b>HANGAR</b><small>機庫</small></button>
+  <div class="m-foot"><span id="status">載入中…</span><button id="mHelp">操作說明・素材授權</button><a id="fullLink" href="https://wireframech.vercel.app" target="_blank" rel="noopener" style="display:none;margin-top:6px;padding:8px 14px;border-radius:10px;border:1px solid rgba(140,220,255,.5);color:#9fe8ff;text-decoration:none;font-size:14px">⛶ You can also play at wireframech.vercel.app（大畫面）</a></div>
+  <div id="mModal" class="m-modal"><div class="m-panel">
+    <button class="m-x" id="mModalX" aria-label="關閉">✕</button>
+    <div id="mHelpBody">
+      <h3>操作說明</h3><details open><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
-    <li><b style="color:#c99bff">線上對戰</b>（1v1，真人）：「快速配對」自動找人，20 秒沒找到就改打 AI；「建立房間」會在畫面上方顯示 5 碼代碼，對方在「加入」輸入同一組代碼。等待時可以先在練習場活動。房主從基地 A、加入者從基地 B 出發，規則和對戰 AI 相同</li>
+    <li><b style="color:#c99bff">線上對戰</b>（1v1，真人）：首頁按「MAIN LOBBY」進大廳。「QUICK MATCH」自動找人，20 秒沒找到就改打 AI；「ROOM」建立房間，把房間代碼告訴朋友，對方在「JOIN」輸入代碼加入，房主按「BATTLE」開打。房主從基地 A、加入者從基地 B 出發，規則和對戰 AI 相同</li>
     <li><b style="color:#ffb070">對戰 AI</b>：你從基地 A、AI 從基地 B 出發；先擊破 5 次或 5 分鐘內分數高的贏；掉下虛空算對方得分；橘色機體與橘色鋼索是 AI</li>
     <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），左上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>輕點＝原地跳；快速往任一方向滑出並放開＝往那邊跳</b>；推得越遠走越快（在地上、坡上、貼牆或釘在牆上時都能跳）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
@@ -271,16 +372,17 @@
     <li>擺盪時鏡頭會<b>鎖住準星下的地形</b>，不會亂晃；放手時準星附近有敵人，就<b>一直看著那個敵人</b>；一轉視角就解除</li>
     <li>新手輔助：沒有勾點時<b>先按住鋼索</b>，勾點一出現就自動勾上（中心小圓閃爍＝在等）；沒勾鋼索時 1 秒不操作，視角會回到往上看；<b>空白處點兩下＝180° 迴轉</b></li>
     <li>擺到最低點（預測線變<b style="color:#7f7">綠</b>）放手速度 ×1.15；放手後的最高點有短暫懸停</li>
-  </ul></details>
-  <p class="kb">鍵盤：X 切換主副武　WASD　F 智慧鋼索（勾住時 W/S 收放、A/D 擺盪）　Q E 左右索　Space／Shift 推進　R 裝填　滑鼠瞄準、左鍵射擊</p>
-  <label id="gyroStartRow" style="display:none;margin-top:8px;font-size:15px"><input type="checkbox" id="gyroStart" checked style="width:20px;height:20px;vertical-align:middle"> 使用陀螺儀瞄準</label>
-  <label style="margin:8px 0;font-size:15px">地圖 <select id="mapSel" style="font-size:15px;min-height:36px;border-radius:8px;background:#0f2230;color:#e6f6ff;border:1px solid rgba(140,220,255,.4)"><option value="novice">大島・樹林</option><option value="ring" disabled>環形空島戰場（之後更新）</option></select></label>
-  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="go" id="goBtn" disabled>載入中…</button><button class="go go2" id="goAI" disabled>對戰 AI</button><button class="go go3" id="goNet">線上對戰</button><button class="go" id="goTut" style="background:linear-gradient(180deg,#7fe3a0,#2fa866)">新手教學</button></div>
-  <div id="netPanel"><button id="netQuick">快速配對</button><span class="sep">或</span><button id="netHost">建立房間</button><input id="netCodeIn" maxlength="6" placeholder="房間代碼" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="netJoin">加入</button>
-    <div class="hint">快速配對：20 秒內沒找到人會改打 AI。代碼約戰：一人建立房間，把畫面上方的代碼告訴對方。</div></div>
-  <div id="status"></div>
-  <a id="fullLink" href="https://wireframech.vercel.app" target="_blank" rel="noopener" style="display:none;margin-top:6px;padding:8px 14px;border-radius:10px;border:1px solid rgba(140,220,255,.5);color:#9fe8ff;text-decoration:none;font-size:14px">⛶ You can also play at wireframech.vercel.app（大畫面）</a>
-  <div style="opacity:.7;font-size:11px;max-width:min(640px,92vw);text-align:center;margin-top:6px;line-height:1.5">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）<br>松樹與地面材質：<a href="https://sketchfab.com/3d-models/pine-forest-ece69535f7584e099488f65f2072264e" target="_blank" style="color:#9fe8ff">“Pine Forest”</a> by fangzhangmnm，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>（已拆出單棵樹、縮小貼圖）</div>
+  </ul></details><p class="kb">鍵盤：X 切換主副武　WASD　F 智慧鋼索（勾住時 W/S 收放、A/D 擺盪）　Q E 左右索　Space／Shift 推進　R 裝填　滑鼠瞄準、左鍵射擊</p><label id="gyroStartRow" style="display:none;margin-top:8px;font-size:15px"><input type="checkbox" id="gyroStart" checked style="width:20px;height:20px;vertical-align:middle"> 使用陀螺儀瞄準</label><label style="margin:8px 0;font-size:15px">地圖 <select id="mapSel" style="font-size:15px;min-height:36px;border-radius:8px;background:#0f2230;color:#e6f6ff;border:1px solid rgba(140,220,255,.4)"><option value="novice">大島・樹林</option><option value="ring" disabled>環形空島戰場（之後更新）</option></select></label>
+      <div class="m-legacy"><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="go" id="goBtn" disabled>載入中…</button><button class="go go2" id="goAI" disabled>對戰 AI</button><button class="go" id="goTut" style="background:linear-gradient(180deg,#7fe3a0,#2fa866)">新手教學</button></div></div>
+      <div style="opacity:.7;font-size:11px;max-width:min(640px,92vw);text-align:center;margin-top:6px;line-height:1.5">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）<br>松樹與地面材質：<a href="https://sketchfab.com/3d-models/pine-forest-ece69535f7584e099488f65f2072264e" target="_blank" style="color:#9fe8ff">“Pine Forest”</a> by fangzhangmnm，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>（已拆出單棵樹、縮小貼圖）</div>
+    </div>
+    <div id="mProfBody">
+      <h3>個人資料</h3>
+      <label class="m-field">駕駛員名稱 <input id="mNameIn" maxlength="12" autocomplete="off" spellcheck="false"></label>
+      <div class="m-recs" id="mRecs"></div>
+      <div class="m-note">線上對戰時，對手會看到你的名稱。</div>
+    </div>
+  </div></div>
 </div>
 
 <script type="module">
@@ -454,7 +556,7 @@ const matRock   = new THREE.MeshLambertMaterial({ color: 0x7a8494 });
 const matClutter= new THREE.MeshLambertMaterial({ color: 0x8b8072 });
 const matTrunk = new THREE.MeshLambertMaterial({ color: 0x5a4632, flatShading: true }), matLeaf = new THREE.MeshLambertMaterial({ color: 0x2f6b3a, flatShading: true }), matLeaf2 = new THREE.MeshLambertMaterial({ color: 0x3b7d45, flatShading: true });
 const matPad    = new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.55 });
-const islands = [], supplyPads = [];
+const islands = [], supplyPads = [], padBeams = [];
 // ===== v2.5 真正的空島外型：不規則平頂草地＋往下收的岩石倒錐＋垂下的石筍；碰撞用凸包（站立、鋼索判定照舊）=====
 const matIslandV = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
 // v3.3 地面材質（取自 “Pine Forest” by fangzhangmnm, CC BY 4.0）：島面蓋一層貼圖（每 9m 重複一次）
@@ -568,7 +670,7 @@ function addIsland(name, cx, top, cz, w, d, th, opt = {}){
   if (opt.supply){ // 補給島：發光補給平台（站上去補燃料與彈藥）
     const pad = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 0.3, 24), matPad); pad.position.set(cx, top + 0.15, cz); scene.add(pad);
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 60, 8), new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.18 }));
-    beam.position.set(cx, top + 30, cz); scene.add(beam);
+    beam.position.set(cx, top + 30, cz); scene.add(beam); padBeams.push(beam);
     supplyPads.push({ x: cx, y: top, z: cz, r: 6 });
   }
   if (opt.boulders) for (let i = 0; i < opt.boulders; i++){ const a = i / opt.boulders * 6.28 + mrng() * 0.6, r = 0.55 + mrng() * 0.28, sz = 3 + mrng() * 2.5;   // 只放在外側，中間（補給台、靶）保持淨空
@@ -667,7 +769,7 @@ function addCover(x, z, groundY, len, H, yaw, rnd){   // 長條巨石掩體：�
   for (const sgn of [-1, 1]) coverSpots.push(V(x + Math.cos(yaw) * sgn * (rx + 3.2), groundY, z - Math.sin(yaw) * sgn * (rx + 3.2)));
 }
 function addPad(x, y, z){ const pad = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 0.3, 24), matPad); pad.position.set(x, y + 0.15, z); scene.add(pad);
-  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 60, 8), new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.18 })); beam.position.set(x, y + 30, z); scene.add(beam);
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 60, 8), new THREE.MeshBasicMaterial({ color: 0x40ffb0, transparent: true, opacity: 0.18 })); beam.position.set(x, y + 30, z); scene.add(beam); padBeams.push(beam);
   supplyPads.push({ x, y, z, r: 6 }); }
 // =====================================================================
 // v3.4 植被：草叢（程式畫的草葉貼圖、十字交叉薄片、數千叢一次畫完、會隨風擺）＋灌木（用松樹貼圖的枝葉拼成）
@@ -1267,6 +1369,7 @@ window.__net = NET;
 addEventListener('pagehide', () => { if (NET.tr) NET.tr.leave(); });   // 關掉分頁時通知對方
 const netUI = { el: null, txt: null, btn: null };
 function netShow(msg, btnText = '取消', onBtn = netCancel){
+  if (!running){ menuNetMsg(msg); if (netUI.el) netUI.el.style.display = 'none'; return; }   // v3.9 選單中：訊息顯示在大廳／房間畫面
   if (!netUI.el){ netUI.el = document.getElementById('netBar'); netUI.txt = document.getElementById('netTxt'); netUI.btn = document.getElementById('netBtn');
     netUI.el.addEventListener('pointerdown', e => e.stopPropagation()); netUI.el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true }); }
   netUI.el.style.display = msg ? 'flex' : 'none'; netDiagShow(); netUI.txt.textContent = msg || ''; netUI.btn.textContent = btnText; netUI.btn.style.display = btnText ? '' : 'none'; netUI.btn.onclick = e => { e.stopPropagation(); onBtn(); };
@@ -1281,7 +1384,7 @@ function netDiag(code, peer){
   NET.L(`錯誤 ${code} ${peer ? peer.slice(0, 8) : ''}`); console.warn('[net]', code, peer);
   netDiagShow();
 }
-function netDiagShow(){ const el = document.getElementById('netDiag'); if (!el) return; const c = NET.lastDiag;
+function netDiagShow(){ const el = document.getElementById('netDiag'); if (!el) return; const c = NET.lastDiag; menuNetMsg();
   el.textContent = c ? `⚠ ${NET_DIAG_TXT[c] || c}（${NET.diag[c]} 次）` : ''; el.style.display = c ? 'block' : 'none'; }
 function netLeave(){ if (NET.tr){ NET.tr.leave(); NET.tr = null; } NET.peer = null; }
 function netReset(){ netLeave(); Object.assign(NET, { diag: {}, lastDiag: null, state: 'idle', host: false, code: null, via: null, inviteTo: null, buf: [], off: null, fx: [], lostShown: false, gotHi: false, sentGo: false }); NET.lobby.clear(); }
@@ -1317,11 +1420,11 @@ function netLobbyTick(dt){
     if (best){ NET.code = netCode(); NET.inviteTo = best; NET.inviteT = now; NET.state = 'inviting'; NET.tr.send('invite', { code: NET.code }, best); }
   }
   const others = [...NET.lobby.values()].filter(p => p.s === 'w').length;
-  netShow(`尋找對手… ${Math.ceil(Math.max(0, NETCFG.lobbyWaitS - waitS))} 秒${others ? `（大廳 ${others} 人）` : ''}　等待時可以先練習`);
-  if (waitS > NETCFG.lobbyWaitS && NET.state === 'lobby'){ const blocked = NET.diag && NET.diag['peer-connect-failed']; netReset(); netShow(null); toast(blocked ? '有找到對手，但網路擋住了直連，先和 AI 對戰' : '沒有找到對手，先和 AI 對戰', 3500); match.start('ai'); }
+  netShow(`尋找對手… ${Math.ceil(Math.max(0, NETCFG.lobbyWaitS - waitS))} 秒${others ? `（大廳 ${others} 人）` : ''}`);
+  if (waitS > NETCFG.lobbyWaitS && NET.state === 'lobby'){ const blocked = NET.diag && NET.diag['peer-connect-failed']; netReset(); netShow(null); toast(blocked ? '有找到對手，但網路擋住了直連，先和 AI 對戰' : '沒有找到對手，先和 AI 對戰', 3500); playMode('ai'); }
 }
 // 代碼約戰
-async function netHostCode(){ netReset(); const code = netCode(); NET.via = 'code'; await netEnterRoom(code, true, null); if (NET.state === 'connecting') NET.state = 'codewait'; }
+async function netHostCode(){ netReset(); const code = netCode(); NET.via = 'code'; NET.code = code; menuNetMsg(); await netEnterRoom(code, true, null); if (NET.state === 'connecting') NET.state = 'codewait'; menuNetMsg(); }
 async function netJoinCode(code){ code = (code || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (code.length < 4){ toast('請輸入 4–6 碼的房間代碼', 2000); return; } netReset(); NET.via = 'code'; await netEnterRoom(code, false, null); }
 // 進私人房間：雙方互送 hi（帶版本），host 收到後送 go，雙方開局
 async function netEnterRoom(code, host, peerHint){
@@ -1332,7 +1435,7 @@ async function netEnterRoom(code, host, peerHint){
   let tr; try { tr = await netJoin('m-' + code); } catch (err){ console.warn(err); netShow('連線失敗', '關閉', () => netShow(null)); NET.state = 'idle'; return; }
   if (NET.state !== 'connecting'){ tr.leave(); return; }
   NET.tr = tr;
-  const hi = id => tr.send('hi', { ver: NETCFG.ver, host }, id);
+  const hi = id => tr.send('hi', { ver: NETCFG.ver, host, name: profName() }, id);
   tr.on('join', id => { if (!NET.peer) hi(id); });
   tr.on('leave', id => { if (id === NET.peer) netPeerGone('對手離開了'); });
   tr.on('msg', (t, d, from) => {
@@ -1341,17 +1444,23 @@ async function netEnterRoom(code, host, peerHint){
     if (t === 'hi'){
       if (d.ver !== NETCFG.ver){ netShow(`對方版本不同（${d.ver}），請兩邊都重新整理`, '關閉', netCancel); return; }
       if (d.host === host){ if (host) return; netShow('這個代碼已有人建房但是設定衝突，請重新建房', '關閉', netCancel); return; }
-      NET.peer = from; NET.lastRecv = performance.now();
+      NET.peer = from; NET.peerName = (d.name || '對手').slice(0, 12); NET.lastRecv = performance.now();
       if (!NET.gotHi){ NET.gotHi = true; hi(from); }
+      if (NET.via === 'code'){ if (NET.state !== 'match') NET.state = 'room'; menuNetMsg(); return; }   // v3.9 房間：等房主按 BATTLE
       if (host && !NET.sentGo){ NET.sentGo = true; tr.send('go', {}, from); netBegin(); }
       return; }
     if (t === 'go' && !host && NET.state !== 'match'){ NET.peer = from; netBegin(); return; }
     netOnMsg(t, d);
   });
 }
-function netBegin(){ NET.state = 'match'; NET.lastRecv = performance.now(); NET.buf = []; NET.off = null; netShow(null); match.start('net'); toast(NET.host ? '對手已連線！你從基地 A 出發' : '對手已連線！你從基地 B 出發', 2200); }
+function netRoomBattle(){ if (!NET.host || NET.state !== 'room' || !NET.peer) return; NET.sentGo = true; NET.send('go', {}); netBegin(); }
+function netBegin(){ NET.state = 'match'; NET.lastRecv = performance.now(); NET.buf = []; NET.off = null; netShow(null); playMode('net'); if (bot) bot.name = NET.peerName || '對手'; toast(NET.host ? '對手已連線！你從基地 A 出發' : '對手已連線！你從基地 B 出發', 2200); }
 function netPeerGone(msg){
   if (NET.state === 'match' && match.mode === 'net'){ const live = match.state === 'live'; netLeave(); NET.state = 'idle'; if (live){ match.state = 'over'; input.fire = false; showResult(msg); } return; }
+  if (NET.state === 'room'){   // v3.9 房間裡對手離開
+    if (NET.host){ NET.peer = null; NET.peerName = null; NET.gotHi = false; NET.state = 'codewait'; toast('對手離開了房間', 2000); menuNetMsg(); }
+    else { netReset(); menuGo('lobby'); toast('房主離開了房間', 2500); }
+    return; }
   if (NET.state === 'connecting' || NET.state === 'codewait'){ if (NET.via === 'quick'){ NET.skip.add(NET.peerHint); netRequeue(); } else { netReset(); netShow(msg, '關閉', () => netShow(null)); } }
 }
 function netRequeue(){ netQuick(); }   // NET.skip 保留：這次配對中跳過連不上的人
@@ -2729,11 +2838,10 @@ document.getElementById('bSet').addEventListener('click', ()=> setEl.classList.t
 document.getElementById('setClose').addEventListener('click', ()=> setEl.classList.remove('open'));
 // 回到首頁：只在練習、對戰 AI 時可用（線上對戰中隱藏，避免對手那邊卡住）
 const homeBtn = document.getElementById('setHome');
-function updateHomeBtn(){ homeBtn.style.display = running && match.mode !== 'net' ? '' : 'none'; }
+function updateHomeBtn(){ homeBtn.style.display = running && match.mode !== 'net' ? '' : 'none'; setEl.classList.toggle('inMenu', !running); }
 document.getElementById('bSet').addEventListener('click', updateHomeBtn);
 homeBtn.addEventListener('click', e => { e.stopPropagation(); goHome(); });
-function goHome(){
-  if (match.mode === 'net') return;
+function goHome(){   // 設定裡的按鈕在線上對戰中會隱藏；結果畫面的「回到首頁」則會一併離開連線
   setEl.classList.remove('open');
   if (typeof netReset === 'function' && window.__net && window.__net.state !== 'idle'){ netReset(); netShow(null); }   // 練習場裡正在等配對 → 一起取消
   if (tutorial.on) tutorial.finish(false);
@@ -2743,7 +2851,7 @@ function goHome(){
   try { document.exitPointerLock && document.exitPointerLock(); } catch (_){}
   running = false; showTouchUI(false); hctx.clearRect(0, 0, hud.width, hud.height);
   document.getElementById('result').style.display = 'none';
-  document.getElementById('start').style.display = '';
+  menuShow('home');
 }
 setEl.addEventListener('click', e => { if (e.target === setEl) setEl.classList.remove('open'); });   // 點面板外的暗處也能關
 for (const t of setEl.querySelectorAll('.tabs button')) t.addEventListener('click', ()=>{
@@ -2999,7 +3107,7 @@ const _eye = V(), _cam = V(); const stab = { point: null, fast: 0, target: null 
 function frame(now){
   requestAnimationFrame(frame);
   let dt = Math.min((now - last) / 1000, 0.25); last = now;
-  if (!running){ renderer.render(scene, camera); return; }
+  if (!running){ menuFrame(dt); netFrame(dt); renderer.render(scene, camera); return; }
   // FPS 監測 → 降 DPR
   fpsFrames++; fpsTime += dt;
   if (fpsTime >= CONFIG.render.fpsWindow){ const fps = fpsFrames / fpsTime; fpsFrames = 0; fpsTime = 0;
@@ -3187,11 +3295,111 @@ function frame(now){
 
 // 初始相機位置
 camera.position.set(S.x, S.y + CONFIG.camera.eye, S.z); camera.rotation.set(0, CONFIG.map.spawnYaw, 0, 'YXZ');
+// =====================================================================
+// v3.9 主選單（依玩家草圖）：首頁 HOME → 主大廳 MAIN LOBBY → 房間 ROOM；機庫 HANGAR；左上個人資料、右上設定
+//  背景是遊戲場景：鏡頭在自己機體正前方，機體正視、炮口朝左上
+// =====================================================================
+const startEl = document.getElementById('start');
+const MENU = { scr: 'home', back: 'home', t: 0 };
+function menuOn(){ return startEl.style.display !== 'none'; }
+function menuShow(scr = 'home'){ startEl.style.display = ''; menuGo(scr); }
+function menuHide(){ startEl.style.display = 'none'; $('mModal').classList.remove('on'); $('mOffSub').classList.remove('on'); }
+function $(id){ return document.getElementById(id); }
+function menuGo(scr){
+  if (scr === 'hangar' && MENU.scr !== 'hangar') MENU.back = MENU.scr;
+  MENU.scr = scr; startEl.dataset.scr = scr;
+  for (const el of startEl.querySelectorAll('.m-scr')) el.classList.toggle('on', el.dataset.scr === scr);
+  $('mOffSub').classList.remove('on'); $('mJoinRow').classList.remove('on');
+  menuNetMsg(); menuProfile();
+}
+function menuReady(){ startEl.classList.remove('loading'); $('status').textContent = ''; menuProfile(); menuPaints(); menuGo('home'); }
+// ---- 個人資料：名稱＋戰績（存在這台裝置）----
+function profName(){ try { return (localStorage.getItem('wfm.name') || '').trim() || 'PILOT'; } catch (_){ return 'PILOT'; } }
+function profRec(){ try { return JSON.parse(localStorage.getItem('wfm.rec')) || {}; } catch (_){ return {}; } }
+function recordResult(mode, r){ if (mode !== 'ai' && mode !== 'net') return; const R = profRec(); const k = R[mode] = R[mode] || { w: 0, l: 0, d: 0 }; k[r]++; try { localStorage.setItem('wfm.rec', JSON.stringify(R)); } catch (_){} }
+function menuProfile(){ const R = profRec(), a = R.ai || { w: 0, l: 0, d: 0 }, n = R.net || { w: 0, l: 0, d: 0 };
+  $('mName').textContent = profName(); $('mRec').textContent = `AI ${a.w}勝${a.l}敗・線上 ${n.w}勝${n.l}敗`;
+  $('mRecs').innerHTML = `<span></span><b>勝</b><b>敗</b><b>平手</b><span>對戰 AI</span><span>${a.w}</span><span>${a.l}</span><span>${a.d}</span><span>線上對戰</span><span>${n.w}</span><span>${n.l}</span><span>${n.d}</span>`; }
+function menuModal(v){ const m = $('mModal'); m.dataset.v = v; m.classList.add('on'); if (v === 'prof') $('mNameIn').value = profName() === 'PILOT' ? '' : profName(); }
+$('mProfile').addEventListener('click', () => menuModal('prof'));
+$('mHelp').addEventListener('click', () => menuModal('help'));
+$('mModalX').addEventListener('click', () => $('mModal').classList.remove('on'));
+$('mModal').addEventListener('click', e => { if (e.target === $('mModal')) $('mModal').classList.remove('on'); });
+$('mNameIn').addEventListener('input', e => { const v = e.target.value.replace(/[<>]/g, '').slice(0, 12); try { localStorage.setItem('wfm.name', v); } catch (_){} menuProfile(); });
+$('mSet').addEventListener('click', () => { updateHomeBtn(); setEl.classList.add('open'); });
+// ---- 首頁 ----
+$('mOffline').addEventListener('click', () => $('mOffSub').classList.toggle('on'));
+for (const b of $('mOffSub').querySelectorAll('button')) b.addEventListener('click', async () => {
+  const m = b.dataset.play;
+  if (m === 'tut'){ if (await prepStart()){ enterPlay('practice', true); tutorial.start(); } }
+  else startClick(m);
+});
+$('mToLobby').addEventListener('click', () => menuGo('lobby'));
+for (const b of startEl.querySelectorAll('[data-back]')) b.addEventListener('click', () => { if (b.dataset.back === 'BACKTO') return menuGo(MENU.back || 'home'); if (MENU.scr === 'lobby' && NET.state !== 'idle'){ netReset(); } menuGo(b.dataset.back); });
+// ---- 主大廳 ----
+for (const b of startEl.querySelectorAll('.m-party')) b.addEventListener('click', () => toast('組隊（3v3）之後開放', 1800));
+$('mRoom').addEventListener('click', async () => { if (!(await prepStart())) return; menuGo('room'); netHostCode(); });
+$('mQuick').addEventListener('click', async () => {
+  if (NET.state === 'lobby' || NET.state === 'inviting' || NET.state === 'joining' || NET.state === 'connecting'){ netReset(); menuNetMsg(); return; }   // 配對中再按一次＝取消
+  if (!(await prepStart())) return; netQuick(); });
+// ---- 房間 ----
+$('mJoin').addEventListener('click', () => { $('mJoinRow').classList.toggle('on'); if ($('mJoinRow').classList.contains('on')) $('mCodeIn').focus(); });
+$('mJoinGo').addEventListener('click', () => { const c = $('mCodeIn').value; if ((c || '').replace(/[^A-Za-z0-9]/g, '').length < 4){ toast('請輸入 4–6 碼的房間代碼', 2000); return; } $('mJoinRow').classList.remove('on'); netJoinCode(c).then(menuNetMsg); menuNetMsg(); });
+$('mCodeIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('mJoinGo').click(); });
+$('mBattle').addEventListener('click', () => netRoomBattle());
+$('mRoomExit').addEventListener('click', () => { netReset(); menuGo('lobby'); });
+$('mCopy').addEventListener('click', async () => { if (!NET.code) return; const t = `來 WIREFRAMECH 跟我對戰！房間代碼：${NET.code}`;
+  try { if (navigator.share) await navigator.share({ text: t }); else { await navigator.clipboard.writeText(NET.code); toast('已複製代碼', 1500); } } catch (_){} });
+$('mOpp').addEventListener('click', () => { if (!NET.peer) $('mCopy').click(); });
+// 大廳／房間的連線狀態（配對進度、房間代碼、對手、診斷）
+let menuMsgText = '';
+function menuNetMsg(msg){
+  if (msg !== undefined) menuMsgText = msg || '';
+  const diag = NET.lastDiag ? `⚠ ${NET_DIAG_TXT[NET.lastDiag] || NET.lastDiag}` : '';
+  const searching = NET.state === 'lobby' || NET.state === 'inviting' || NET.state === 'joining' || (NET.via === 'quick' && NET.state === 'connecting');
+  $('mQuick').classList.toggle('busy', searching); $('mQuickT').textContent = searching ? 'SEARCHING…' : 'QUICK MATCH'; $('mQuickS').textContent = searching ? '配對中，再按一次取消' : '快速配對（20 秒沒人改打 AI）';
+  $('mLobbyMsg').textContent = [searching ? menuMsgText : '', diag].filter(Boolean).join('\n');
+  // 房間
+  const inRoom = NET.via === 'code' && NET.state !== 'idle', host = NET.host, peer = !!NET.peer && (NET.state === 'room' || NET.state === 'match');
+  $('mCode').textContent = inRoom && NET.code ? NET.code : '·····';
+  $('mOpp').classList.toggle('full', peer); $('mOppIcon').textContent = peer ? '◆' : '＋';
+  $('mOppTxt').textContent = peer ? (NET.peerName || '對手') : (inRoom && !host ? '連線中…' : '等待對手（點這裡分享代碼）');
+  $('mBattle').disabled = !(peer && host); $('mBattleS').textContent = !peer ? '等待對手加入' : host ? '開始對戰！' : '等待房主開始';
+  $('mRoomMsg').textContent = [!inRoom ? '' : host ? (peer ? '' : '把上方代碼告訴朋友，或按「分享代碼」') : (peer ? '' : menuMsgText), diag].filter(Boolean).join('\n');
+}
+// ---- 機庫：塗裝（和設定的「外觀」同步）----
+function menuPaints(){ const sel = $('optPaint'), box = $('mPaints'); box.innerHTML = '';
+  for (const o of sel.options){ const b = document.createElement('button'); b.textContent = o.textContent; b.classList.toggle('on', o.value === sel.value);
+    b.addEventListener('click', () => { sel.value = o.value; sel.dispatchEvent(new Event('change')); menuPaints(); }); box.appendChild(b); } }
+$('optPaint').addEventListener('change', () => menuPaints());
+$('mHangar').addEventListener('click', () => menuGo('hangar'));
+// ---- 選單背景：自己的機體正視、炮口朝左上（機庫時機體移到左邊，讓出右邊面板）----
+const _mf = V(), _mr = V(), _mc = V(), _ml = V(), _md = V(), _mUp = V(0, 1, 0);
+let menuBg = false;
+function menuBackdrop(on){   // 選單時藏起出生點的補給光柱，避免擋在機體正中間
+  if (menuBg === on) return; menuBg = on; for (const b of padBeams) b.visible = !on; document.body.classList.toggle('inMenu', on); }
+function menuFrame(dt){
+  if (!menuOn()){ menuBackdrop(false); return; }
+  menuBackdrop(true);
+  MENU.t += dt; const P = state.player, p = P.currPos;
+  dirFromYawPitch(local.spawnYaw, 0, _mf); _mr.crossVectors(_mf, UP).normalize();   // _mf＝機體出生時面向；_mr＝它的右手邊（＝鏡頭看過去的畫面左方）
+  const hang = MENU.scr === 'hangar', side = hang ? -2.6 : 0;   // 機庫：機體移到畫面左邊，讓出右邊面板
+  _mc.copy(p).addScaledVector(_mf, 17).addScaledVector(_mr, side); _mc.y += 3.4;   // 鏡頭在機體正前方 17m、略高
+  _ml.copy(p).addScaledVector(_mr, side); _ml.y += 1.9;
+  camera.position.copy(_mc); camera.lookAt(_ml); if (camera.fov !== 42){ camera.fov = 42; camera.updateProjectionMatrix(); }
+  // 機頭轉向畫面左前方、整台微微抬頭 → 砲口朝左上；加一點呼吸感
+  _md.copy(_mf).multiplyScalar(-0.55).addScaledVector(_mr, 1).normalize();
+  P.yaw = Math.atan2(-_md.x, -_md.z) + Math.sin(MENU.t * 0.5) * 0.03; P.pitch = 0.5;
+  P.grounded = true; P.groundN = _mUp.set(0, 1, 0).addScaledVector(_md, -0.28 - Math.sin(MENU.t * 0.8) * 0.02).normalize(); P.pinned = null; P.vel.set(0, 0, 0);
+  if (mech.loaded || mech.failed){ mech.root.visible = true; mech.update(dt, p, P, state.ropes); }
+}
+
 requestAnimationFrame(frame);
 
 // 開始畫面
 const goBtn = document.getElementById('goBtn');
 goBtn.disabled = false; goBtn.textContent = '練習（打靶）';
+menuReady();
 const goAI = document.getElementById('goAI'); goAI.disabled = false;
 try { if (window.top !== window.self) document.getElementById('fullLink').style.display = 'inline-block'; } catch(_){ document.getElementById('fullLink').style.display = 'inline-block'; }   // 嵌在 itch.io 等網站的小框裡時，顯示大畫面版連結
 const mapSel = document.getElementById('mapSel'); mapSel.value = MAP_ID;
@@ -3206,32 +3414,30 @@ function updateFSBtn(){ document.getElementById('bFS').style.display = (running 
 document.getElementById('bFS').addEventListener('click', e => { e.stopPropagation(); goFS(); });
 for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => { setTimeout(() => { resize(); calcStick(); idleStick(); updateFSBtn(); }, 50); });
 addEventListener('resize', updateFSBtn);
-async function startClick(mode, noTut = false){
-  startMode = mode; unlockAudio();
+// v3.9 開始流程拆成兩段：prepStart（使用者按下時：音效、陀螺儀權限、全螢幕）＋ enterPlay（關掉選單、開局）
+//  iPad：陀螺儀權限對話框會讓全螢幕跳掉，所以第一次只要求權限，請玩家再按一次
+let gyroAsked = false;
+async function prepStart(){
+  unlockAudio();
   const wantGyro = matchMedia('(pointer:coarse)').matches && document.getElementById('gyroStart').checked;
-  if (wantGyro && needsMotionPerm() && !motionGranted && !goBtn.dataset.asked){
-    goBtn.dataset.asked = '1'; goBtn.disabled = true; goBtn.textContent = '等待陀螺儀權限…';
-    await enableGyro(true);
-    goBtn.disabled = false; goBtn.textContent = '進入戰場（全螢幕）'; if (mode === 'ai'){ goAI.textContent = '進入對戰（全螢幕）'; }
-    return; // 第二下才進全螢幕
-  }
+  if (wantGyro && needsMotionPerm() && !motionGranted && !gyroAsked){ gyroAsked = true; await enableGyro(true); toast('陀螺儀已設定好，請再按一次', 2500); return false; }
   if (wantGyro && !gyro.on) enableGyro(true);
-  document.getElementById('start').style.display = 'none';
-  goFS();
+  goFS(); return true;
+}
+function enterPlay(mode, noTut = false){
+  startMode = mode; menuHide();
   match.start(mode);
   if (mode === 'practice' && !noTut && !tutorial.done() && !tutorial.on) setTimeout(() => tutorial.start(), 600);   // 第一次玩：自動開始教學（可以跳過）
   last = performance.now(); running = true; idleStick(); setTimeout(updateFSBtn, 400);
 }
+async function startClick(mode, noTut = false){ if (await prepStart()) enterPlay(mode, noTut); }
+function playMode(mode){ if (running) match.start(mode); else enterPlay(mode, true); }   // 配對結果（打 AI／開打）：在選單時直接進遊戲
 goBtn.addEventListener('click', () => startClick('practice'));
 goAI.addEventListener('click', () => startClick('ai'));
-// v3.8 線上對戰：先進練習場（等待時可以先練），再開始配對
-const netPanel = document.getElementById('netPanel');
-document.getElementById('goNet').addEventListener('click', () => { netPanel.style.display = netPanel.style.display === 'flex' ? 'none' : 'flex'; });
-document.getElementById('netQuick').addEventListener('click', async () => { await startClick('practice', true); if (running) netQuick(); });
-document.getElementById('netHost').addEventListener('click', async () => { await startClick('practice', true); if (running) netHostCode(); });
-document.getElementById('netJoin').addEventListener('click', async () => { const c = document.getElementById('netCodeIn').value; if ((c || '').replace(/[^A-Za-z0-9]/g, '').length < 4){ toast('請輸入 4–6 碼的房間代碼', 2000); return; } await startClick('practice', true); if (running) netJoinCode(c); });
+
 document.getElementById('goTut').addEventListener('click', async () => { await startClick('practice'); if (running) tutorial.start(); });
 function showResult(msg){ const me = match.score[local.team], op = match.score[1 - local.team], win = me > op, draw = me === op;
+  if (!msg) recordResult(match.mode, win ? 'w' : draw ? 'd' : 'l');
   document.getElementById('resTitle').textContent = draw ? '平手' : win ? '勝利' : '敗北';
   document.getElementById('resTitle').style.color = draw ? '#e8f6ff' : win ? '#63e6ff' : '#ff8a6a';
   document.getElementById('resScore').textContent = `你 ${me} ： ${op} ${bot ? bot.name : 'AI'}` + (msg ? `（${msg}）` : '');
@@ -3240,9 +3446,9 @@ function showResult(msg){ const me = match.score[local.team], op = match.score[1
 function hudMatch(){ if (match.state !== 'over') document.getElementById('result').style.display = 'none'; }
 document.getElementById('resAgain').addEventListener('click', e => { e.stopPropagation();
   if (match.mode !== 'net') return match.start('ai');
-  if (NET.state !== 'match'){ match.start('practice'); netQuick(); return; }
+  if (NET.state !== 'match'){ goHome(); menuGo('lobby'); netQuick(); return; }
   if (NET.host){ match.start('net'); NET.send('restart', {}); } else { NET.send('again', {}); toast('已通知房主，等待開始…', 2500); } });
-document.getElementById('resPractice').addEventListener('click', e => { e.stopPropagation(); if (match.mode === 'net') netCancel(); else match.start('practice'); });
+document.getElementById('resPractice').addEventListener('click', e => { e.stopPropagation(); goHome(); });
 document.getElementById('result').addEventListener('pointerdown', e => e.stopPropagation());
 
 // =====================================================================
