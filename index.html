@@ -162,6 +162,8 @@
   .c-violet { background:linear-gradient(90deg, #4b2a8f, #7a4fe0); }
   .c-red { background:linear-gradient(90deg, #8f2a2a, #e0573f); }
   .m-btn.busy { background:linear-gradient(90deg, #6a4a10, #d08a20); }
+  .m-btn.c-red.on { background:linear-gradient(90deg, #1f7a4a, #35c27a); }
+  .m-opp.full.ready { border-color:#6ff0bd; color:#6ff0bd; background:rgba(8,40,28,.6); }
   .m-sub { display:none; flex-wrap:wrap; gap:8px; padding-left:calc(14px + var(--sl)); max-width:min(560px, 70vw); } .m-sub.on { display:flex; }
   .m-sub button, .m-sub input { min-height:48px; padding:0 16px; border-radius:10px; border:1px solid rgba(140,220,255,.55); background:rgba(8,26,40,.88); color:#eaf8ff; font-size:16px; }
   .m-sub input { width:7.5em; text-align:center; letter-spacing:.18em; text-transform:uppercase; font-size:18px; -webkit-user-select:text; user-select:text; }
@@ -312,7 +314,7 @@
 <div id="toast"></div>
 <div id="start" class="loading">
   <div id="mProfile" class="m-profile" role="button" aria-label="個人資料"><div class="m-av">◆</div><div class="m-pt"><b id="mName">PILOT</b><small id="mRec">對戰紀錄</small></div></div>
-  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v3.9b（連線測試版）</span></div>
+  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v3.9c（連線測試版）</span></div>
   <button id="mSet" class="m-icon" aria-label="設定">⚙</button>
   <div class="m-scr on" data-scr="home">
     <div class="m-left">
@@ -337,7 +339,7 @@
       <div class="m-msg" id="mRoomMsg"></div>
       <div id="mJoinRow" class="m-sub"><input id="mCodeIn" maxlength="6" placeholder="輸入代碼" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="mJoinGo">加入</button></div>
       <button class="m-btn c-violet" id="mJoin"><b>JOIN</b><small>加入朋友的房間</small></button>
-      <button class="m-btn c-red" id="mBattle" disabled><b>BATTLE</b><small id="mBattleS">等待對手加入</small></button>
+      <button class="m-btn c-red" id="mBattle" disabled><b id="mBattleT">BATTLE</b><small id="mBattleS">等待對手加入</small></button>
     </div>
     <button class="m-exit" id="mRoomExit">EXIT <span>⇥</span></button>
   </div>
@@ -1360,7 +1362,7 @@ function netLocalTransport(roomId){
 // ---- 配對／連線狀態 ----
 //  IDLE → LOBBY（快速配對大廳）→ INVITING → CONNECTING（私人房間）→ IN_MATCH
 //  代碼約戰：CODE_WAIT（建房等人）／CONNECTING（輸入代碼加入）
-const NET = { state: 'idle', host: false, tr: null, peer: null, code: null, via: null, skip: new Set(), lobby: new Map(),
+const NET = { ready: { me: false, op: false }, state: 'idle', host: false, tr: null, peer: null, code: null, via: null, skip: new Set(), lobby: new Map(),
   t0: 0, inviteTo: null, inviteT: 0, helloT: 0, snapT: 0, msT: 0, lastRecv: 0, fx: [], buf: [], off: null, lostShown: false, gotHi: false, sentGo: false,
   send(t, d){ if (this.tr && this.peer) this.tr.send(t, d, this.peer); },
   log: [], L(m){ this.log.push(Math.round(performance.now()) + ' ' + m); if (this.log.length > 60) this.log.shift(); },
@@ -1387,7 +1389,7 @@ function netDiag(code, peer){
 function netDiagShow(){ const el = document.getElementById('netDiag'); if (!el) return; const c = NET.lastDiag; menuNetMsg();
   el.textContent = c ? `⚠ ${NET_DIAG_TXT[c] || c}（${NET.diag[c]} 次）` : ''; el.style.display = c ? 'block' : 'none'; }
 function netLeave(){ if (NET.tr){ NET.tr.leave(); NET.tr = null; } NET.peer = null; }
-function netReset(){ netLeave(); Object.assign(NET, { diag: {}, lastDiag: null, state: 'idle', host: false, code: null, via: null, inviteTo: null, buf: [], off: null, fx: [], lostShown: false, gotHi: false, sentGo: false }); NET.lobby.clear(); }
+function netReset(){ netLeave(); Object.assign(NET, { ready: { me: false, op: false }, diag: {}, lastDiag: null, state: 'idle', host: false, code: null, via: null, inviteTo: null, buf: [], off: null, fx: [], lostShown: false, gotHi: false, sentGo: false }); NET.lobby.clear(); }
 function netCancel(){ const wasMatch = match.mode === 'net'; netReset(); netShow(null); if (wasMatch) match.start('practice'); }
 
 // 快速配對：所有人進同一個大廳；ID 小的一方才能邀請；20 秒沒人 → 改打 AI
@@ -1446,19 +1448,21 @@ async function netEnterRoom(code, host, peerHint){
       if (d.host === host){ if (host) return; netShow('這個代碼已有人建房但是設定衝突，請重新建房', '關閉', netCancel); return; }
       NET.peer = from; NET.peerName = (d.name || '對手').slice(0, 12); NET.lastRecv = performance.now();
       if (!NET.gotHi){ NET.gotHi = true; hi(from); }
-      if (NET.via === 'code'){ if (NET.state !== 'match') NET.state = 'room'; menuNetMsg(); return; }   // v3.9 房間：等房主按 BATTLE
+      if (NET.via === 'code'){ if (NET.state !== 'match'){ NET.state = 'room'; NET.ready = { me: false, op: false }; NET.sentGo = false; } menuNetMsg(); return; }   // v3.9 房間：等房主按 BATTLE
       if (host && !NET.sentGo){ NET.sentGo = true; tr.send('go', {}, from); netBegin(); }
       return; }
     if (t === 'go' && !host && NET.state !== 'match'){ NET.peer = from; netBegin(); return; }
     netOnMsg(t, d);
   });
 }
-function netRoomBattle(){ if (!NET.host || NET.state !== 'room' || !NET.peer) return; NET.sentGo = true; NET.send('go', {}); netBegin(); }
+// v3.9c 房間：雙方都按 BATTLE（準備）才開打；之後出擊前選裝也在這一步（各自選完再按準備）
+function netRoomBattle(){ if (NET.state !== 'room' || !NET.peer) return; NET.ready.me = !NET.ready.me; NET.send('ready', { r: NET.ready.me ? 1 : 0 }); menuNetMsg(); netCheckGo(); }
+function netCheckGo(){ if (NET.host && NET.state === 'room' && NET.peer && NET.ready.me && NET.ready.op && !NET.sentGo){ NET.sentGo = true; NET.send('go', {}); netBegin(); } }
 function netBegin(){ NET.state = 'match'; NET.lastRecv = performance.now(); NET.buf = []; NET.off = null; netShow(null); playMode('net'); if (bot) bot.name = NET.peerName || '對手'; toast(NET.host ? '對手已連線！你從基地 A 出發' : '對手已連線！你從基地 B 出發', 2200); }
 function netPeerGone(msg){
   if (NET.state === 'match' && match.mode === 'net'){ const live = match.state === 'live'; netLeave(); NET.state = 'idle'; if (live){ match.state = 'over'; input.fire = false; showResult(msg); } return; }
   if (NET.state === 'room'){   // v3.9 房間裡對手離開
-    if (NET.host){ NET.peer = null; NET.peerName = null; NET.gotHi = false; NET.state = 'codewait'; toast('對手離開了房間', 2000); menuNetMsg(); }
+    if (NET.host){ NET.peer = null; NET.peerName = null; NET.gotHi = false; NET.state = 'codewait'; NET.ready = { me: false, op: false }; NET.sentGo = false; toast('對手離開了房間', 2000); menuNetMsg(); }
     else { netReset(); menuGo('lobby'); toast('房主離開了房間', 2500); }
     return; }
   if (NET.state === 'connecting' || NET.state === 'codewait'){ if (NET.via === 'quick'){ NET.skip.add(NET.peerHint); netRequeue(); } else { netReset(); netShow(msg, '關閉', () => netShow(null)); } }
@@ -1493,6 +1497,7 @@ function netSendMs(){ NET.send('ms', { sc: match.score, tl: Math.round(match.tim
 function netOnMsg(t, d){
   NET.lastRecv = performance.now();
   if (t === 's'){ netOnSnap(d); return; }
+  if (t === 'ready'){ NET.ready.op = !!d.r; menuNetMsg(); netCheckGo(); return; }
   if (match.mode !== 'net') return;
   if (t === 'hit'){   // 對方判定打中我：我自己扣血（保護區內不受傷）
     if (match.state !== 'live' || local.P.safe) return;
@@ -3364,8 +3369,12 @@ function menuNetMsg(msg){
   const inRoom = NET.via === 'code' && NET.state !== 'idle', host = NET.host, peer = !!NET.peer && (NET.state === 'room' || NET.state === 'match');
   $('mCode').textContent = inRoom && NET.code ? NET.code : '·····';
   $('mOpp').classList.toggle('full', peer); $('mOppIcon').textContent = peer ? '◆' : '＋';
-  $('mOppTxt').textContent = peer ? (NET.peerName || '對手') : (inRoom && !host ? '連線中…' : '等待對手（點這裡分享代碼）');
-  $('mBattle').disabled = !(peer && host); $('mBattleS').textContent = !peer ? '等待對手加入' : host ? '開始對戰！' : '等待房主開始';
+  const rd = NET.ready || {}, opReady = peer && rd.op, meReady = peer && rd.me;
+  $('mOppTxt').textContent = peer ? (NET.peerName || '對手') + (opReady ? '　✓ 準備好了' : '　準備中…') : (inRoom && !host ? '連線中…' : '等待對手（點這裡分享代碼）');
+  $('mOpp').classList.toggle('ready', !!opReady);
+  $('mBattle').disabled = !peer; $('mBattle').classList.toggle('on', !!meReady);
+  $('mBattleT').textContent = meReady ? 'READY ✓' : 'BATTLE';
+  $('mBattleS').textContent = !peer ? '等待對手加入' : meReady ? (opReady ? '開打！' : '等對手按 BATTLE（再按一次取消）') : (opReady ? '對手已準備，按下開打' : '雙方都按下才開打');
   $('mRoomMsg').textContent = [!inRoom ? '' : host ? (peer ? '' : '把上方代碼告訴朋友，或按「分享代碼」') : (peer ? '' : menuMsgText), diag].filter(Boolean).join('\n');
 }
 // ---- 機庫：塗裝（和設定的「外觀」同步）----
