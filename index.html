@@ -208,7 +208,7 @@
 </div>
 <div id="settings">
   <div class="panel">
-    <div class="sh"><span>設定</span><button id="setClose" aria-label="關閉">✕</button></div>
+    <div class="sh"><span>設定</span><span style="display:flex;gap:8px"><button id="setHome" aria-label="回到首頁" style="display:none;width:auto;padding:0 12px;font-size:15px">⌂ 回到首頁</button><button id="setClose" aria-label="關閉">✕</button></span></div>
     <nav class="tabs">
       <button data-tab="ctl" class="on">操作</button><button data-tab="cam">鏡頭</button><button data-tab="aid">新手輔助</button><button data-tab="gyro">陀螺儀</button><button data-tab="look">外觀</button>
     </nav>
@@ -254,7 +254,7 @@
 <div id="toast"></div>
 <div id="start">
   <h1 style="letter-spacing:4px">WIREFRAMECH</h1>
-  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵 v3.8b（連線測試版）</div>
+  <div style="color:#7fd8ff;font-size:clamp(12px,3.4vmin,15px);margin-bottom:6px">鋼弦機兵 v3.8c（連線測試版）</div>
   <details style="max-width:min(640px,92vw);margin:4px 0 8px"><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
@@ -2727,6 +2727,24 @@ touchEl.addEventListener('click', e => { if (mouseMode && !document.pointerLockE
 const setEl = document.getElementById('settings');
 document.getElementById('bSet').addEventListener('click', ()=> setEl.classList.toggle('open'));
 document.getElementById('setClose').addEventListener('click', ()=> setEl.classList.remove('open'));
+// 回到首頁：只在練習、對戰 AI 時可用（線上對戰中隱藏，避免對手那邊卡住）
+const homeBtn = document.getElementById('setHome');
+function updateHomeBtn(){ homeBtn.style.display = running && match.mode !== 'net' ? '' : 'none'; }
+document.getElementById('bSet').addEventListener('click', updateHomeBtn);
+homeBtn.addEventListener('click', e => { e.stopPropagation(); goHome(); });
+function goHome(){
+  if (match.mode === 'net') return;
+  setEl.classList.remove('open');
+  if (typeof netReset === 'function' && window.__net && window.__net.state !== 'idle'){ netReset(); netShow(null); }   // 練習場裡正在等配對 → 一起取消
+  if (tutorial.on) tutorial.finish(false);
+  match.start('practice');
+  for (const k of ['fire', 'fireTap', 'hookL', 'hookR', 'hookMain', 'boost', 'thrust', 'ropeLatch']) input[k] = false;
+  input.stickX = input.stickZ = input.moveX = input.moveZ = 0; input.keys.clear(); pointers.clear();
+  try { document.exitPointerLock && document.exitPointerLock(); } catch (_){}
+  running = false; showTouchUI(false); hctx.clearRect(0, 0, hud.width, hud.height);
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('start').style.display = '';
+}
 setEl.addEventListener('click', e => { if (e.target === setEl) setEl.classList.remove('open'); });   // 點面板外的暗處也能關
 for (const t of setEl.querySelectorAll('.tabs button')) t.addEventListener('click', ()=>{
   for (const o of setEl.querySelectorAll('.tabs button, section')) o.classList.toggle('on', o.dataset.tab === t.dataset.tab || o.dataset.page === t.dataset.tab); });
