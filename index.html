@@ -312,7 +312,7 @@
 <div id="toast"></div>
 <div id="start" class="loading">
   <div id="mProfile" class="m-profile" role="button" aria-label="個人資料"><div class="m-av">◆</div><div class="m-pt"><b id="mName">PILOT</b><small id="mRec">對戰紀錄</small></div></div>
-  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v3.9（連線測試版）</span></div>
+  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v3.9b（連線測試版）</span></div>
   <button id="mSet" class="m-icon" aria-label="設定">⚙</button>
   <div class="m-scr on" data-scr="home">
     <div class="m-left">
@@ -3303,7 +3303,8 @@ const startEl = document.getElementById('start');
 const MENU = { scr: 'home', back: 'home', t: 0 };
 function menuOn(){ return startEl.style.display !== 'none'; }
 function menuShow(scr = 'home'){ startEl.style.display = ''; menuGo(scr); }
-function menuHide(){ startEl.style.display = 'none'; $('mModal').classList.remove('on'); $('mOffSub').classList.remove('on'); }
+function menuHide(){ menuBackdrop(false); startEl.style.display = 'none';   // 一定要把遊戲按鈕層顯示回來（v3.9 的 bug：進遊戲後按鈕層一直隱藏，只剩陀螺儀能用）
+  $('mModal').classList.remove('on'); $('mOffSub').classList.remove('on'); }
 function $(id){ return document.getElementById(id); }
 function menuGo(scr){
   if (scr === 'hangar' && MENU.scr !== 'hangar') MENU.back = MENU.scr;
