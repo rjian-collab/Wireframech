@@ -161,6 +161,9 @@
   .c-cyan { background:linear-gradient(90deg, #0d6f8f, #19a7c9); box-shadow:inset 0 -3px 0 rgba(0,0,0,.25); }
   .c-violet { background:linear-gradient(90deg, #4b2a8f, #7a4fe0); }
   .c-red { background:linear-gradient(90deg, #8f2a2a, #e0573f); }
+  #start .locked { filter:grayscale(.85) brightness(.6); } #start .m-btn.locked { position:relative; }
+  #start .locked::after { content:'🔒'; position:absolute; right:30px; top:50%; transform:translateY(-50%); font-size:clamp(18px, 3.4vh, 24px); filter:none; }
+  #start .m-hangar-btn.locked::after { right:8px; top:6px; transform:none; font-size:16px; } #start .m-profile.locked::after { right:40px; font-size:18px; }
   .m-btn.busy { background:linear-gradient(90deg, #6a4a10, #d08a20); }
   .m-btn.c-red.on { background:linear-gradient(90deg, #1f7a4a, #35c27a); }
   .m-opp.full.ready { border-color:#6ff0bd; color:#6ff0bd; background:rgba(8,40,28,.6); }
@@ -314,7 +317,7 @@
 <div id="toast"></div>
 <div id="start" class="loading">
   <div id="mProfile" class="m-profile" role="button" aria-label="個人資料"><div class="m-av">◆</div><div class="m-pt"><b id="mName">PILOT</b><small id="mRec">對戰紀錄</small></div></div>
-  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v3.9c（連線測試版）</span></div>
+  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v3.9d（連線測試版）</span></div>
   <button id="mSet" class="m-icon" aria-label="設定">⚙</button>
   <div class="m-scr on" data-scr="home">
     <div class="m-left">
@@ -3318,13 +3321,22 @@ function menuGo(scr){
   $('mOffSub').classList.remove('on'); $('mJoinRow').classList.remove('on');
   menuNetMsg(); menuProfile();
 }
-function menuReady(){ startEl.classList.remove('loading'); $('status').textContent = ''; menuProfile(); menuPaints(); menuGo('home'); }
+// v3.9d 還沒開放的功能先上鎖：正式版鎖線上大廳；機庫、個人資料兩版都先鎖（網址加 ?unlock=1 可全部打開，測試用）
+const BUILD_ONLINE = true;   // 正式版（main）＝false
+const UNLOCK_ALL = new URLSearchParams(location.search).get('unlock') === '1';
+const LOCKS = { mToLobby: !BUILD_ONLINE && !UNLOCK_ALL, mHangar: !UNLOCK_ALL, mProfile: !UNLOCK_ALL };
+function menuLocks(){
+  for (const [id, on] of Object.entries(LOCKS)){ const el = $(id); el.classList.toggle('locked', on);
+    const sm = el.querySelector('small'); if (sm){ if (!sm.dataset.orig) sm.dataset.orig = sm.textContent; sm.textContent = on ? (id === 'mProfile' ? '尚未開放' : sm.dataset.orig + '・尚未開放') : sm.dataset.orig; } }
+}
+startEl.addEventListener('click', e => { const el = e.target.closest && e.target.closest('.locked'); if (!el) return; e.stopPropagation(); e.preventDefault(); toast('這個功能還沒開放，敬請期待', 1800); buzz(15); }, true);   // 捕獲階段：比按鈕本身的動作先攔下
+function menuReady(){ menuLocks(); startEl.classList.remove('loading'); $('status').textContent = ''; menuProfile(); menuPaints(); menuGo('home'); }
 // ---- 個人資料：名稱＋戰績（存在這台裝置）----
 function profName(){ try { return (localStorage.getItem('wfm.name') || '').trim() || 'PILOT'; } catch (_){ return 'PILOT'; } }
 function profRec(){ try { return JSON.parse(localStorage.getItem('wfm.rec')) || {}; } catch (_){ return {}; } }
 function recordResult(mode, r){ if (mode !== 'ai' && mode !== 'net') return; const R = profRec(); const k = R[mode] = R[mode] || { w: 0, l: 0, d: 0 }; k[r]++; try { localStorage.setItem('wfm.rec', JSON.stringify(R)); } catch (_){} }
 function menuProfile(){ const R = profRec(), a = R.ai || { w: 0, l: 0, d: 0 }, n = R.net || { w: 0, l: 0, d: 0 };
-  $('mName').textContent = profName(); $('mRec').textContent = `AI ${a.w}勝${a.l}敗・線上 ${n.w}勝${n.l}敗`;
+  $('mName').textContent = profName(); $('mRec').textContent = LOCKS.mProfile ? '個人資料・尚未開放' : `AI ${a.w}勝${a.l}敗・線上 ${n.w}勝${n.l}敗`;
   $('mRecs').innerHTML = `<span></span><b>勝</b><b>敗</b><b>平手</b><span>對戰 AI</span><span>${a.w}</span><span>${a.l}</span><span>${a.d}</span><span>線上對戰</span><span>${n.w}</span><span>${n.l}</span><span>${n.d}</span>`; }
 function menuModal(v){ const m = $('mModal'); m.dataset.v = v; m.classList.add('on'); if (v === 'prof') $('mNameIn').value = profName() === 'PILOT' ? '' : profName(); }
 $('mProfile').addEventListener('click', () => menuModal('prof'));
