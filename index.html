@@ -112,6 +112,9 @@
   #bSwap { width:var(--Jk); height:var(--Jk); right:calc(var(--pad) + var(--sr) + var(--Fk)*0.25); bottom:calc(var(--pad) + var(--sb) + var(--Fk)*1.18 + 4vmin); }
   #bRopeR { width:var(--Hk); height:var(--Hk); right:calc(var(--pad) + var(--sr) + var(--Fk)*1.18 + 3vmin); bottom:calc(var(--pad) + var(--sb) + var(--Fk)*0.45); }
   #bRopeL { width:var(--Hk); height:var(--Hk); transform:translate(-50%,-50%); }
+  .btn.xb { --c:#ffd770; width:calc(var(--Hk)*0.78); height:calc(var(--Hk)*0.78); display:none; }   /* v3.9 三指以上用的選用按鈕（預設隱藏） */
+  .btn.xb svg { width:30px; height:16px; fill:#ffd770; } .btn.xb small { font-size:10px; margin-top:0; }
+  body.layedit .btn.xb.off { display:flex !important; opacity:.35; }
   #bRopeL.on { transform:translate(-50%,-50%) scale(.94); }
   .stick.idle { opacity:.75; } .knob.idle { opacity:.8; }
   .stick.thrust { border-color:#ffb040; background:rgba(255,176,64,.15); box-shadow:0 0 14px rgba(255,176,64,.6); }
@@ -199,12 +202,14 @@
   <div class="stick" id="stickBase2"></div><div class="knob" id="stickKnob2"></div>
   <div class="btn rope" id="bRopeL"><b class="ropeic"><i class="side">◀</i><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v8.5"/><circle cx="12" cy="2.8" r="1.4"/><path d="M12 11c-3.6 0-5.8 2.6-5.8 5.6M12 11c3.6 0 5.8 2.6 5.8 5.6M12 11v9.5"/><path d="M4.3 15.4l1.9 1.2 1.2-1.9M19.7 15.4l-1.9 1.2-1.2-1.9M10.4 19.2l1.6 1.4 1.6-1.4"/></svg></b><small id="sRopeL">—</small></div>
   <div class="btn rope" id="bRopeR"><b class="ropeic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v8.5"/><circle cx="12" cy="2.8" r="1.4"/><path d="M12 11c-3.6 0-5.8 2.6-5.8 5.6M12 11c3.6 0 5.8 2.6 5.8 5.6M12 11v9.5"/><path d="M4.3 15.4l1.9 1.2 1.2-1.9M19.7 15.4l-1.9 1.2-1.2-1.9M10.4 19.2l1.6 1.4 1.6-1.4"/></svg><i class="side">▶</i></b><small id="sRopeR">—</small></div>
+  <div class="btn xb" id="bJump"><b>跳</b></div><div class="btn xb" id="bBoost"><b>推</b></div>
+  <div class="btn xb" id="bW1"></div><div class="btn xb" id="bW2"></div><div class="btn xb" id="bW3"></div>
   <div class="btn fire" id="bFire"><b id="lFire"></b><small id="sFire">1000</small></div>
   <div id="swapHint" style="display:none"><span id="swapCur">主武</span></div>
   <div class="wslot" id="ws_main" data-s="main"></div><div class="wslot" id="ws_mg" data-s="mg"></div><div class="wslot" id="ws_sub" data-s="sub"></div>
 </div>
 <div id="layBar"><b>拖曳按鈕到想要的位置</b><span class="lsel" id="laySel">先點一顆按鈕</span>
-  <label>大小 <input type="range" id="laySize" min="0.6" max="1.6" step="0.05" value="1"></label><button id="layReset">全部重設</button><button id="layDone">完成</button></div>
+  <label id="layShowL"><input type="checkbox" id="layShow"> 顯示</label><label>大小 <input type="range" id="laySize" min="0.6" max="1.6" step="0.05" value="1"></label><button id="layReset">全部重設</button><button id="layDone">完成</button></div>
 <div id="topbar">
   <button class="small" id="bReset" aria-label="重生">↺</button>
   <button class="small" id="bView" aria-label="切換視角"></button>
@@ -2680,7 +2685,7 @@ function look(dx, dy, speed = 200){
 // v0.9：改回看得見的按鈕（荒野亂鬥風格），不再用隱形手勢
 //  左：搖桿（左半邊任何地方都能浮動）＋「左索」鈕：按住＝勾住，按著直接拖曳＝收放／擺盪
 //  右：「射擊」大鈕：按住＝開火，按著拖曳＝邊射邊瞄；「右索」鈕：按住＝勾住，按著拖曳＝瞄準；其他地方拖曳＝瞄準
-const btnRoles = { bRopeL: 'ropeL', bRopeR: 'ropeR', bFire: 'fire' };
+const btnRoles = { bRopeL: 'ropeL', bRopeR: 'ropeR', bFire: 'fire', bJump: 'jump', bBoost: 'boost', bW1: 'w1', bW2: 'w2', bW3: 'w3' };   // v3.9 後五個是三指以上用的選用按鈕
 function startFire(p){ // 射擊鈕判定為「開火」：開始射擊，之後拖曳＝瞄準（或移動跟手準星）
   p.firePending = false; setRole('fire', true); slotsOpen(false);
   if (opts.follow === 'weapon'){ p.drag = 'aimGun'; aimReturn = false; } else p.drag = 'look';
@@ -2727,11 +2732,15 @@ function screenDir(ox, oy){ // 螢幕中心偏移（px）→ 世界方向的 yaw
 }
 function clampOff(o){ o.x = clamp(o.x, -innerWidth/2 + 40, innerWidth/2 - 40); o.y = clamp(o.y, -innerHeight/2 + 50, innerHeight/2 - 40); }
 let fireTouches = 0, ropeGraceTimer = 0, levelT = 0, aimNearEnemy = false;
+const XROLES = new Set(['jump', 'boost', 'w1', 'w2', 'w3']);
 function setRole(role, on){
   if (role === 'fire'){ fireTouches = Math.max(0, fireTouches + (on ? 1 : -1)); input.fire = fireTouches > 0; }
   else if (role === 'ropeL'){ clearTimeout(ropeGraceTimer); input.hookMain = on; if (on) buzz(15); }
   else if (role === 'ropeR'){ input.hookR = on; if (on) buzz(15); }
   else if (role === 'swap'){ if (on){ input.swapQueued = true; buzz(10); } }
+  else if (role === 'jump'){ if (on){ const m = Math.hypot(input.stickX || 0, input.stickZ || 0); input.jumpQueued = true; input.jumpPow = 1; input.jumpX = m > 0.3 ? input.stickX / m : 0; input.jumpZ = m > 0.3 ? input.stickZ / m : 0; tutSig.tap = true; buzz(12); } }   // 搖桿有推就往那個方向跳
+  else if (role === 'boost'){ input.boost = on; }
+  else if (role === 'w1' || role === 'w2' || role === 'w3'){ if (on){ input.swapTo = role === 'w1' ? 'main' : role === 'w2' ? 'mg' : 'sub'; buzz(10); swapHint(); } }
   const id = Object.keys(btnRoles).find(k => btnRoles[k] === role); if (id) document.getElementById(id).classList.toggle('on', on);
 }
 touchEl.addEventListener('pointerdown', e => {
@@ -2768,7 +2777,8 @@ touchEl.addEventListener('pointerdown', e => {
       else { p.role = 'ropeRAim'; p.drag = 'aimRope'; ropeAiming = true; ropeOff.x = ropeOff.y = 0; elRopeR.classList.add('on'); }
     }
     else p.drag = 'look';
-  } else if (e.clientX < innerWidth/2){ p.role = 'stick'; p.drag = 'stick'; p.showStick = true; setStick(p); }
+  } else if (e.clientX < innerWidth/2 && ![...pointers.values()].some(q => q.role === 'stick')){ p.role = 'stick';   // v3.9 三指以上：左邊已經有手指在移動，其他手指改成轉視角
+     p.drag = 'stick'; p.showStick = true; setStick(p); }
   else { p.role = 'look'; p.drag = 'look';
     if (now - lastLookTap.t < CONFIG.assist.doubleTapMs && Math.hypot(e.clientX - lastLookTap.x, e.clientY - lastLookTap.y) < 60){
       quickTurn = { left: Math.PI, t: CONFIG.assist.quickTurnS }; lastLookTap.t = -1e9; stab.point = null; stab.target = null; buzz(12); } }
@@ -2807,7 +2817,7 @@ function endPointer(e){
   if (p.role === 'look' && performance.now() - p.t0 < 220 && Math.hypot(p.x - p.ox, p.y - p.oy) < 12) lastLookTap = { t: performance.now(), x: p.x, y: p.y };
   if (p.drag === 'aimGun') aimReturn = true;
   if (p.role === 'ropeL' && e.type === 'pointercancel'){ ropeGraceTimer = setTimeout(() => setRole('ropeL', false), CONFIG.touch.edgeGraceMs); }
-  else if (btnRoles[p.role] || p.role === 'ropeL' || p.role === 'ropeR' || p.role === 'fire') setRole(p.role, false);
+  else if (btnRoles[p.role] || p.role === 'ropeL' || p.role === 'ropeR' || p.role === 'fire' || XROLES.has(p.role)) setRole(p.role, false);
   // v2.8 移動搖桿放開時的手勢：輕點＝原地跳；快速往任一方向滑出並放開（0.25 秒內）＝往那個方向跳
   if (p.role === 'stick'){ const dt0 = performance.now() - p.t0, dx = p.x - p.ox, dy = p.y - p.oy, d = Math.hypot(dx, dy), J = CONFIG.stickJump;
     const SPc = CONFIG.spider;
@@ -2831,7 +2841,9 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive: false
 document.addEventListener('contextmenu', e => e.preventDefault());
 
 let mouseMode = false;
-function showTouchUI(on){ document.querySelectorAll('.btn').forEach(b => b.style.display = on ? 'flex' : 'none'); if (!on) { stickBase.style.display = stickKnob.style.display = 'none'; } }
+// v3.9 自訂按鈕位置的存檔（showTouchUI 會用到，所以放在前面）
+let LAYOUT = {}; try { LAYOUT = JSON.parse(localStorage.getItem('wfm.layout') || '{}') || {}; } catch(_){ LAYOUT = {}; }
+function showTouchUI(on){ document.querySelectorAll('.btn').forEach(b => b.style.display = on && !(b.classList.contains('xb') && !(LAYOUT[b.id] && LAYOUT[b.id].on)) ? 'flex' : 'none'); if (!on) { stickBase.style.display = stickKnob.style.display = 'none'; } }
 addEventListener('keydown', e => {
   if (e.repeat) return; unlockAudio();
   if (!mouseMode){ mouseMode = true; showTouchUI(false); }
@@ -2890,30 +2902,41 @@ document.getElementById('optGyroInvX').addEventListener('change', e => gyro.invX
 if (matchMedia('(pointer:coarse)').matches) document.getElementById('gyroStartRow').style.display = 'block';
 document.getElementById('optSize').addEventListener('input', e => { document.documentElement.style.setProperty('--k', e.target.value); applyLayout(); });
 // ---- v3.9 自訂按鈕位置：位置存成螢幕比例（轉向、換裝置也大致不變），大小是在「按鈕大小」之上再乘一個倍率 ----
-const LAYOUT_IDS = ['bFire', 'bRopeR', 'bRopeL'], LAYOUT_NAME = { bFire: '射擊鈕', bRopeR: '右鋼索', bRopeL: '左鋼索' };
-let LAYOUT = {}; try { LAYOUT = JSON.parse(localStorage.getItem('wfm.layout') || '{}') || {}; } catch(_){ LAYOUT = {}; }
+const LAYOUT_IDS = ['bFire', 'bRopeR', 'bRopeL', 'bJump', 'bBoost', 'bW1', 'bW2', 'bW3'], LAYOUT_NAME = { bFire: '射擊鈕', bRopeR: '右鋼索', bRopeL: '左鋼索', bJump: '跳躍', bBoost: '推進', bW1: '01 主砲', bW2: '02 螳螂鐮', bW3: '03 釘槍' };
+const XB_DEF = { bJump: [0.88, 0.42], bBoost: [0.76, 0.42], bW1: [0.62, 0.14], bW2: [0.71, 0.14], bW3: [0.80, 0.14] };   // 選用按鈕的預設位置（右上方，給食指）
+for (const [id, k] of [['bW1', 'main'], ['bW2', 'mg'], ['bW3', 'sub']]) document.getElementById(id).innerHTML = iconSVG(k) + `<small>${id.slice(-1).padStart(2, '0')}</small>`;
 function applyLayout(){
   for (const id of LAYOUT_IDS){ const el = document.getElementById(id); if (!el) continue;
     el.style.left = el.style.top = el.style.right = el.style.bottom = el.style.width = el.style.height = '';
-    const L = LAYOUT[id]; if (!L) continue;
+    const xb = el.classList.contains('xb'); let L = LAYOUT[id];
+    if (xb){ const on = !!(L && L.on); el.classList.toggle('off', !on); el.style.display = layEd.on || (on && !mouseMode) ? 'flex' : 'none';
+      if (!L) L = { x: XB_DEF[id][0], y: XB_DEF[id][1], s: 1 }; if (L.x == null){ L.x = XB_DEF[id][0]; L.y = XB_DEF[id][1]; } }
+    if (!L) continue;
     const r = el.getBoundingClientRect(), w = r.width * (L.s || 1), h = r.height * (L.s || 1);
     el.style.width = w + 'px'; el.style.height = h + 'px'; el.style.right = el.style.bottom = 'auto';
-    el.style.left = clamp(L.x * innerWidth - w / 2, 0, innerWidth - w) + 'px'; el.style.top = clamp(L.y * innerHeight - h / 2, 0, innerHeight - h) + 'px'; }
+    const ctr = id === 'bRopeL' ? 1 : 0;   // 左索鈕的 CSS 用 translate(-50%,-50%) 置中
+    el.style.left = (clamp(L.x * innerWidth - w / 2, 0, innerWidth - w) + ctr * w / 2) + 'px'; el.style.top = (clamp(L.y * innerHeight - h / 2, 0, innerHeight - h) + ctr * h / 2) + 'px'; }
   layoutSlots(); }
 function saveLayout(){ try { localStorage.setItem('wfm.layout', JSON.stringify(LAYOUT)); } catch(_){} }
 addEventListener('resize', () => setTimeout(applyLayout, 60)); setTimeout(applyLayout, 350);
 const layEd = { on: false, sel: null, drag: null, wasRunning: false };
 function layoutEdit(on){
   layEd.on = on; document.body.classList.toggle('layedit', on); document.getElementById('layBar').classList.toggle('on', on);
-  if (on){ layEd.wasRunning = running; running = false; showTouchUI(true); setEl.classList.remove('open'); layoutSelect(null); }
-  else { running = layEd.wasRunning; last = performance.now(); layoutSelect(null); saveLayout(); } }
+  if (on){ layEd.wasRunning = running; running = false; showTouchUI(true); setEl.classList.remove('open'); layoutSelect(null); applyLayout(); }
+  else { running = layEd.wasRunning; last = performance.now(); layoutSelect(null); saveLayout(); applyLayout(); } }
 function layoutSelect(id){ layEd.sel = id; for (const k of LAYOUT_IDS) document.getElementById(k).classList.toggle('lay-on', k === id);
-  document.getElementById('laySel').textContent = id ? LAYOUT_NAME[id] : '先點一顆按鈕'; document.getElementById('laySize').value = id && LAYOUT[id] ? (LAYOUT[id].s || 1) : 1; }
+  document.getElementById('laySel').textContent = id ? LAYOUT_NAME[id] : '先點一顆按鈕'; document.getElementById('laySize').value = id && LAYOUT[id] ? (LAYOUT[id].s || 1) : 1;
+  const xb = id && document.getElementById(id).classList.contains('xb'); document.getElementById('layShowL').style.display = xb ? '' : 'none';
+  if (xb) document.getElementById('layShow').checked = !!(LAYOUT[id] && LAYOUT[id].on); }
+document.getElementById('layShow').addEventListener('change', e => { const id = layEd.sel; if (!id) return; const L = LAYOUT[id] || (LAYOUT[id] = { x: XB_DEF[id][0], y: XB_DEF[id][1], s: 1 }); L.on = e.target.checked; applyLayout(); });
 touchEl.addEventListener('pointerdown', e => { if (!layEd.on) return; e.stopImmediatePropagation(); e.preventDefault();
-  const el = e.target.closest ? e.target.closest('.btn') : null; if (!el || !LAYOUT_IDS.includes(el.id)){ layoutSelect(null); return; }
+  let el = e.target.closest ? e.target.closest('.btn') : null;
+  if (!el || !LAYOUT_IDS.includes(el.id)){ let bd = 1e9; el = null;   // 沒點正：找最近、在 1.4 倍半徑內的按鈕
+    for (const id of LAYOUT_IDS){ const b = document.getElementById(id); if (!b || getComputedStyle(b).display === 'none') continue; const r = b.getBoundingClientRect(), d = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)) / (r.width / 2); if (d < 1.4 && d < bd){ bd = d; el = b; } } }
+  if (!el){ layoutSelect(null); return; }
   layoutSelect(el.id); const r = el.getBoundingClientRect(); layEd.drag = { id: el.id, pid: e.pointerId, dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) }; }, { capture: true });
 addEventListener('pointermove', e => { const d = layEd.drag; if (!layEd.on || !d || d.pid !== e.pointerId) return; e.stopImmediatePropagation();
-  const L = LAYOUT[d.id] || (LAYOUT[d.id] = { s: 1 }); L.x = clamp((e.clientX - d.dx) / innerWidth, 0.03, 0.97); L.y = clamp((e.clientY - d.dy) / innerHeight, 0.05, 0.97); applyLayout(); }, { capture: true });
+  const L = LAYOUT[d.id] || (LAYOUT[d.id] = { s: 1, on: false }); L.x = clamp((e.clientX - d.dx) / innerWidth, 0.03, 0.97); L.y = clamp((e.clientY - d.dy) / innerHeight, 0.05, 0.97); applyLayout(); }, { capture: true });
 addEventListener('pointerup', e => { if (layEd.drag && layEd.drag.pid === e.pointerId){ layEd.drag = null; e.stopImmediatePropagation(); } }, { capture: true });
 document.getElementById('laySize').addEventListener('input', e => { const id = layEd.sel; if (!id) return;
   const el = document.getElementById(id), r = el.getBoundingClientRect(); const L = LAYOUT[id] || (LAYOUT[id] = { x: (r.left + r.width / 2) / innerWidth, y: (r.top + r.height / 2) / innerHeight });
