@@ -3321,10 +3321,10 @@ function menuGo(scr){
   $('mOffSub').classList.remove('on'); $('mJoinRow').classList.remove('on');
   menuNetMsg(); menuProfile();
 }
-// v3.9d 還沒開放的功能先上鎖：正式版鎖線上大廳；機庫、個人資料兩版都先鎖（網址加 ?unlock=1 可全部打開，測試用）
+// v3.9d 還沒開放的功能先上鎖：正式版鎖線上大廳；機庫、個人資料兩版都先鎖（網址加 ?unlock=1 可打開機庫、個人資料，測試用）
 const BUILD_ONLINE = true;   // 正式版（main）＝false
 const UNLOCK_ALL = new URLSearchParams(location.search).get('unlock') === '1';
-const LOCKS = { mToLobby: !BUILD_ONLINE && !UNLOCK_ALL, mHangar: !UNLOCK_ALL, mProfile: !UNLOCK_ALL };
+const LOCKS = { mToLobby: !BUILD_ONLINE, mHangar: !UNLOCK_ALL, mProfile: !UNLOCK_ALL };   // 線上只看版本開關：正式版不能用網址參數打開
 function menuLocks(){
   for (const [id, on] of Object.entries(LOCKS)){ const el = $(id); el.classList.toggle('locked', on);
     const sm = el.querySelector('small'); if (sm){ if (!sm.dataset.orig) sm.dataset.orig = sm.textContent; sm.textContent = on ? (id === 'mProfile' ? '尚未開放' : sm.dataset.orig + '・尚未開放') : sm.dataset.orig; } }
