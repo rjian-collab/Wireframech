@@ -245,7 +245,6 @@
     <section data-page="aid">
       <label class="row"><span class="tx"><b>鎖定敵人</b><i>放手時準星附近有敵人，擺盪中視角一直看著它</i></span><input type="checkbox" class="sw" id="optLockEnemy" checked></label>
       <label class="row"><span class="tx"><b>按住等勾點</b><i>沒勾點時按住鋼索，勾點出現就自動勾上（最多 1 秒）</i></span><input type="checkbox" class="sw" id="optRopeBuffer" checked></label>
-      <label class="row"><span class="tx"><b>視角回正</b><i>沒勾鋼索、1 秒沒操作，視角慢慢回到水平</i></span><input type="checkbox" class="sw" id="optAutoLevel" checked></label>
     </section>
     <section data-page="gyro">
       <label class="row"><span class="tx"><b>陀螺儀瞄準</b><i>轉動手機來轉視角</i></span><input type="checkbox" class="sw" id="optGyro"></label>
@@ -907,7 +906,7 @@ const newRopes = () => [
 const newWeapon = () => ({ active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0, melee: { cd: 0, t: 0, ph: 0, prev: false, vis: null } });
 const state = { tick: 0, player: newPlayerState(S, CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon() };
 const events = []; // {type, ...} 給 render/hud/audio 用
-const opts = { shadows: true, paint: 'steel', view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true, autoLevel: true };
+const opts = { shadows: true, paint: 'steel', view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true };
 
 // =====================================================================
 // v3.0 玩家列表＋隊伍（LocalPlayer／BotPlayer；之後的 NetworkPlayer 用同樣欄位）
@@ -2893,7 +2892,6 @@ document.getElementById('bView').addEventListener('click', e => { e.stopPropagat
 document.getElementById('bView').innerHTML = opts.view3P ? IC_3P : IC_1P;
 document.getElementById('optLockEnemy').addEventListener('change', e => opts.lockEnemy = e.target.checked);
 document.getElementById('optRopeBuffer').addEventListener('change', e => opts.ropeBuffer = e.target.checked);
-document.getElementById('optAutoLevel').addEventListener('change', e => opts.autoLevel = e.target.checked);
 document.getElementById('optRoll').addEventListener('change', e => opts.roll = e.target.checked);
 document.getElementById('optSens').addEventListener('input', e => opts.sens = parseFloat(e.target.value));
 document.getElementById('optFollow').addEventListener('change', e => { opts.follow = e.target.value; aimOff.x = aimOff.y = 0; input.ropeLatch = false; });
@@ -3263,11 +3261,8 @@ function frame(now){
   _cam.copy(_eye);
   if (shakeT > 0){ shakeT -= dt; const k = shakeT / CONFIG.camera.shakeDur * shakeAmp; _cam.x += (Math.random()-.5)*k; _cam.y += (Math.random()-.5)*k; _cam.z += (Math.random()-.5)*k; }
   camera.position.copy(_cam);
-  // v1.5 上下角度回正：沒勾鋼索、超過 1 秒沒有任何視角輸入 → 上下角度慢慢回到往上 10°（只調上下，不動左右）
-  const anyHookedNow = state.ropes[0].hooked || state.ropes[1].hooked, idleMs = performance.now() - lastLookT;
-  const levelOwnsPitch = opts.autoLevel && !mouseMode && !anyHookedNow && idleMs > CONFIG.assist.levelIdleMs && !quickTurn;
-  if (levelOwnsPitch && !stab.target){ const tgt = CONFIG.assist.levelPitchDeg * DEG, d = tgt - P.pitch, mx = CONFIG.assist.levelRate * DEG * dt;
-    P.pitch += clamp(d * Math.min(1, dt * 3), -mx, mx); }
+  // v3.9 移除「視角回正」（玩家回饋：戰鬥中會干擾瞄準）；鏡頭鎖定地形照舊可以調上下角度
+  const levelOwnsPitch = false;
   // v1.5 雙擊空白處＝180° 迴轉（0.25 秒平滑轉過去）
   if (quickTurn){ const k = Math.min(1, dt / Math.max(quickTurn.t, dt)); const step = quickTurn.left * k; P.yaw += step; quickTurn.left -= step; quickTurn.t -= dt;
     lastLookT = performance.now(); if (quickTurn.t <= 0 || Math.abs(quickTurn.left) < 1e-4){ P.yaw += quickTurn.left; quickTurn = null; } }
