@@ -216,7 +216,7 @@
       <label class="row"><span class="tx"><b>速度區間</b><i>越快越刺激，也越容易掉下去</i></span><select id="optSpeed"><option value="0.75">穩定 ×0.75</option><option value="1" selected>標準</option><option value="1.3">快 ×1.3</option><option value="1.7">極速 ×1.7</option></select></label>
       <label class="row"><span class="tx"><b>微調倍率</b><i>0.5 ～ 2.0 自由調整</i></span><span class="ctl"><input type="range" id="optSpeedK" min="0.5" max="2" step="0.05" value="1"> <span id="optSpeedV" class="val">×1.00</span></span></label>
       <label class="row"><span class="tx"><b>跟手準星</b><i>按住按鈕拖曳時，準星跟著手指走</i></span><select id="optFollow"><option value="none">關（畫面中央）</option><option value="weapon">武器</option><option value="rope">鋼索</option></select></label>
-      <label class="row"><span class="tx"><b>自動開火</b><i>準星對到敵人就射（57mm、機槍）</i></span><input type="checkbox" class="sw" id="optAutoFire"></label>
+      <label class="row"><span class="tx"><b>自動開火</b><i>準星對到敵人就射（57mm）</i></span><input type="checkbox" class="sw" id="optAutoFire"></label>
       <label class="row"><span class="tx"><b>拖曳靈敏度</b><i>滑動畫面轉視角的速度</i></span><span class="ctl"><input type="range" id="optSens" min="0.1" max="0.6" step="0.05" value="0.25"></span></label>
       <label class="row"><span class="tx"><b>按鈕大小</b><i>手大或平板可以調大</i></span><span class="ctl"><input type="range" id="optSize" min="0.8" max="1.3" step="0.05" value="1"></span></label>
     </section>
@@ -262,7 +262,7 @@
     <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），左上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>輕點＝原地跳；快速往任一方向滑出並放開＝往那邊跳</b>；推得越遠走越快（在地上、坡上、貼牆或釘在牆上時都能跳）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
-    <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">按住會在旁邊彈出三個武器圖示，往圖示方向一甩就切換：上＝01 主武 57mm、左上＝02 副武機槍、更左＝03 腿部釘槍</b></li>
+    <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">按住會在旁邊彈出三個武器圖示，往圖示方向一甩就切換：上＝01 主武 57mm、右＝02 螳螂鐮（近身按射擊揮刀，一刀擊破，冷卻 3 秒）、左＝03 腿部釘槍</b></li>
     <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、欄位（01 主武／02 副武／03 腿部）、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
     <li><b>腿部釘槍</b>（不佔手臂，共 24 根）：釘在牆上時用搖桿可以沿牆爬行，每 2.5m 用掉一根，用完就掉下來；身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器打敵人。</li>
     <li><b>57mm 滑膛炮</b>：每 0.8 秒一發、6 發一匣，砲彈有飛行時間與下墜，落點 4m 內有爆炸傷害；空中開砲會被後座力往後推</li>
@@ -319,9 +319,11 @@ const CONFIG = Object.freeze({
     shakeDur: 0.5, speedLinesMin: 25, speedLinesMax: 60 },
   render: { dprMax: 1.5, dprFallback: 1.0, fallbackFps: 50, fpsWindow: 2 },
   // v1.9 主武：57mm 滑膛炮（實體彈道：有飛行時間與彈道下墜、落點爆炸範圍傷害）
-  cannon: { rpm: 75, speed: 700, range: 600, damage: 700, splash: 350, splashR: 4, mag: 6, reserve: 24, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
+  cannon: { rpm: 75, speed: 700, range: 600, damage: 1500, splash: 700, splashR: 5,   // v3.9 加強：直擊 700→1500（4 發擊破）、爆風 350→700、半徑 4→5m
+             mag: 6, reserve: 24, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
   nail: { crawlSpeed: 5, crawlPerNail: 6, damage: 1000, mag: 6, reserve: 18, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6, brake: 0.3 },   // 副武：釘槍（5×2 發）
   safeZone: { radius: 18 },
+  melee: { dmg: 6000, range: 7.5, vReach: 5, arcDeg: 60, guardDeg: 60, parryPush: 12, windup: 0.25, recoverHit: 0.25, recoverMiss: 0.6, cooldown: 3, lunge: 6 },   // v3.9 螳螂鐮：前搖 0.25 秒（對手看得到手臂舉起）→ 下劈；揮空硬直 0.6 秒、冷卻 3 秒
   pvp: { hp: 6000, killLimit: 5, timeLimit: 300, spawnB: { x: 354, y: 12.2, z: 0 } },   // v3.0b 機體 6000 HP＝之後的螳螂鐮（6000，近戰）一刀滿血擊破；先擊破 5 次、5 分鐘
   weapon: { rpm: 600, range: 500, damage: 100, ammo: 1000, reload: 3,   // v1.9 起為副武：14.5mm 機槍（格鬥臂）
     spread: { base: 0.3, moving: 0.5, swinging: 1.0, swingSpeed: 12, max: 2.0, bloomPerShot: 0.08, recover: 0.3 },
@@ -887,7 +889,7 @@ const newPlayerState = (sp, yaw) => ({ yaw, pitch: 0, grounded: false, fuel: CON
 const newRopes = () => [
     { side: 'L', hooked: false, anchor: V(), L: 0, tension: 0, reeling: false },
     { side: 'R', hooked: false, anchor: V(), L: 0, tension: 0, reeling: false } ];
-const newWeapon = () => ({ active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0 });
+const newWeapon = () => ({ active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0, melee: { cd: 0, t: 0, ph: 0, prev: false, vis: null } });
 const state = { tick: 0, player: newPlayerState(S, CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon() };
 const events = []; // {type, ...} 給 render/hud/audio 用
 const opts = { shadows: true, paint: 'steel', view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true, autoLevel: true };
@@ -913,8 +915,22 @@ function placeActor(a, p, yaw){
   a.P.prevPos.set(p.x, p.y, p.z); a.P.currPos.set(p.x, p.y, p.z); a.P.vel.set(0, 0, 0); a.P.yaw = yaw; a.P.pitch = 0; a.P.pinned = null; a.P.fuel = CONFIG.boost.fuel;
   for (const r of a.ropes){ r.hooked = false; r.wasHeld = false; } a.tgt.mesh.position.set(p.x, p.y, p.z);
 }
+// v3.9 高周波刀（螳螂鐮）架刀：拿著刀、沒在揮的時候，正面 ±60° 來的子彈、砲彈、刀全部擋掉；刀對刀＝兩台都被彈開
+let dmgKind = null;
+function isGuarding(v){ const w = v.weapon, ml = w && w.melee; return !!w && w.active === 'mg' && !(ml && (ml.ph || ml.vis != null)); }
+function guardBlocks(v, from){ if (!from || !isGuarding(v)) return false;
+  const dx = from.x - v.P.currPos.x, dz = from.z - v.P.currPos.z, d = Math.hypot(dx, dz); if (d < 0.5) return true;
+  return (dx * -Math.sin(v.P.yaw) + dz * -Math.cos(v.P.yaw)) / d >= Math.cos(CONFIG.melee.guardDeg * DEG); }
 function actorDamage(v, dmg){
   if (match.state !== 'live' || v.P.safe || curActor === v) return false;   // 保護區內不受傷；不會打到自己
+  if (curActor && guardBlocks(v, curActor.P.currPos)){
+    const at = v.P.currPos.clone(); at.x -= Math.sin(v.P.yaw) * 2.2; at.z -= Math.cos(v.P.yaw) * 2.2; at.y += 0.6;
+    if (dmgKind === 'melee'){   // 刀對刀：攻擊方往後彈、被擋方也退一點
+      const dx = v.P.currPos.x - curActor.P.currPos.x, dz = v.P.currPos.z - curActor.P.currPos.z, d = Math.hypot(dx, dz) || 1, MC = CONFIG.melee;
+      const la = curActor.body.linvel(); curActor.body.setLinvel({ x: la.x - dx / d * MC.parryPush, y: la.y + 3, z: la.z - dz / d * MC.parryPush }, true);
+      if (v.kind !== 'net'){ const lb = v.body.linvel(); v.body.setLinvel({ x: lb.x + dx / d * MC.parryPush * 0.5, y: lb.y + 2, z: lb.z + dz / d * MC.parryPush * 0.5 }, true); } }
+    events.push({ type: 'block', victim: v.pid, at, parry: dmgKind === 'melee' });
+    return false; }
   if (match.mode === 'net'){ if (v.kind !== 'net') return false; NET.send('hit', { dmg: Math.round(dmg) }); events.push({ type: 'actorHit', victim: v.pid, dmg }); return true; }   // v3.8 連線：開槍方判定，傷害交給對方自己扣
   v.hp = Math.max(0, v.hp - dmg); v.lastHitBy = curActor; events.push({ type: 'actorHit', victim: v.pid, dmg });
   if (v.hp <= 0) match.died(v, curActor);
@@ -1054,12 +1070,12 @@ function createBotBrain(a){
       const P = a.P, pos = P.currPos, eye = eyePos(pos, V()), enemy = a.enemies[0], ep = enemy ? enemy.mesh.position : null;
       if (st.think <= 0){ st.think = B.thinkS; this.think(pos, eye, ep, enemy); }
       // 槍口轉向（有轉速上限，看起來像在瞄）
-      const k = Math.min(1, B.turnRate * dt / Math.max(0.001, Math.abs(st.dYaw || 0) + Math.abs(st.dPitch || 0)));
+      const k = Math.min(1, B.turnRate * ((st.dist || 99) < 25 ? 2.2 : 1) * dt / Math.max(0.001, Math.abs(st.dYaw || 0) + Math.abs(st.dPitch || 0)));   // v3.9 近距離轉得比較快（貼臉時跟得上）
       let dy = (st.tYaw ?? P.yaw) - st.gunYaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
       const dp = (st.tPitch ?? 0) - st.gunPitch; st.dYaw = dy; st.dPitch = dp;
       st.gunYaw += dy * k; st.gunPitch += dp * k;
       const aimErr = Math.hypot(dy, dp);
-      const fire = st.nailFire || (st.wantFire && aimErr < 1.5 * DEG && !P.safe && (a.weapon.active !== 'mg' || st.burst > 0));
+      const fire = a.weapon.active === 'mg' ? !!st.meleeReq : st.nailFire || (st.wantFire && aimErr < Math.max(1.5 * DEG, Math.atan(1.6 / Math.max(1, st.dist || 99))) && !P.safe);   // v3.9 近距離：準星在機體寬度內就開火（以前要 1.5° 內，貼臉時轉不過來就一直不開）   // 鐮刀：每次思考（0.1 秒）重新按一次
       const cmd = { seq: 0, tick: state.tick, moveX: st.moveX || 0, moveZ: st.reel || 0, yaw: st.travel && st.moveYaw != null ? st.moveYaw : st.gunYaw, pitch: st.gunPitch, fire, hookL: false, hookR: st.hold, hookMain: false,
         smart: true, autoFire: false, swap: false, swapTo: st.wantW !== a.weapon.active ? st.wantW : null, gunYaw: st.gunYaw, gunPitch: st.gunPitch,
         aimYaw: st.aimYaw, aimPitch: st.aimPitch, ropeYaw: st.aimYaw, ropePitch: st.aimPitch, jump: !!st.jump, jumpPow: 1, jumpX: st.jumpX || 0, jumpZ: st.jumpZ || 0, boost: st.boost, thrust: false, reload: false };
@@ -1073,11 +1089,13 @@ function createBotBrain(a){
       if (ep){ const to = V().subVectors(ep, eye); dist = to.length(); to.divideScalar(dist);
         const h = castRay(eye, to, dist + 2); see = !h || targetsByCollider.get(h.handle) === enemy; }
       if (see){ st.seeT += dt; st.lostT = 0; } else { st.seeT = 0; st.lostT += dt; }
+      st.meleeReq = see && dist < CONFIG.melee.range * 0.85 && a.weapon.active === 'mg' && !(a.weapon.melee && (a.weapon.melee.cd > 0 || a.weapon.melee.ph));   // v3.9 近身就揮鐮
       // ---- 戰鬥：挑武器、算瞄準點 ----
       st.wantFire = false; st.nailFire = false;
       if (P.grounded && !P.pinned) st.climb = false;
       if (ep && see && dist < 600){
-        if (!st.climb) st.wantW = dist < B.mgRange ? 'mg' : 'main';
+        if (!st.climb) st.wantW = dist < CONFIG.melee.range * 1.1 ? 'mg' : 'main';   // v3.9 02 欄改成螳螂鐮：進入斬擊距離才換刀
+        st.dist = dist;
         const ev = enemy.actor ? enemy.actor.P.vel : V(), tf = st.wantW === 'main' ? dist / CN.speed : 0;
         const aim = V().copy(ep).addScaledVector(ev, tf); aim.y += 0.5 * -CONFIG.physics.gravity * tf * tf;
         st.errT -= dt; if (st.errT <= 0){ st.errT = 0.6;   // 誤差每 0.6 秒換一次，持續看著目標會越來越準
@@ -1086,7 +1104,6 @@ function createBotBrain(a){
         aim.add(st.err);
         const d = V().subVectors(aim, eye).normalize(); st.tYaw = Math.atan2(-d.x, -d.z); st.tPitch = Math.asin(clamp(d.y, -1, 1));
         st.wantFire = st.seeT > (st.atCover ? 0.12 : 0.35) && !st.climb;   // 反應時間（跳射時很短，不然跳到頂點還沒開砲）
-        if (st.wantW === 'mg' && st.burst <= -0.5) st.burst = 0.8;   // 機槍點放
       } else if (ep){ const d = V().subVectors(ep, eye).normalize(); st.tYaw = Math.atan2(-d.x, -d.z); st.tPitch = clamp(Math.asin(d.y), -0.3, 0.3); }
       // ---- 卡住偵測 ----
       if (pos.distanceTo(st.lastP) < 0.8 && !P.grounded) st.stuckT += dt; else st.stuckT = 0; st.lastP.copy(pos);
@@ -1202,6 +1219,7 @@ function ensureBot(){
   bot = { pid: 'bot1', name: 'AI', team: 1, kind: 'bot', active: true, body, col, P: newPlayerState(sp, -CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon(),
     hp: CONFIG.pvp.hp, spawn: V(sp.x, sp.y, sp.z), spawnYaw: -CONFIG.map.spawnYaw, enemies: [local.tgt] };
   bot.tgt = makeActorTarget(bot); actors.push(bot);
+  if (!practiceOn){ local.enemies = [bot.tgt]; targets = local.enemies; }   // v3.9 修正：第一次開 AI 對戰時，setPractice 先跑、AI 還沒建立 → 本機敵人清單是空的（射控輔助、自動開火、螳螂鐮都找不到 AI）
   bot.mech = createMech({ weapon: () => bot.weapon, paint: 'desert' }); bot.mech.loadModel().then(() => applyShadows(bot.mech.root)).catch(() => { bot.mech.failed = true; });
   bot.brain = createBotBrain(bot);
   return bot;
@@ -1426,11 +1444,17 @@ function netQueueFx(ev){
   if (match.mode !== 'net' || NET.state !== 'match') return;
   if (ev.type === 'shot') NET.fx.push({ k: ev.nail ? 'n' : 's', f: v3a(ev.from), to: v3a(ev.to), h: ev.hit ? 1 : 0, n: ev.normal ? v3a(ev.normal, r3) : 0 });
   else if (ev.type === 'cannon'){ const sh = state.weapon.shells[state.weapon.shells.length - 1]; if (sh) NET.fx.push({ k: 'c', p: v3a(sh.p), v: v3a(sh.v) }); }
+  else if (ev.type === 'meleeStart') NET.fx.push({ k: 'm', s: ev.side || 1 });   // v3.9 揮鐮動作（傷害照樣走 hit）
+  else if (ev.type === 'melee') NET.fx.push({ k: 'mh', h: ev.hit ? 1 : 0, at: v3a(ev.at) });
+  else if (ev.type === 'block') NET.fx.push({ k: 'b', at: v3a(ev.at), p: ev.parry ? 1 : 0, me: ev.victim === local.pid ? 0 : 1 });   // me=1：被擋的是對方（從對方角度＝自己擋下）
   if (NET.fx.length > 40) NET.fx.shift();
 }
 function netFx(f){
   if (!bot || !bot.active) return;
   if (f.k === 's' || f.k === 'n'){ const n = f.n ? V().fromArray(f.n) : null; remoteEvent({ type: 'shot', from: V().fromArray(f.f), to: V().fromArray(f.to), hit: !!f.h, normal: n, nail: f.k === 'n', by: 'net' }); }
+  else if (f.k === 'm'){ const ml = bot.weapon.melee || (bot.weapon.melee = { cd: 0, t: 0, ph: 0, prev: false }); ml.vis = 0; ml.side = f.s || 1; remoteEvent({ type: 'meleeStart', from: bot.P.currPos.clone(), by: 'net' }); }
+  else if (f.k === 'b') remoteEvent({ type: 'block', at: V().fromArray(f.at), parry: !!f.p, victim: f.me ? local.pid : bot.pid, by: 'net' });
+  else if (f.k === 'mh') remoteEvent({ type: 'melee', hit: !!f.h, at: V().fromArray(f.at), by: 'net' });
   else if (f.k === 'c'){ bot.weapon.shells.push({ p: V().fromArray(f.p), v: V().fromArray(f.v), life: CONFIG.cannon.range / CONFIG.cannon.speed + 0.5, net: true }); remoteEvent({ type: 'cannon', from: V().fromArray(f.p), by: 'net' }); }
 }
 function netShellsTick(dt){   // 對手的砲彈：只做飛行與爆炸外觀
@@ -1452,7 +1476,9 @@ const tpCam = { pos: V(), valid: false };
 function aim3P(eyeOverride){
   if (!opts.view3P || !tpCam.valid) return null;
   const P = state.player, eye = eyeOverride ? V().copy(eyeOverride) : eyePos(P.currPos, V()), fwd = dirFromYawPitch(P.yaw, P.pitch, V());
-  const h = castRay(tpCam.pos, fwd, 700), aim = h ? h.point : tpCam.pos.clone().addScaledVector(fwd, 700);
+  // v3.9 修正「準星對到卻打不到」：鏡頭在機體後上方，鏡頭到機體之間的樹／石頭／地面會被當成瞄準點 → 改從射線上最靠近機體的點開始找
+  const s0 = Math.max(0, V().subVectors(eye, tpCam.pos).dot(fwd)), o2 = tpCam.pos.clone().addScaledVector(fwd, s0);
+  const h = castRay(o2, fwd, 700), aim = h ? h.point : o2.clone().addScaledVector(fwd, 700);
   const d = aim.sub(eye); if (d.lengthSq() < 4) return null; d.normalize();
   return [Math.atan2(-d.x, -d.z), Math.asin(clamp(d.y, -1, 1))];
 }
@@ -1830,7 +1856,7 @@ function simTick(cmd, sub = false){   // v3.0 sub＝替其他機體（AI）跑�
     }
   }
   // 速度上限
-  const capK = CONFIG.speedCap * (opts.speedK || 1), sp = _v.length(); if (sp > capK) _v.multiplyScalar(capK/sp);   // v2.5 最高速度跟著速度區間
+  const capK = CONFIG.speedCap * 0.8 * (opts.speedK || 1), sp = _v.length(); if (sp > capK) _v.multiplyScalar(capK/sp);   // v2.5 最高速度跟著速度區間
   playerBody.setTranslation(_p, true); playerBody.setLinvel(_v, true);
 
   // 出界重生
@@ -1879,6 +1905,15 @@ function weaponTick(cmd, dt){
   // v1.9 三個欄位：01 主武 57mm（'main'）→ 02 副武 14.5mm 機槍（'mg'）→ 03 腿部釘槍（'sub'）
   if (cmd.swap){ w.active = w.active === 'main' ? 'mg' : w.active === 'mg' ? 'sub' : 'main'; events.push({ type: 'swap' }); }
   if (cmd.swapTo && cmd.swapTo !== w.active){ w.active = cmd.swapTo; events.push({ type: 'swap' }); }   // v2.2 三方向直接選欄位
+  // v3.9 螳螂鐮：按下（上升緣）→ 前搖 → 下劈判定 → 硬直；揮刀期間不能開火
+  { const ml = w.melee || (w.melee = { cd: 0, t: 0, ph: 0, prev: false, vis: null }), MC = CONFIG.melee;
+    ml.cd = Math.max(0, ml.cd - dt);
+    const want = w.active === 'mg' && cmd.fire;   // 02 欄＝螳螂鐮（欄位 id 沿用 'mg'，連線與教學不用改）：按下射擊鈕的瞬間出刀
+    if (want && !ml.prev && ml.ph === 0 && ml.cd <= 0 && !P.safe){ ml.ph = 1; ml.t = MC.windup; ml.vis = 0; ml.side = -(ml.side || -1); ml.yaw = cmd.gunYaw ?? P.yaw; events.push({ type: 'meleeStart', from: P.currPos.clone(), side: ml.side }); }
+    ml.prev = !!want;
+    if (ml.ph === 1){ ml.t -= dt; if (ml.t <= 0){ const hit = meleeStrike(cmd.gunYaw ?? ml.yaw); ml.ph = 2; ml.t = hit ? MC.recoverHit : MC.recoverMiss; ml.cd = MC.cooldown; } }
+    else if (ml.ph === 2){ ml.t -= dt; if (ml.t <= 0) ml.ph = 0; }
+    if (ml.ph || w.active === 'mg'){ w.prevFire = cmd.fire; w.blocked = !!P.safe; shellsTick(dt); return; } }   // 揮刀期間不能開火；02 欄沒有槍
   const fireEdge = cmd.fire && !w.prevFire; w.prevFire = cmd.fire;
   w.blocked = !!P.safe;
   shellsTick(dt);
@@ -1915,6 +1950,31 @@ function weaponTick(cmd, dt){
   }
   events.push({ type: 'shot', from: origin, to: end, hit: !!hit, hitTarget, normal: hit ? hit.normal : null, tracer: w.shots % W.tracerEvery === 0 });
 }
+// v3.9 準星用：前方扇形內有沒有砍得到的目標
+function meleeInRange(){
+  const MC = CONFIG.melee, P = state.player, o = P.currPos, yaw = P.yaw, fx = -Math.sin(yaw), fz = -Math.cos(yaw), cosA = Math.cos(MC.arcDeg * DEG);
+  for (const t of targets){ if (t.dead) continue; const dx = t.mesh.position.x - o.x, dz = t.mesh.position.z - o.z, dy = t.mesh.position.y - o.y, d = Math.hypot(dx, dz);
+    if (d <= MC.range && Math.abs(dy) <= MC.vReach && (d < 1 || (dx * fx + dz * fz) / d >= cosA)) return true; }
+  return false;
+}
+// v3.9 螳螂鐮下劈：往前突進一小段，判定前方扇形（水平 ±60°、7.5m、上下 5m）內最近、視線沒被擋的目標
+function meleeStrike(yaw){
+  const MC = CONFIG.melee, tr = playerBody.translation(), o = V(tr.x, tr.y, tr.z), eye = eyePos(o);
+  const fwd = V(-Math.sin(yaw), 0, -Math.cos(yaw)), lv = playerBody.linvel();
+  playerBody.setLinvel({ x: lv.x + fwd.x * MC.lunge, y: lv.y, z: lv.z + fwd.z * MC.lunge }, true);
+  let best = null, bd = Infinity; const cosA = Math.cos(MC.arcDeg * DEG);
+  for (const t of targets){ if (t.dead) continue;
+    const to = V().subVectors(t.mesh.position, o), dy = to.y; to.y = 0; const d = to.length();
+    if (d > MC.range || Math.abs(dy) > MC.vReach) continue;
+    if (d > 1 && fwd.dot(to.divideScalar(d)) < cosA) continue;
+    const toE = V().subVectors(t.mesh.position, eye), dE = toE.length(), h = castRay(eye, toE.divideScalar(dE), dE + 3);
+    if (h && targetsByCollider.get(h.handle) !== t && h.toi < dE - 1.5) continue;   // 中間有地形擋住
+    if (d < bd){ bd = d; best = t; } }
+  const at = best ? best.mesh.position.clone() : o.clone().addScaledVector(fwd, MC.range * 0.6);
+  if (best){ dmgKind = 'melee'; try { damageTarget(best, MC.dmg); } finally { dmgKind = null; } }
+  events.push({ type: 'melee', hit: !!best, at, from: o.clone() });
+  return !!best;
+}
 // v2.6 自動開火：用「準星實際指向」（第三人稱已校正）判斷，活靶落在射控輔助範圍（2°）內且視線沒被擋，持續 0.1 秒就開火；子彈照樣由射控補正到靶上
 function autoFireCheck(cmd, dt, range){
   const w = state.weapon, P = state.player;
@@ -1943,7 +2003,7 @@ function cannonTick(cmd, dt){
     for (const t of targets){ if (t.dead) continue; const to = V().subVectors(t.mesh.position, origin), d = to.length(); if (d > CN.range) continue;
       const ang = dir.angleTo(to); if (ang < bestA){ bestA = ang; best = t; } }
     if (best){ const to = V().subVectors(best.mesh.position, origin), d = to.length(), tf = d / CN.speed; to.y += 0.5 * -CONFIG.physics.gravity * tf * tf; dir.copy(to.normalize()); w.assisted = (w.assisted || 0) + 1; } }
-  w.shells.push({ p: origin.clone().addScaledVector(dir, 1.5), v: dir.clone().multiplyScalar(CN.speed), life: CN.range / CN.speed + 0.5, id: w.shots });
+  w.shells.push({ p: origin.clone(), v: dir.clone().multiplyScalar(CN.speed), life: CN.range / CN.speed + 0.5, id: w.shots });   // v3.9 從機身中心（眼睛）出發：以前從前方 1.5m 出發，貼臉時砲彈直接出現在敵人身體裡、判定不到
   w.recoil += CN.recoilDeg;
   if (!P.grounded && !P.pinned){ const lv = playerBody.linvel(); playerBody.setLinvel({ x: lv.x - dir.x * CN.knockback, y: lv.y - dir.y * CN.knockback, z: lv.z - dir.z * CN.knockback }, true); }   // 空中開砲會被後座力往後推
   events.push({ type: 'cannon', from: origin });
@@ -2120,7 +2180,22 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     // 炮塔與砲管跟著準星；機槍臂也指向準星
     M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9); if (M.mgArm) M.mgArm.rotation.x = clamp(P.pitch, -0.4, 0.7);   // 機槍跟準星上下
     if (M.arm2){ const want = (cfg.weapon ? cfg.weapon() : state.weapon).active === 'mg' ? 1 : 0; M.arm2.k += (want - M.arm2.k) * Math.min(1, dt * 8);   // 選 02 副武時展開成 L，其他時候收成 V
-      const k = M.arm2.k; M.arm2.S.rotation.x = 0.9 * (1 - k) + 0.6 * k; M.arm2.E.rotation.x = 3.6 * (1 - k) + 1.02 * k; }   // v3.6 收：上臂斜前下、前臂往後上折貼在機鼻下（螳螂）；展：L 形   // v2.9 收：V 字開口朝前（前臂斜向前上、不進機鼻）；展：上臂斜前下＋前臂水平
+      const k = M.arm2.k, bsx = 0.9 * (1 - k) + 1.3 * k, bex = 3.6 * (1 - k) + 1.2 * k;   // 收：折在機鼻下（螳螂）；v3.9 選 02 時架刀：雙臂往前、前臂交叉擋在機鼻前
+      // v3.9 螳螂鐮：0～0.25 秒舉臂往外（前搖）→ 0.25～0.33 斜劈過機鼻前方 → 停 0.17 秒 → 0.95 秒收回
+      const ml = (cfg.weapon ? cfg.weapon() : state.weapon).melee, sm = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+      for (const A of M.arm2.arms){
+        let sx = bsx, ex = bex, sz = -A.sd * 0.42 * k;
+        if (ml && ml.vis != null && (ml.side || 1) === A.sd){ const v = ml.vis; let a, b, q;
+          const B0 = [bsx, bex, -A.sd * 0.42 * k], UP = [2.6, 1.9, A.sd * 0.55], HIT = [0.55, 0.35, -A.sd * 0.75];
+          if (v < 0.25){ q = sm(v / 0.25); a = B0; b = UP; }
+          else if (v < 0.33){ q = (v - 0.25) / 0.08; q = 1 - (1 - q) * (1 - q); a = UP; b = HIT; }
+          else if (v < 0.5){ q = 1; a = b = HIT; }
+          else { q = sm((v - 0.5) / 0.45); a = HIT; b = B0; }
+          sx = a[0] + (b[0] - a[0]) * q; ex = a[1] + (b[1] - a[1]) * q; sz = a[2] + (b[2] - a[2]) * q;
+          const o = v < 0.25 ? 0 : v < 0.33 ? (v - 0.25) / 0.08 : Math.max(0, 1 - (v - 0.33) / 0.18); A.slash.visible = o > 0.01; A.slash.material.opacity = 0.85 * o; }
+        else A.slash.visible = false;
+        A.S.rotation.set(sx, 0, sz); A.E.rotation.x = ex; }
+      if (ml && ml.vis != null){ ml.vis += dt; if (ml.vis > 0.95) ml.vis = null; } }   // v3.6 收：上臂斜前下、前臂往後上折貼在機鼻下（螳螂）；展：L 形   // v2.9 收：V 字開口朝前（前臂斜向前上、不進機鼻）；展：上臂斜前下＋前臂水平
     // v2.9 滑膛炮後座：機身往後一頓、機首微抬，腳固定在地上吸收（IK 自動彎膝）
     M.rc = Math.max(0, (M.rc || 0) - dt / 0.28); const rk = M.rc * M.rc * (3 - 2 * M.rc);
     M.body.position.set(0, -0.12 * rk, 0.42 * rk); M.body.rotation.x = 0.09 * rk;
@@ -2257,19 +2332,27 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
       const joint = (r, m) => new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), m);
       const core = new THREE.Box3().setFromObject(gltf.scene.getObjectByName('Cockpit_Procedural_Scratched_Metal_0') || gltf.scene);
       // 格鬥臂：v3.6 肩關節移到機鼻前端、位置比較高（平常像螳螂一樣折在機鼻下）
-      const S = new THREE.Group(); S.position.set((core.min.x + core.max.x) / 2, core.min.y + 0.5, core.min.z - 0.6); M.body.add(S); S.add(joint(0.45, matD));
-      const L1 = 1.4, L2 = 2.3;   // v2.9 縮短：避免手肘戳進地面、前臂插進機鼻
-      const up = blade(L1, 0.55, 0.38, 0.45, matF); S.add(up);
-      const E = new THREE.Group(); E.position.y = -L1; S.add(E); E.add(joint(0.34, matD));
-      const fo = blade(L2, 0.42, 0.05, 0.4, matF); E.add(fo);                                  // 前臂收尖（刃狀）
-      const spur = blade(0.9, 0.16, 0.02, 0.5, matD); spur.rotation.x = -2.4; E.add(spur);      // 肘部的倒刺
-      M.arm2 = { S, E, k: 0 };
+      // v3.9 螳螂鐮：左右各一隻刃臂（平常折在機鼻兩側下方），交叉斬一次揮一邊
+      const L1 = 1.4, L2 = 2.3, ARM_X = 0.62;   // v2.9 縮短：避免手肘戳進地面、前臂插進機鼻
+      const mkArm = sd => { const S = new THREE.Group(); S.position.set((core.min.x + core.max.x) / 2 + sd * ARM_X, core.min.y + 0.5, core.min.z - 0.6); M.body.add(S); S.add(joint(0.4, matD));
+        S.add(blade(L1, 0.5, 0.34, 0.45, matF));
+        const E = new THREE.Group(); E.position.y = -L1; S.add(E); E.add(joint(0.3, matD));
+        E.add(blade(L2, 0.4, 0.04, 0.4, matF));                                                // 前臂收尖（刃狀）
+        const spur = blade(0.9, 0.16, 0.02, 0.5, matD); spur.rotation.x = -2.4; E.add(spur);   // 肘部的倒刺
+        // 刀光：機鼻前方一道斜的弧（右臂＝右上往左下、左臂＝左上往右下，兩刀合起來是 X）
+        const g = new THREE.RingGeometry(2.7, 3.5, 32, 1, 0.3, 2.5);
+        const sl = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: new THREE.Color(0x7ff5e0).multiplyScalar(PROMO ? 2.5 : 1.5), transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
+        sl.position.set((core.min.x + core.max.x) / 2, core.min.y + 0.3, core.min.z - 2.4); sl.rotation.z = -sd * 0.75; sl.visible = false; sl.userData.noCast = true; M.body.add(sl);
+        return { S, E, sd, slash: sl }; };
+      const armR = mkArm(1), armL = mkArm(-1);
+      M.arm2 = { arms: [armR, armL], k: 0 };
       // 機槍：機身頂部前段（草圖藍色箭頭位置）
       const G = new THREE.Group(); G.position.set((core.min.x + core.max.x) / 2 + 0.55, core.max.y - 0.05, core.min.z + 1.6); M.body.add(G);
       G.add(joint(0.18, matD));
       const rcv = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.24, 0.8), matF); rcv.position.set(0, 0.12, -0.2); G.add(rcv);
       const brl = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.3, 8), matD); brl.rotation.x = Math.PI / 2; brl.position.set(0, 0.14, -1.25); G.add(brl);
       const muz = new THREE.Object3D(); muz.position.set(0, 0.14, -1.92); G.add(muz);
+      G.visible = false;   // v3.9 機槍改成螳螂鐮：槍身不顯示（槍口位置保留給特效）
       M.mgArm = G; M.mgWrist = null; M.mgMuzzle = muz; }
     // 57mm 砲口位置（砲管不參與機身變形）
     { const cn = gltf.scene.getObjectByName('Cannon'); if (cn){ const cbx = new THREE.Box3().setFromObject(cn), mz = new THREE.Object3D();
@@ -2358,6 +2441,9 @@ function remoteEvent(ev){
     case 'shot': { const mz = M2 ? M2.muzzle(ev.nail ? 'nail' : 'mg', V()) : null, from = mz || ev.from; spawnSparks(from, null); spawnTracer(from, ev.to); if (ev.hit) spawnSparks(ev.to, ev.normal); if (vol > 0.3) sfx('shot'); break; }
     case 'cannon': { const mz = M2 ? M2.muzzle('cannon', V()) : null, shl = bot.weapon.shells[bot.weapon.shells.length - 1];
       if (mz){ spawnSparks(mz, null); if (shl && !shl.voff){ shl.voff = mz.clone().sub(shl.p); shl.vt = 0.2; } } if (M2) M2.recoil(); sfx(vol > 0.5 ? 'cannon' : 'boom', vol); break; }
+    case 'meleeStart': sfx('slash', vol); break;
+    case 'block': sfx('clang', 0.8); for (let k = 0; k < 4; k++) spawnSparks(ev.at, null); if (ev.victim === local.pid) toast(ev.parry ? '格擋！刀被彈開' : '擋下！', 700); else if (ev.parry) toast('被格擋！', 700); break;
+    case 'melee': if (ev.hit){ sfx('slashHit', 1); spawnBoom(ev.at, null); } break;
     case 'boom': sfx('boom', 0.6); spawnBoom(ev.at, ev.normal); break;
     case 'died': { const nm = bot ? bot.name : 'AI'; if (ev.victim === local.pid){ toast(ev.killer ? `被 ${nm} 擊破！回到基地` : '墜落！對方 +1', 1800); flashT = 0.08; } else if (!ev.killer) toast(`${nm} 墜落！你 +1`, 1500); else { toast(`擊破 ${nm}！`, 1500); sfx('clank', 1); } break; }
     case 'actorHit': if (ev.victim === local.pid){ hurtT = Math.min(0.6, hurtT + ev.dmg / 1500); sfx('clank', 0.5); buzz(30); } break;
@@ -2422,6 +2508,22 @@ function sfx(type, strength=1){
     s.connect(f).connect(g); g.gain.setValueAtTime(type === 'cannon' ? 0.45 : 0.3*strength, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.35); s.start(t); s.stop(t+0.36);
   } else if (type === 'hit'){
     const o = actx.createOscillator(); o.type='sine'; o.frequency.value = 1500; o.connect(g); g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.05); o.start(t); o.stop(t+0.06);
+  } else if (type === 'slash'){   // v3.9 揮鐮：高頻雜訊往上掃的破風聲＋金屬聲
+    const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 3;
+    f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(5200, t + 0.32); s.connect(f).connect(g);
+    g.gain.setValueAtTime(0.001, t); g.gain.exponentialRampToValueAtTime(0.32 * strength, t + 0.26); g.gain.exponentialRampToValueAtTime(0.001, t + 0.4); s.start(t); s.stop(t + 0.42);
+    const o = actx.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(1400, t); const g2 = actx.createGain(); g2.connect(actx.destination); o.connect(g2);
+    g2.gain.setValueAtTime(0.05 * strength, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.18); o.start(t); o.stop(t + 0.2);
+  } else if (type === 'clang'){   // v3.9 擋下：金屬撞擊（兩個不和諧的高頻）
+    for (const fq of [1870, 2630]){ const o = actx.createOscillator(); o.type = 'square'; o.frequency.value = fq; const g2 = actx.createGain(); g2.connect(actx.destination); o.connect(g2);
+      g2.gain.setValueAtTime(0.07 * strength, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.25); o.start(t); o.stop(t + 0.26); }
+    const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 3000; s.connect(f).connect(g);
+    g.gain.setValueAtTime(0.2 * strength, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.12); s.start(t); s.stop(t + 0.13);
+  } else if (type === 'slashHit'){
+    const s = actx.createBufferSource(); s.buffer = noiseBuf; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1200; s.connect(f).connect(g);
+    g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.5); s.start(t); s.stop(t + 0.52);
+    const o = actx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(260, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.3); const g2 = actx.createGain(); g2.connect(actx.destination); o.connect(g2);
+    g2.gain.setValueAtTime(0.18, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.35); o.start(t); o.stop(t + 0.36);
   } else if (type === 'miss'){
     const o = actx.createOscillator(); o.type='triangle'; o.frequency.value = 220; o.connect(g); g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.08); o.start(t); o.stop(t+0.09);
   }
@@ -2559,13 +2661,13 @@ function resolveFirePending(){ // 每幀：按住超過 70ms 且沒在往上甩 
     if ((mv < 12 && now - p.t0 >= CONFIG.touch.fireDelayMs) || now - p.t0 >= CONFIG.touch.swapWindowMs) startFire(p);
   }
 }
-// v2.2 射擊鈕三方向快甩直接選欄位：上＝01 主武、左＝02 副武、右＝03 腿部（必須以該方向為主）
-function slotAt(dx, up){ const a = Math.atan2(up, dx) / DEG; if (a > 20 && a <= 93) return 'main'; if (a > 93 && a <= 119) return 'mg'; if (a > 119 || a < -160) return 'sub'; return null; }   // 依角度落在哪個扇區
+// v2.2 射擊鈕三方向快甩直接選欄位；v3.9 改成 上＝01 主武、右＝02 螳螂鐮、左＝03 釘槍（依玩家草圖，方向分更開）
+function slotAt(dx, up){ const a = Math.atan2(up, dx) / DEG; if (a > 45 && a <= 135) return 'main'; if (a > -45 && a <= 45) return 'mg'; if (a > 135 || a < -135) return 'sub'; return null; }   // v3.9 拉開成上／右／左三個 90° 扇區（往下甩不切換）   // 依角度落在哪個扇區
 function flickSlot(p){ const dx = p.x - p.ox, up = p.oy - p.y; return Math.hypot(dx, up) > CONFIG.touch.swapFlick ? slotAt(dx, up) : null; }
-// v2.5 武器圖示（SVG 路徑，viewBox 0 0 30 16）：01 57mm 滑膛炮、02 14.5mm 機槍、03 腿部釘槍
+// v2.5 武器圖示（SVG 路徑，viewBox 0 0 30 16）：01 57mm 滑膛炮、02 螳螂鐮（v3.9 取代 14.5mm 機槍）、03 腿部釘槍
 const WICON = {
   main: 'M1 6h9v5H1z M10 7.1h16v2.3H10z M25.5 6h3.5v4.5h-3.5z M3 11h5v2.5H3z M4 4h4v2H4z',
-  mg:   'M2 6h11v4.2H2z M13 7.3h11v1.5H13z M22.5 6.4h1.8v3.3h-1.8z M5 10.2h4.2v4H5z M2 4h3.5v2H2z M24.5 7.1h4v1.9h-4z',
+  mg:   'M2 13.5L4 11l9-4.5 1.2 1.6L5.2 14.8z M12.6 6.2C17 2.5 23.5 1.6 29 3.8 24.5 3.6 19.5 4.6 15.4 7.6z M12 5l2.2-1.4 1.6 2.4-2.2 1.4z',   // v3.9 螳螂鐮
   sub:  'M2 3.5h3.2v9H2z M5.2 7h15v2h-15z M20.2 6.4L28.5 8l-8.3 1.6z M8 5.2h1.4v5.6H8z M12 5.6h1.4v4.8H12z' };
 const IC_THRUST = '<svg class="ic s" viewBox="0 0 24 24"><path d="M12 3v11M7.5 7.5L12 3l4.5 4.5"/><path d="M9 17c0 2.2 1.4 3.6 3 4.5 1.6-.9 3-2.3 3-4.5"/></svg>';   // 推進（往上的箭頭＋火焰）
 const IC_REEL = '<svg class="ic s" viewBox="0 0 24 24"><path d="M12 20V6M7 10l5-5 5 5"/><path d="M5 21h14"/></svg>';   // 收索
@@ -2574,11 +2676,13 @@ const IC_3P = '<svg viewBox="0 0 24 24"><circle cx="15" cy="7" r="2.6"/><path d=
 const IC_1P = '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';   // 第一人稱（眼睛）
 const iconSVG = k => `<svg viewBox="0 0 30 16" aria-hidden="true"><path d="${WICON[k]}"/></svg>`;
 const WICON2D = {}; for (const k in WICON) WICON2D[k] = new Path2D(WICON[k]);
-const SLOT_ANG = { main: 80, mg: 106, sub: 132 };   // v2.5 三個位置排成扇形，在射擊鈕左上方（右邊是螢幕邊緣、左邊是右索鈕）
-const SLOT_DIR = {}; for (const k in SLOT_ANG){ const a = SLOT_ANG[k] * DEG; SLOT_DIR[k] = [Math.cos(a), -Math.sin(a), k === 'main' ? '01' : k === 'mg' ? '02' : '03']; }
+const SLOT_ANG = { main: 90, mg: 0, sub: 180 };   // v3.9 上／右／左（右邊靠螢幕邊緣，圖示會往內收、往上抬一點）
+const SLOT_DIR = {}; for (const k in SLOT_ANG){ const a = SLOT_ANG[k] * DEG; SLOT_DIR[k] = [Math.cos(a) + 1e-6, -Math.sin(a), k === 'main' ? '01' : k === 'mg' ? '02' : '03']; }
 for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k); el.innerHTML = iconSVG(k) + `<span class="dir">${SLOT_DIR[k][2]}</span>`; }
-function layoutSlots(){ const r = document.getElementById('bFire').getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width * 1.08;
-  for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k), [dx, dy] = SLOT_DIR[k], l = Math.hypot(dx, dy); el.style.left = (cx + dx / l * R) + 'px'; el.style.top = (cy + dy / l * R) + 'px'; } }
+function layoutSlots(){ const r = document.getElementById('bFire').getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width * 1.3;
+  for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k), [dx, dy] = SLOT_DIR[k], l = Math.hypot(dx, dy);
+    let x = cx + dx / l * R, y = cy + dy / l * R; const over = x - (innerWidth - 28); if (over > 0){ x -= over; y -= over * 0.8; }   // 超出螢幕右邊就往內、往上收
+    el.style.left = x + 'px'; el.style.top = y + 'px'; } }
 addEventListener('resize', () => setTimeout(layoutSlots, 50)); setTimeout(layoutSlots, 300);
 function slotsOpen(on, hot){ for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k); el.classList.toggle('open', !!on); el.classList.toggle('hot', on && hot === k); } }
 function swapHint(){ setTimeout(() => slotsOpen(false), 160); const el = document.getElementById('swapHint'); el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
@@ -2723,7 +2827,8 @@ document.getElementById('optShake').addEventListener('change', e => opts.shake =
 document.getElementById('optShadows').addEventListener('change', e => opts.shadows = e.target.checked);
 document.getElementById('optStab').addEventListener('change', e => opts.stab = e.target.checked);
 // v2.5 速度區間（像 86 一樣依駕駛習慣調整）：同時縮放地面速度、地面加速、推進水平上限、撲擊速度、最高速度
-const SPEED_BASE = { ground: CONFIG.ground.speed, accel: CONFIG.ground.accel, hCap: CONFIG.boost.hCap, cap: CONFIG.speedCap, pounce: CONFIG.spider.pounceSpeed };
+const SPEED_STD = 0.8;   // v3.9「標準」戰速整體慢 20%（玩家回饋：太快瞄不到）；×1.0 現在＝舊版 ×0.8
+const SPEED_BASE = { ground: CONFIG.ground.speed * SPEED_STD, accel: CONFIG.ground.accel * SPEED_STD, hCap: CONFIG.boost.hCap * SPEED_STD, cap: CONFIG.speedCap * SPEED_STD, pounce: CONFIG.spider.pounceSpeed * SPEED_STD };
 // v2.7 速度區間放寬：×0.5（最高 30 m/s）～×2.0（最高 120 m/s），純看個人操作偏好（越快越容易掉下去）
 function setSpeedK(k){ k = clamp(+k || 1, 0.5, 2.0); opts.speedK = k;
   CONFIG.ground.speed = SPEED_BASE.ground * k; CONFIG.ground.accel = SPEED_BASE.accel * k; CONFIG.boost.hCap = SPEED_BASE.hCap * k; CONFIG.spider.pounceSpeed = SPEED_BASE.pounce * k;
@@ -2818,7 +2923,7 @@ function drawHUD(dt){
     c.strokeStyle = col; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 14, 0, Math.PI*2); c.stroke();
     c.beginPath(); c.moveTo(x-22, y); c.lineTo(x-8, y); c.moveTo(x+8, y); c.lineTo(x+22, y); c.moveTo(x, y-22); c.lineTo(x, y-8); c.moveTo(x, y+8); c.lineTo(x, y+22); c.stroke();
     c.fillStyle = col; c.font = '600 11px sans-serif'; c.textAlign = 'center'; c.fillText(label, x, y + 36); };
-  if (opts.follow === 'weapon' && !mouseMode && (aimOff.x || aimOff.y)) drawReticle(aimOff.x, aimOff.y, '#ff6a50', state.weapon.active === 'main' ? '57mm' : state.weapon.active === 'mg' ? '14.5mm' : '釘槍');
+  if (opts.follow === 'weapon' && !mouseMode && (aimOff.x || aimOff.y)) drawReticle(aimOff.x, aimOff.y, '#ff6a50', state.weapon.active === 'main' ? '57mm' : state.weapon.active === 'mg' ? '螳螂鐮' : '釘槍');
   if (ropeAiming) drawReticle(ropeOff.x, ropeOff.y, '#3de0ff', '放開＝射出右索');
   // 狀態橫幅：無敵區／釘在牆上
   { const msgs = []; if (P.safe) msgs.push(['出生保護區：不會受傷，也不能開火', '#40ffb0']); if (P.pinned) msgs.push(['釘在牆上：勾索、推進或撲擊就會脫離', '#ffc94a']);
@@ -2844,7 +2949,7 @@ function drawHUD(dt){
     }
     // 兩側梯狀刻度：左＝推進燃料、右＝彈量（由下往上點亮）
     const nL = 9, gapL = 0.3 * R0, top = cy - (nL - 1) / 2 * gapL;
-    const fuelFr = P.fuel / CONFIG.boost.fuel, isMG = wst2.active === 'mg', ammoFr = sub ? wst2.nail.ammo / CONFIG.nail.mag : isMG ? wst2.ammo / W.ammo : wst2.cannon.ammo / CONFIG.cannon.mag;
+    const fuelFr = P.fuel / CONFIG.boost.fuel, isMG = wst2.active === 'mg', mlS = wst2.melee || {}, ammoFr = sub ? wst2.nail.ammo / CONFIG.nail.mag : isMG ? 1 - (mlS.cd || 0) / CONFIG.melee.cooldown : wst2.cannon.ammo / CONFIG.cannon.mag;   // v3.9 02＝螳螂鐮：右側刻度改成冷卻
     const lowFuel = fuelFr < 0.25, blink = Math.floor(performance.now() / 250) % 2;
     for (let i = 0; i < nL; i++){
       const y = top + i * gapL; if (Math.abs(y - yL) < gapL * 0.5) continue;
@@ -2855,7 +2960,7 @@ function drawHUD(dt){
     c.shadowBlur = 0; c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`;
     c.fillStyle = lowFuel ? '#ff8070' : '#ffcf8a'; c.textAlign = 'center';
     txt(P.onPad ? 'SUPPLY' : 'BST ' + Math.round(fuelFr * 100) + '%', cx - 2.62*R0, top - 8*sc);
-    c.fillStyle = sub ? '#ffd770' : '#ffa08a'; txt(sub ? 'NAIL' : isMG ? 'MG' : '57mm', cx + 2.62*R0, top - 8*sc);
+    c.fillStyle = sub ? '#ffd770' : '#ffa08a'; txt(sub ? 'NAIL' : isMG ? 'BLADE' : '57mm', cx + 2.62*R0, top - 8*sc);
     // 讀數：左尖峰＝高度、右尖峰＝速度
     c.font = `700 ${Math.round(12*sc)}px ui-monospace, Menlo, monospace`; c.fillStyle = MINT;
     const alt = state.player.currPos.y;
@@ -2884,6 +2989,16 @@ function drawHUD(dt){
     }
     // 內圈括弧＝射擊散布（散得越開括弧越開），各帶兩條刻度
     const spread = currentSpread(), Ri = (0.62 + spread * 0.08 + crossPulse * 0.08) * R0, hb = 0.48;
+    if (isMG){   // v3.9 螳螂鐮準星：大 X（兩道刃痕）；剛揮的那一邊亮起；敵人進入斬擊範圍時變紅；冷卻中變暗
+      const ready = !(mlS.cd > 0) && !mlS.ph, inR = meleeInRange(), Lx = 1.05 * R0, Ly = 0.8 * R0;
+      const lastSide = mlS.vis != null ? (mlS.side || 1) : 0, glow = mlS.vis != null ? clamp(1 - Math.max(0, mlS.vis - 0.25) / 0.6, 0, 1) : 0;
+      for (const sd of [1, -1]){   // sd=1：右上→左下（右鐮）；sd=-1：左上→右下（左鐮）
+        const lit = lastSide === sd && glow > 0, col = lit ? `rgba(200,255,250,${0.5 + 0.5 * glow})` : inR && ready ? '#ff5a48' : ready ? MINT : DIM;
+        c.save(); c.shadowBlur = lit ? 18 : 6; c.shadowColor = lit ? '#7ff5e0' : 'rgba(127,245,224,.65)';
+        c.strokeStyle = col; c.lineWidth = lit ? 4.2 : 2.4; c.beginPath(); c.moveTo(cx + sd * Lx, cy - Ly); c.quadraticCurveTo(cx + sd * 0.12 * R0, cy - 0.12 * R0, cx - sd * Lx, cy + Ly); c.stroke();
+        c.restore(); }
+      if (!ready && mlS.cd > 0){ c.strokeStyle = MINT; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, 0.42 * R0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - mlS.cd / CONFIG.melee.cooldown)); c.stroke(); }
+    } else {
     for (const mid of [Math.PI, 0]){
       c.strokeStyle = hot; c.lineWidth = 1.8; c.beginPath(); c.arc(cx, cy, Ri, mid - hb, mid + hb); c.stroke();
       for (const t of [-0.26, 0.26]){ const a2 = mid + t, x = cx + Math.cos(a2) * Ri, y = cy + Math.sin(a2) * Ri, dir = mid === 0 ? 1 : -1;
@@ -2893,6 +3008,7 @@ function drawHUD(dt){
     const g0 = 9*sc, g1 = 19*sc;
     line([[cx - g1 - 4*sc, cy], [cx - g0 - 2*sc, cy]], hot, 2); line([[cx + g0 + 2*sc, cy], [cx + g1 + 4*sc, cy]], hot, 2);
     line([[cx, cy - g1 - 6*sc], [cx, cy - g0 - 4*sc]], hot, 2); line([[cx, cy + g0 + 4*sc], [cx, cy + g1 + 6*sc]], hot, 2);
+    }
     const anyH = state.ropes[0].hooked || state.ropes[1].hooked, waitH = state.ropes[0].bufT > 0 || state.ropes[1].bufT > 0;
     const canH = !!hookPreview[0] || (waitH && Math.floor(performance.now() / 90) % 2 === 0);   // 按住等勾點時閃爍
     const ccol = hitMarkT > 0 ? '#ff5050' : anyH ? '#3de0ff' : canH ? '#ffe14a' : MINT; // 中心小圓：黃＝按下去會勾到、青＝已勾住
@@ -2901,12 +3017,12 @@ function drawHUD(dt){
     if (hitMarkT > 0){ for (const [a2,b2] of [[-1,-1],[1,-1],[-1,1],[1,1]]) line([[cx+a2*7*sc, cy+b2*7*sc], [cx+a2*13*sc, cy+b2*13*sc]], '#ff5050', 2); }
     // 彈種資訊（準星附近）：弧頂＝彈量、弧頂上方＝彈種；準星下方＝武器欄位
     c.shadowBlur = 4;
-    const cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : isMG ? (wst2.reloading > 0 ? 'RLD' : String(Math.floor(wst2.ammo)).padStart(4, '0')) : (wst2.cannon.reloading > 0 ? 'RLD' : wst2.cannon.ammo + '/' + Math.floor(wst2.cannon.reserve));
+    const cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : isMG ? (mlS.cd > 0 ? mlS.cd.toFixed(1) + 's' : 'READY') : (wst2.cannon.reloading > 0 ? 'RLD' : wst2.cannon.ammo + '/' + Math.floor(wst2.cannon.reserve));
     const wcol = blocked ? '#9aa6b2' : sub ? '#ffd770' : isMG ? '#ffc890' : MINT;
     c.font = `700 ${Math.round(13*sc)}px ui-monospace, Menlo, monospace`; c.fillStyle = wcol; c.textAlign = 'center';
     
     c.font = `700 ${Math.round(9*sc)}px ui-monospace, Menlo, monospace`;
-    const wname = blocked ? 'SAFE ZONE · HOLD FIRE' : sub ? 'NAIL GUN' : isMG ? '14.5mm MG' : '57mm SMOOTHBORE', yB = cy + R0 + 24*sc; // 武器資訊集中在大弧下方（弧上留給敵人方向）
+    const wname = blocked ? 'SAFE ZONE · HOLD FIRE' : sub ? 'NAIL GUN' : isMG ? 'MANTIS BLADE' : '57mm SMOOTHBORE', yB = cy + R0 + 24*sc; // 武器資訊集中在大弧下方（弧上留給敵人方向）
     c.font = `700 ${Math.round(15*sc)}px ui-monospace, Menlo, monospace`; txt(cnt, cx, yB);
     c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'right'; txt((sub ? '03' : isMG ? '02' : '01'), cx - 2*sc, yB + 18*sc);
 
@@ -2950,7 +3066,7 @@ function updateButtons(){
     if (lastUI['c'+i] !== cls){ lastUI['c'+i] = cls; el.classList.toggle('hooked', cls === 'hooked'); el.classList.toggle('none', cls === 'none'); el.classList.toggle('thrustmode', cls === 'thrustmode'); }
   });
   const w = state.weapon, sub = w.active === 'sub', mg = w.active === 'mg';
-  const ft = sub ? (w.nail.reloading > 0 ? IC_RELOAD : w.nail.ammo + '/' + w.nail.reserve) : mg ? (w.reloading > 0 ? IC_RELOAD : String(Math.floor(w.ammo))) : (w.cannon.reloading > 0 ? IC_RELOAD : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
+  const ft = sub ? (w.nail.reloading > 0 ? IC_RELOAD : w.nail.ammo + '/' + w.nail.reserve) : mg ? (w.melee && w.melee.cd > 0 ? w.melee.cd.toFixed(1) + 's' : '斬') : (w.cannon.reloading > 0 ? IC_RELOAD : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
   if (lastUI.f !== ft){ lastUI.f = ft; elSF.innerHTML = ft; }
   const fl = (w.blocked ? 'x' : '') + (sub ? 'sub' : mg ? 'mg' : 'main');
   if (lastUI.fl !== fl){ lastUI.fl = fl; document.getElementById('lFire').innerHTML = iconSVG(w.active); elFire.classList.toggle('none', !!w.blocked); }
@@ -3006,6 +3122,9 @@ function frame(now){
     netQueueFx(ev);
     switch (ev.type){
       case 'hook': sfx('hook'); buzz(20); break;
+      case 'meleeStart': sfx('slash'); buzz(15); break;
+      case 'block': sfx('clang'); for (let k = 0; k < 4; k++) spawnSparks(ev.at, null); if (ev.victim === local.pid){ crossPulse = 1; toast(ev.parry ? '格擋！刀被彈開' : '擋下！', 700); buzz(25); } else if (ev.parry) toast('被格擋！', 700); break;
+      case 'melee': if (ev.hit){ sfx('slashHit'); spawnBoom(ev.at, null); hitMarkT = 0.25; flashT = 0.08; if (opts.shake){ shakeT = CONFIG.camera.shakeDur; shakeAmp = 0.5 * CONFIG.camera.shakeScale; } buzz(60); } else sfx('miss'); break;
       case 'bottomFling': sfx('clank', 0.4); buzz(15); flashT = 0.06; break;
       case 'apex': crossPulse = 0.4; break;
       case 'hookMiss': sfx('miss'); break;
@@ -3018,7 +3137,7 @@ function frame(now){
       case 'boom': sfx('boom', ev.hitTarget ? 1 : 0.6); spawnBoom(ev.at, ev.normal); if (ev.hitTarget){ hitMarkT = 0.18; sfx('hit'); } break;
       case 'shot': { sfx('shot'); const mz = opts.view3P ? mech.muzzle(ev.nail ? 'nail' : 'mg', V()) : null; const from = mz || ev.from; if (mz) spawnSparks(mz, null); if (ev.tracer) spawnTracer(from, ev.to); } if (ev.hit) spawnSparks(ev.to, ev.normal); if (ev.hitTarget){ hitMarkT = 0.12; sfx('hit'); } break;
       case 'kill': sfx('clank', 0.6); break;
-      case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '01 主武：57mm 滑膛炮' : state.weapon.active === 'mg' ? '02 副武：14.5mm 機槍' : '03 腿部：釘槍（靠牆開槍＝釘住；也能當武器）', 1200); break;
+      case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '01 主武：57mm 滑膛炮' : state.weapon.active === 'mg' ? '02 副武：螳螂鐮（近身按射擊）' : '03 腿部：釘槍（靠牆開槍＝釘住；也能當武器）', 1200); break;
       case 'pin': sfx('clank', 0.8); buzz(25); flashT = 0.05; break;
       case 'unpin': sfx('miss'); break;
       case 'nailOut': toast('釘子用完了！', 1500); break;
@@ -3243,7 +3362,7 @@ const tutorial = (() => {
   // v3.4 用動畫示範手勢（半透明指尖在要操作的按鈕上做一次動作，一直重播），不用文字
   const hand = $('tutHand'), aim = $('tutAim'), trail = $('tutTrail'), rip = hand.querySelector('s'); let anim = null, anim2 = null;
   // 手勢關鍵影格 [dx, dy, 按下?, 時間比例]，座標相對於目標中心（px）。每輪重播時依目前的搖桿半徑／射擊鈕大小重算（轉向、縮放都不會跑掉）
-  const slotVec = (k, F) => { const a = SLOT_ANG[k] * DEG, R = F * 1.08; return [Math.cos(a) * R, -Math.sin(a) * R]; };   // 與 layoutSlots 同一套幾何
+  const slotVec = (k, F) => { const a = SLOT_ANG[k] * DEG, R = F * 1.3; return [Math.cos(a) * R, -Math.sin(a) * R]; };   // 與 layoutSlots 同一套幾何
   const GEST = {
     move:   R => [[0, 0, 0, 0], [0, 0, 1, .12], [0, -R * .85, 1, .45], [0, -R * .85, 1, .8], [0, -R * .85, 0, .9], [0, 0, 0, 1]],
     look:   () => { const a = innerWidth * .07, b = -innerWidth * .1; return [[a, 0, 0, 0], [a, 0, 1, .12], [b, 8, 1, .6], [b, 8, 0, .7], [a, 0, 0, 1]]; },
