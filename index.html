@@ -58,13 +58,13 @@
     65% { opacity:.6; background-color:rgba(var(--c),.08); } 100% { opacity:0; background-color:rgba(var(--c),0); } }
   @keyframes woJit { 0% { background-position:0 0, 0 0; } 14% { background-position:-41px 23px, 0 1px; } 28% { background-position:17px -61px, 0 2px; }
     42% { background-position:-73px -9px, 0 0; } 57% { background-position:31px 47px, 0 1px; } 71% { background-position:-11px 88px, 0 2px; } 85%, 100% { background-position:57px -33px, 0 0; } }
-  #vs.on .vs-card, #settings.open .panel, .m-modal.on .m-panel { will-change:transform, opacity;
+  #vs.on .vs-card, #settings.open .panel, .m-modal.on .m-panel, .m-sub.on, .m-scr.on .m-hangar { will-change:transform, opacity;
     animation:woOpen var(--wo-t, .55s) var(--wo-dl, 0s) both, woFlk calc(var(--wo-t, .55s) * 1.5) var(--wo-dl, 0s) steps(1, end) both; }
-  .wo-n::after, #vs.on .vs-card::after, #settings.open .panel::after, .m-modal.on .m-panel::after { content:''; position:absolute; inset:0; z-index:5; pointer-events:none;
+  .wo-n::after, #vs.on .vs-card::after, #settings.open .panel::after, .m-modal.on .m-panel::after, .m-sub.on::after, .m-scr.on .m-hangar::after { content:''; position:absolute; inset:0; z-index:5; pointer-events:none;
     background-image:var(--wo-noise, none), repeating-linear-gradient(0deg, rgba(0,0,0,.4) 0 1px, transparent 1px 3px); background-size:256px 256px, 100% 3px;
     animation:woNoise calc(var(--wo-t, .55s) * 1.6) var(--wo-dl, 0s) ease-out both, woJit calc(var(--wo-t, .55s) * 1.6) var(--wo-dl, 0s) steps(1, end) both; }
-  @media (prefers-reduced-motion: reduce) { #vs.on .vs-card, #settings.open .panel, .m-modal.on .m-panel { animation:none; }
-    #vs.on .vs-card::after, #settings.open .panel::after, .m-modal.on .m-panel::after { display:none; } }
+  @media (prefers-reduced-motion: reduce) { #vs.on .vs-card, #settings.open .panel, .m-modal.on .m-panel, .m-sub.on, .m-scr.on .m-hangar { animation:none; }
+    #vs.on .vs-card::after, #settings.open .panel::after, .m-modal.on .m-panel::after, .m-sub.on::after, .m-scr.on .m-hangar::after { display:none; } }
   /* 開場對戰畫面：背景是繞圈運鏡的戰場，雙方名片直接浮在戰場上（沒有底下的深色帶子） */
   #vs { position:fixed; inset:0; z-index:9; display:none; pointer-events:none; overflow:hidden; font-family:var(--f-disp); }
   #vs.on { display:block; } #vs.out { opacity:0; transition:opacity .35s; }
@@ -292,6 +292,7 @@
   .stick.thrust { border-color:#ffb040; box-shadow:0 0 22px rgba(255,170,60,.85), inset 0 0 22px rgba(255,170,60,.35); }
   .stick.thrust::after { opacity:1; animation:spin 1.2s linear infinite; }
   .stick.rope { border-color:#3de0ff; box-shadow:0 0 18px rgba(61,224,255,.8), inset 0 0 22px rgba(61,224,255,.35); }
+  .set-pz { font-size:12px; font-weight:700; letter-spacing:.12em; color:rgb(var(--mint)); white-space:nowrap; } .set-pz.net { color:rgb(255,182,74); }
   /* v4.0 設定／個人資料／說明／機庫視窗改成 Defenspace 細線風格（主選單的大按鈕先不動） */
   #settings .panel, .m-panel { --c:var(--mint); }
   #settings .panel { position:relative; background:rgba(6,20,22,.92); border:1px solid rgba(var(--c),.75); border-radius:0; box-shadow:0 0 5px rgba(var(--c),.22), 0 10px 40px rgba(0,0,0,.5); }
@@ -315,6 +316,14 @@
   .m-panel h3 { display:inline-block; background:rgb(var(--c)); color:var(--ink); padding:2px 12px; font-family:var(--f-disp); letter-spacing:.16em; }
   .m-paints button { border-radius:0; border-color:rgba(var(--c),.4); background:rgba(var(--c),.03); } .m-paints button.on { border-color:rgb(var(--c)); background:rgba(var(--c),.14); color:#fff; }
   .m-thumb { border-radius:0; border-color:rgba(var(--c),.35); } .m-load b { color:rgb(var(--c)); }
+  /* v4.1 首頁／大廳的彈出視窗也套用細線風格＋開啟效果（單機子選單、加入房間、機庫面板、房間代碼、對手欄） */
+  .m-sub.on { --c:var(--mint); position:relative; margin:18px 0 0 calc(14px + var(--sl)); padding:8px; border:1px solid rgba(var(--c),.7); background:rgba(6,20,22,.78); box-shadow:0 0 5px rgba(var(--c),.22); }
+  .m-sub[data-tag]::before { content:attr(data-tag); position:absolute; top:-18px; left:-1px; height:18px; line-height:18px; padding:0 10px; background:rgb(var(--c)); color:var(--ink); font-family:var(--f-disp); font-size:12px; font-weight:700; letter-spacing:.14em; }
+  .m-sub button, .m-sub input { border-radius:0; border:1px solid rgba(var(--mint),.5); background:rgba(var(--mint),.04); color:#eafff8; }
+  .m-sub button:active { background:rgba(var(--mint),.5); color:var(--ink); } .m-sub input { background:rgba(6,20,22,.95); }
+  .m-roomno { border-radius:0; border-color:rgba(var(--mint),.7); background:rgba(6,20,22,.8); box-shadow:0 0 5px rgba(var(--mint),.22); font-family:var(--f-disp); }
+  .m-roomno button { border-radius:0; border-color:rgba(var(--mint),.5); background:rgba(var(--mint),.04); }
+  .m-slot { border-radius:0; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -353,7 +362,7 @@
 </div>
 <div id="settings">
   <div class="panel">
-    <div class="sh"><span>設定</span><span style="display:flex;gap:8px"><button id="setHome" aria-label="回到首頁" style="display:none;width:auto;padding:0 12px;font-size:15px">⌂ 回到首頁</button><button id="setClose" aria-label="關閉">✕</button></span></div>
+    <div class="sh"><span>設定</span><span style="display:flex;gap:8px;align-items:center"><b id="setPause" class="set-pz"></b><button id="setHome" aria-label="回到首頁" style="display:none;width:auto;padding:0 12px;font-size:15px">⌂ 回到首頁</button><button id="setClose" aria-label="關閉">✕</button></span></div>
     <nav class="tabs">
       <button data-tab="ctl" class="on">操作</button><button data-tab="cam">鏡頭</button><button data-tab="aid">新手輔助</button><button data-tab="gyro">陀螺儀</button><button data-tab="look">外觀</button>
     </nav>
@@ -410,7 +419,7 @@
   <button id="mSet" class="m-icon" aria-label="設定">⚙</button>
   <div class="m-scr on" data-scr="home">
     <div class="m-left">
-      <div id="mOffSub" class="m-sub"><button data-play="practice">練習（打靶）</button><button data-play="ai">對戰 AI</button><button data-play="tut">新手教學</button><button data-play="tutset">設定教學</button></div>
+      <div id="mOffSub" class="m-sub" data-tag="單機遊玩"><button data-play="practice">練習（打靶）</button><button data-play="ai">對戰 AI</button><button data-play="tut">新手教學</button><button data-play="tutset">設定教學</button></div>
       <button class="m-btn c-cyan" id="mOffline"><b>PLAY OFFLINE</b><small>單機遊玩</small></button>
       <button class="m-btn c-violet" id="mToLobby"><b>MAIN LOBBY</b><small>線上大廳</small></button>
     </div>
@@ -429,7 +438,7 @@
     <button class="m-slot m-opp" id="mOpp"><span id="mOppIcon">＋</span><small id="mOppTxt">等待對手</small></button>
     <div class="m-left">
       <div class="m-msg" id="mRoomMsg"></div>
-      <div id="mJoinRow" class="m-sub"><input id="mCodeIn" maxlength="6" placeholder="輸入代碼" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="mJoinGo">加入</button></div>
+      <div id="mJoinRow" class="m-sub" data-tag="輸入房間代碼"><input id="mCodeIn" maxlength="6" placeholder="輸入代碼" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="mJoinGo">加入</button></div>
       <button class="m-btn c-violet" id="mJoin"><b>JOIN</b><small>加入朋友的房間</small></button>
       <button class="m-btn c-red" id="mBattle" disabled><b id="mBattleT">BATTLE</b><small id="mBattleS">等待對手加入</small></button>
     </div>
@@ -3140,7 +3149,8 @@ document.getElementById('bSet').addEventListener('click', ()=> setEl.classList.t
 document.getElementById('setClose').addEventListener('click', ()=> setEl.classList.remove('open'));
 // 回到首頁：只在練習、對戰 AI 時可用（線上對戰中隱藏，避免對手那邊卡住）
 const homeBtn = document.getElementById('setHome');
-function updateHomeBtn(){ homeBtn.style.display = running && match.mode !== 'net' ? '' : 'none'; setEl.classList.toggle('inMenu', !running); }
+function updateHomeBtn(){ homeBtn.style.display = running && match.mode !== 'net' ? '' : 'none'; setEl.classList.toggle('inMenu', !running);
+  const pz = document.getElementById('setPause'), net = running && match.mode === 'net'; pz.textContent = !running ? '' : net ? '連線對戰中・不會暫停' : '‖ 已暫停'; pz.classList.toggle('net', net); }   // v4.1 暫停提示
 document.getElementById('bSet').addEventListener('click', updateHomeBtn);
 homeBtn.addEventListener('click', e => { e.stopPropagation(); goHome(); });
 function goHome(){   // 設定裡的按鈕在線上對戰中會隱藏；結果畫面的「回到首頁」則會一併離開連線
@@ -3476,6 +3486,7 @@ function frame(now){
   requestAnimationFrame(frame);
   let dt = Math.min((now - last) / 1000, 0.25); last = now;
   if (!running){ menuFrame(dt); netFrame(dt); drawFrame(); return; }
+  if (setEl.classList.contains('open') && match.mode !== 'net'){ netFrame(dt); drawFrame(); return; }   // v4.1 開著設定＝暫停（物理、AI、計時都停）；線上對戰為了公平不暫停
   // FPS 監測 → 降 DPR
   fpsFrames++; fpsTime += dt;
   if (fpsTime >= CONFIG.render.fpsWindow){ const fps = fpsFrames / fpsTime; fpsFrames = 0; fpsTime = 0;
