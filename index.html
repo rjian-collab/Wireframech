@@ -3259,7 +3259,7 @@ function syncDeviceUI(){ const sl = document.getElementById('optSens'); sl.value
   sel.options[0].textContent = '自動判斷（' + (DEVICE_AUTO === 'pc' ? '電腦' : '行動裝置') + '）'; }
 document.getElementById('optSens').addEventListener('input', e => { opts.sens = parseFloat(e.target.value); lsSet('wfm.sens.' + DEVICE, opts.sens); document.getElementById('optSensV').textContent = opts.sens.toFixed(2); });
 document.getElementById('optDevice').addEventListener('change', e => { const v = e.target.value; lsSet('wfm.device', v); DEVICE = v === 'auto' ? DEVICE_AUTO : v;
-  mouseMode = DEVICE === 'pc'; opts.sens = sensFor(DEVICE); showTouchUI(running && !mouseMode); try { applyLayout(); } catch(_){} syncDeviceUI(); });
+  mouseMode = DEVICE === 'pc'; opts.sens = sensFor(DEVICE); showTouchUI(running && !mouseMode); try { applyLayout(); idleStick(); } catch(_){} syncDeviceUI(); });
 syncDeviceUI();
 document.getElementById('optFollow').addEventListener('change', e => { opts.follow = e.target.value; aimOff.x = aimOff.y = 0; input.ropeLatch = false; });
 document.getElementById('optAutoFire').addEventListener('change', e => opts.autoFire = e.target.checked);
