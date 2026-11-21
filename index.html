@@ -335,7 +335,8 @@
   .pz-b button:first-child { border-color:rgb(var(--c)); background:rgba(var(--c),.14); } .pz-b button:active { background:rgba(var(--c),.5); color:var(--ink); }
   #lockHint { position:fixed; left:50%; top:58%; transform:translateX(-50%); z-index:6; display:none; padding:6px 14px; border:1px solid rgba(var(--mint),.6); background:rgba(6,20,22,.7); color:#eafff8; font-size:14px; pointer-events:none; }
   #bReload { --c:#9fe8ff; width:calc(var(--Hk)*0.6); height:calc(var(--Hk)*0.6); right:calc(var(--pad) + var(--sr) + var(--Fk)*1.18 + 3vmin + var(--Hk)*0.2); bottom:calc(var(--pad) + var(--sb) + var(--Fk)*0.45 + var(--Hk) + 2.5vmin); }
-  #bReload b { font-size:13px; letter-spacing:.05em; }
+  #bReload svg.rld { width:62%; height:62%; overflow:visible; } #bReload .ar { fill:none; stroke:var(--c); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  #bReload .bl { fill:var(--c); } #bReload .cs { stroke:#06202a; stroke-width:1.2; }   /* v4.1 換彈圖示：子彈＋環形箭頭 */
 </style>
 <script type="importmap">
 { "imports": {
@@ -360,7 +361,7 @@
   <div class="btn rope" id="bRopeR"><b class="ropeic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v8.5"/><circle cx="12" cy="2.8" r="1.4"/><path d="M12 11c-3.6 0-5.8 2.6-5.8 5.6M12 11c3.6 0 5.8 2.6 5.8 5.6M12 11v9.5"/><path d="M4.3 15.4l1.9 1.2 1.2-1.9M19.7 15.4l-1.9 1.2-1.2-1.9M10.4 19.2l1.6 1.4 1.6-1.4"/></svg><i class="side">▶</i></b><small id="sRopeR">—</small></div>
   <div class="btn xb" id="bJump"><b>跳</b></div><div class="btn xb" id="bBoost"><b>推</b></div>
   <div class="btn xb" id="bW1"></div><div class="btn xb" id="bW2"></div><div class="btn xb" id="bW3"></div>
-  <div class="btn" id="bReload"><b>換彈</b></div>
+  <div class="btn" id="bReload" aria-label="換彈"><svg class="rld" viewBox="0 0 24 24" aria-hidden="true"><path class="ar" d="M19.2 12a7.2 7.2 0 1 1-2.1-5.1"/><path class="ar" d="M17.6 3.4v3.9h-3.9"/><path class="bl" d="M12 6.6c1.4 1 2 2.4 2 3.8v5.4h-4v-5.4c0-1.4.6-2.8 2-3.8z"/><path class="cs" d="M10 13.6h4"/></svg></div>
   <div class="btn fire" id="bFire"><b id="lFire"></b><small id="sFire">1000</small></div>
   <div id="swapHint" style="display:none"><span id="swapCur">主武</span></div>
   <div class="wslot" id="ws_main" data-s="main"></div><div class="wslot" id="ws_mg" data-s="mg"></div><div class="wslot" id="ws_sub" data-s="sub"></div>
