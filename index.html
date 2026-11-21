@@ -523,6 +523,9 @@ const CONFIG = Object.freeze({
   body: { mass: 3000, radius: 1.2, halfHeight: 0.9, linDamping: 0.05 },
   ground: { speed: 20, accel: 54, friction: 50, slideFriction: 8, slideAbove: 12, jump: 10 },   // v2.9c 平地全速 20 m/s ≈ 72 km/h（120 km/h 太快瞄不到）
   air: { control: 2 },
+  // v4.3 橫向機動：實測從掩體跳射打不到人 → 改以左右平移閃躲為主。橫移比前後快、起步更快，空中也比較好修正；側跳又低又快（閃槍線用）
+  //       weight＝副武器重量（之後依各種副武調整；數字越大越笨重，1＝標準）
+  mobility: { strafeK: 1.45, strafeAccelK: 1.7, airStrafeK: 1.8, sideHopK: 1.35, sideHopUpK: 0.6, weight: { blade: 1.0, mg: 1.0 } },
   boost: { accel: 40, fuel: 6, horizontal: 0.75, lift: 0.8, fallBrake: 2.5, hCap: 24, regenGround: 0.6, regenPad: 4 },
   supply: { ammoPerSec: 200 },
   fireControl: { coneDeg: 2.0 },
@@ -1238,7 +1241,7 @@ function setPractice(on){
 // ---- v3.0 電腦 AI：輸出和玩家一樣的 command 物件（之後可直接拿來當網路測試的假對手）----
 //  導航：每座島取數個「落腳點」，兩點之間 58m 內、視線沒被擋就連一條「鋼索可達」的邊；移動＝瞄準下一個落腳點射鋼索、收索拉過去、到了放手
 //  戰鬥：挑一個看得到你、距離 60–220m、不在保護區的落腳點；瞄準有前置量＋隨時間收斂的誤差；遠距 57mm、近距 14.5mm
-const BOTCFG = { ropeRange: 90, thinkS: 0.1, errDegStart: 7.5, errDegMin: 2.6, settleS: 4.5, turnRate: 2.4, leadK: [0.35, 0.85], moveErrK: 0.035, react: 0.65, reactCover: 0.3, mgBurst: 0.5,   // v4.2 削弱 AI：誤差加大、瞄準收斂變慢、提前量不準、目標移動越快越不準、反應變慢、機槍點放變短
+const BOTCFG = { ropeRange: 90, thinkS: 0.1, errDegStart: 4.5, errDegMin: 1.1, settleS: 2.2, turnRate: 3.2, aimLag: 1.0, react: 0.35, reactCover: 0.12, mgBurst: 0.8,   // v4.3 AI 改成瞄「你 1 秒前的位置」（不算提前量）；v4.2 的其他削弱還原
   hopTimeout: 6, fightMin: 40, fightMax: 150, fightBest: 95, mgRange: 90, regoalS: [6, 10] };   // v3.0c 更主動：理想距離 95m、每 6–10 秒換位置
 let NAV = null;
 function buildNav(){
@@ -1344,12 +1347,17 @@ function createBotBrain(a){
       if (ep && see && dist < 600){
         if (!st.climb) st.wantW = bladeOn(a.weapon) ? (dist < CONFIG.melee.range * 1.1 ? 'mg' : 'main') : (dist < B.mgRange ? 'mg' : 'main');   // v3.9 帶刀：進入斬擊距離才換刀；帶機槍：90m 內換機槍
         st.dist = dist;
-        if (!bladeOn(a.weapon) && st.wantW === 'mg' && st.burst <= -0.7) st.burst = B.mgBurst;   // 機槍點放（v4.2 縮短、間隔拉長）
-        const ev = enemy.actor ? enemy.actor.P.vel : V(), tf = st.wantW === 'main' ? dist / CN.speed : 0;
-        if (st.leadK == null) st.leadK = B.leadK[0] + rnd() * (B.leadK[1] - B.leadK[0]);   // v4.2 提前量只估 35–85%，不會算得剛剛好
-        const aim = V().copy(ep).addScaledVector(ev, tf * st.leadK); aim.y += 0.5 * -CONFIG.physics.gravity * tf * tf;
-        st.errT -= dt; if (st.errT <= 0){ st.errT = 0.6; st.leadK = B.leadK[0] + rnd() * (B.leadK[1] - B.leadK[0]);   // 誤差每 0.6 秒換一次，持續看著目標會越來越準
-          const deg = Math.max(B.errDegMin, B.errDegStart - (B.errDegStart - B.errDegMin) * Math.min(1, st.seeT / B.settleS)) * (1 + B.moveErrK * ev.length());   // v4.2 你動得越快越難打中
+        if (!bladeOn(a.weapon) && st.wantW === 'mg' && st.burst <= -0.5) st.burst = B.mgBurst;   // 機槍點放
+        const tf = st.wantW === 'main' ? dist / CN.speed : 0;
+        // v4.3 AI 瞄的是你「1 秒前」的位置（記錄最近 1.5 秒的軌跡），不預判；只補砲彈下墜
+        st.clock = (st.clock || 0) + dt; const hist = st.hist || (st.hist = []);
+        if (!hist.length || st.clock - hist[hist.length - 1].t > 0.05) hist.push({ t: st.clock, p: V().copy(ep) });
+        while (hist.length > 2 && hist[1].t <= st.clock - B.aimLag) hist.shift();
+        while (hist.length && st.clock - hist[0].t > B.aimLag + 0.5) hist.shift();
+        const past = hist.length && st.clock - hist[0].t >= B.aimLag * 0.5 ? hist[0].p : ep;
+        const aim = V().copy(past); aim.y += 0.5 * -CONFIG.physics.gravity * tf * tf;
+        st.errT -= dt; if (st.errT <= 0){ st.errT = 0.6;   // 誤差每 0.6 秒換一次，持續看著目標會越來越準
+          const deg = Math.max(B.errDegMin, B.errDegStart - (B.errDegStart - B.errDegMin) * Math.min(1, st.seeT / B.settleS));
           const m = Math.tan(deg * DEG) * dist; st.err.set((rnd() - 0.5) * 2, (rnd() - 0.5) * 1.4, (rnd() - 0.5) * 2).multiplyScalar(m); }
         aim.add(st.err);
         const d = V().subVectors(aim, eye).normalize(); st.tYaw = Math.atan2(-d.x, -d.z); st.tPitch = Math.asin(clamp(d.y, -1, 1));
@@ -1932,6 +1940,7 @@ function simTick(cmd, sub = false){   // v3.0 sub＝替其他機體（AI）跑�
     moveF = anyHooked ? 0 : fwdIn;
   }
   const strafeIn = ropeStick ? 0 : strafe;
+  const MOB = CONFIG.mobility, mobW = 1 / ((MOB.weight[state.weapon && state.weapon.s2] || 1)), strafeS = strafeIn * MOB.strafeK * mobW;   // v4.3 橫移加速（之後依副武重量調整）
 
   // --- 跳躍 ---
   // v1.8 撲擊（蜘蛛腳）：在地面／坡面／釘在牆上／貼牆時，往搖桿方向撲出；勾著鋼索時不作用
@@ -1948,8 +1957,9 @@ function simTick(cmd, sub = false){   // v3.0 sub＝替其他機體（AI）跑�
       _d.set(_fwd.x * cmd.jumpZ + _right.x * cmd.jumpX, 0, _fwd.z * cmd.jumpZ + _right.z * cmd.jumpX);
       if (_d.lengthSq() < 1e-4) _d.copy(_fwd); _d.normalize();
       const pw = cmd.jumpPow || 1;   // v2.9 滑越快 → 撲越遠、越高
-      const along = _v.x * _d.x + _v.z * _d.z, add = Math.max(0, SP.pounceSpeed * pw - along);
-      _v.x += _d.x * add; _v.z += _d.z * add; _v.y = Math.max(_v.y, 0) + SP.pounceUp * pw;
+      const side = Math.abs(cmd.jumpX) > Math.abs(cmd.jumpZ) * 1.5, M2 = CONFIG.mobility, wk = 1 / ((M2.weight[state.weapon && state.weapon.s2] || 1));   // v4.3 側跳：又低又快，用來閃槍線
+      const along = _v.x * _d.x + _v.z * _d.z, add = Math.max(0, SP.pounceSpeed * pw * (side ? M2.sideHopK : 1) * wk - along);
+      _v.x += _d.x * add; _v.z += _d.z * add; _v.y = Math.max(_v.y, 0) + SP.pounceUp * pw * (side ? M2.sideHopUpK : 1);
       if (n && n.y < 0.9){ _v.x += n.x * SP.pounceWallPush; _v.z += n.z * SP.pounceWallPush; }   // 從牆／陡坡撲出：順便推離表面
       P.pounceCD = SP.cooldown; P.jumpT = 0.3; P.grounded = false; events.push({ type: 'fling' });
     }
@@ -1960,25 +1970,25 @@ function simTick(cmd, sub = false){   // v3.0 sub＝替其他機體（AI）跑�
   if (onSlope && !(anyHooked && reelIn > 0) && !P.thrusting){
     // v1.8 蜘蛛腳：在 70° 以內的坡面上抵銷重力、貼住坡面，沿坡面移動
     const n = P.groundN; _v.y -= CONFIG.physics.gravity * dt;   // gravity 為負值 → 這裡加回去
-    let tx = (_fwd.x*moveF + _right.x*strafeIn) * CONFIG.ground.speed, tz = (_fwd.z*moveF + _right.z*strafeIn) * CONFIG.ground.speed, ty = 0;
+    let tx = (_fwd.x*moveF*mobW + _right.x*strafeS) * CONFIG.ground.speed, tz = (_fwd.z*moveF*mobW + _right.z*strafeS) * CONFIG.ground.speed, ty = 0;
     const tn = tx*n.x + tz*n.z; tx -= n.x*tn; ty -= n.y*tn; tz -= n.z*tn;   // 投影到坡面
-    const hasIn = Math.abs(moveF) + Math.abs(strafeIn) > 0.05, rate = (hasIn ? CONFIG.ground.accel : CONFIG.ground.friction) * dt;
+    const hasIn = Math.abs(moveF) + Math.abs(strafeIn) > 0.05, rate = (hasIn ? CONFIG.ground.accel * (Math.abs(strafeIn) > 0.3 ? MOB.strafeAccelK : 1) : CONFIG.ground.friction) * dt;
     const vn = _v.x*n.x + _v.y*n.y + _v.z*n.z; const px = _v.x - n.x*vn, py = _v.y - n.y*vn, pz = _v.z - n.z*vn;
     const dx = tx - px, dy = ty - py, dz = tz - pz, dl = Math.hypot(dx, dy, dz);
     const k = dl <= rate ? 1 : rate / dl; _v.x += dx*k; _v.y += dy*k; _v.z += dz*k;
     _v.x -= n.x * SP.slopePress * dt; _v.y -= n.y * SP.slopePress * dt; _v.z -= n.z * SP.slopePress * dt;   // 輕壓向坡面
   } else if (P.grounded && !(anyHooked && reelIn > 0)){
-    const tx = (_fwd.x*moveF + _right.x*strafeIn) * CONFIG.ground.speed;
-    const tz = (_fwd.z*moveF + _right.z*strafeIn) * CONFIG.ground.speed;
+    const tx = (_fwd.x*moveF*mobW + _right.x*strafeS) * CONFIG.ground.speed;
+    const tz = (_fwd.z*moveF*mobW + _right.z*strafeS) * CONFIG.ground.speed;
     const hs = Math.hypot(_v.x, _v.z);
     const hasIn = Math.abs(moveF) + Math.abs(strafeIn) > 0.05;
-    let rate = hasIn ? CONFIG.ground.accel : CONFIG.ground.friction;
-    if (hs > Math.max(CONFIG.ground.slideAbove, CONFIG.ground.speed + 2)) rate = CONFIG.ground.slideFriction; // 落地速度超過跑速才會滑行
+    let rate = hasIn ? CONFIG.ground.accel * (Math.abs(strafeIn) > 0.3 ? MOB.strafeAccelK : 1) : CONFIG.ground.friction;
+    if (hs > Math.max(CONFIG.ground.slideAbove, CONFIG.ground.speed * (Math.abs(strafeIn) > 0.3 ? MOB.strafeK : 1) + 2)) rate = CONFIG.ground.slideFriction; // 落地速度超過跑速才會滑行
     const dx = tx - _v.x, dz = tz - _v.z, dl = Math.hypot(dx, dz), step = rate*dt;
     if (dl <= step){ _v.x = tx; _v.z = tz; } else { _v.x += dx/dl*step; _v.z += dz/dl*step; }
   } else {
-    const ax = (_fwd.x*moveF + _right.x*strafeIn) * CONFIG.air.control;
-    const az = (_fwd.z*moveF + _right.z*strafeIn) * CONFIG.air.control;
+    const ax = (_fwd.x*moveF + _right.x*strafeIn*MOB.airStrafeK) * CONFIG.air.control * mobW;
+    const az = (_fwd.z*moveF + _right.z*strafeIn*MOB.airStrafeK) * CONFIG.air.control * mobW;
     _v.x += ax*dt; _v.z += az*dt;
   }
   // 擺盪推力：沿「垂直於繩子」的左右方向推
