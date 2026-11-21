@@ -2258,6 +2258,24 @@ function crescentGeo(){
   for (let i = 0; i < N; i++){ const o = i * 2; idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); return g;
 }
+// v4.1 螳螂鐮刃的幾何：沿 -Y 延伸、刃面薄（X 方向）、往 +Z（刃口那側）彎成鐮刀鉤、收成針尖
+//  回傳 body（刀身＋刀背）與 edge（刃口斜面，另外用發光材質）兩個幾何；只在載入時建一次
+function scytheGeo(len, w0, th0, curve, n = 10){
+  const body = [], edge = [], P = new THREE.Vector3(0, 0, 0), st = [];
+  for (let i = 0; i <= n; i++){ const t = i / n, phi = curve * Math.pow(t, 1.5), T = new THREE.Vector3(0, -Math.cos(phi), Math.sin(phi)), N = new THREE.Vector3(0, Math.sin(phi), Math.cos(phi));
+    const w = w0 * Math.pow(1 - t, 0.8) * (0.85 + 0.35 * Math.sin(Math.PI * Math.min(1, t * 1.6))), th = th0 * (1 - 0.75 * t);
+    const sp = P.clone().addScaledVector(N, -w * 0.18), ed = P.clone().addScaledVector(N, w * 0.82), bv = P.clone().addScaledVector(N, w * 0.42);   // 刀背、斜面起點、刃口
+    st.push({ c: P.clone().addScaledVector(N, w * 0.3), sa: sp.clone().setX(th / 2), sb: sp.clone().setX(-th / 2), ba: bv.clone().setX(th * 0.3), bb: bv.clone().setX(-th * 0.3), e: ed });
+    P.addScaledVector(T, len / n); }
+  const tri = (arr, a, b, c, ctr) => { const nn = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a)), m = a.clone().add(b).add(c).divideScalar(3).sub(ctr);
+    if (nn.dot(m) < 0) arr.push(a.x, a.y, a.z, c.x, c.y, c.z, b.x, b.y, b.z); else arr.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z); };   // 面朝外（依中心線自動決定繞向）
+  const quad = (arr, A, B, k1, k2) => { const c = A.c.clone().add(B.c).multiplyScalar(0.5); tri(arr, A[k1], A[k2], B[k1], c); tri(arr, A[k2], B[k2], B[k1], c); };
+  for (let i = 0; i < n; i++){ const A = st[i], B = st[i + 1];
+    quad(body, A, B, 'sa', 'ba'); quad(body, A, B, 'sb', 'bb'); quad(body, A, B, 'sa', 'sb');   // 兩側刀面＋刀背
+    quad(edge, A, B, 'ba', 'e'); quad(edge, A, B, 'bb', 'e'); }                                   // 刃口斜面
+  const mk = a => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(a, 3)); g.computeVertexNormals(); return g; };
+  return { body: mk(body), edge: mk(edge) };
+}
 // v3.9 準星用：前方扇形內有沒有砍得到的目標
 function meleeInRange(){
   const MC = CONFIG.melee, P = state.player, o = P.currPos, yaw = P.yaw, fx = -Math.sin(yaw), fz = -Math.cos(yaw), cosA = Math.cos(MC.arcDeg * DEG);
@@ -2481,7 +2499,7 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     if (kind === 'nail'){ const fr = M.legs.filter(L => L.rest && L.rest.z < 0); if (!fr.length) return null; const L = fr[(nailSide++) % fr.length];   // 前腳（樁腳）左右輪流
       return M.body.localToWorld(out.copy(L.cur).lerp(L.hip, 0.15)); }
     return null; };
-  M.dishTip = (i, out) => { M.claws[i].children[1].getWorldPosition(out); return out; };
+  M.dishTip = (i, out) => { if (M.launchers) return M.launchers[i].muz.getWorldPosition(out); M.claws[i].children[1].getWorldPosition(out); return out; };   // v4.1 鋼索從機身艙口的發射器槍口出來
   M.recoil = () => { M.rc = 1; };
   M.update = (dt, pos, P, ropes) => {
     M.root.position.copy(pos);
@@ -2490,15 +2508,17 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     const upT = P.pinned && P.pinned.normal ? P.pinned.normal : P.grounded && P.groundN ? P.groundN : UP; M.up.lerp(upT, 1 - Math.exp(-dt / 0.12)).normalize();   // v2.4 釘在牆上：腹部朝牆
     _q.setFromUnitVectors(UP, M.up); M.root.quaternion.setFromAxisAngle(UP, M.yaw).premultiply(_q);
     // 炮塔與砲管跟著準星；機槍臂也指向準星
-    M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9); if (M.mgArm) M.mgArm.rotation.x = clamp(P.pitch, -0.4, 0.7);   // 機槍跟準星上下
-    { const wq = cfg.weapon ? cfg.weapon() : state.weapon; if (M.mgArm) M.mgArm.visible = !bladeOn(wq); }   // v3.9 選機槍時顯示槍身
-    if (M.arm2){ const wq2 = cfg.weapon ? cfg.weapon() : state.weapon, want = wq2.active === 'mg' && bladeOn(wq2) ? 1 : 0; M.arm2.k += (want - M.arm2.k) * Math.min(1, dt * 8);   // 選 02 副武時展開成 L，其他時候收成 V
-      const k = M.arm2.k, bsx = 0.9 * (1 - k) + 1.3 * k, bex = 3.6 * (1 - k) + 1.2 * k;   // 收：折在機鼻下（螳螂）；v3.9 選 02 時架刀：雙臂往前、前臂交叉擋在機鼻前
+    M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9);
+    { const wq = cfg.weapon ? cfg.weapon() : state.weapon; if (M.setKit) M.setKit(bladeOn(wq) ? 'blade' : 'mg'); }   // v4.1 前臂套件跟著選裝（換機庫設定、AI 隨機、連線對手都會即時換）
+    if (M.arm2){ const wq2 = cfg.weapon ? cfg.weapon() : state.weapon, bOn = bladeOn(wq2), want = wq2.active === 'mg' && bOn ? 1 : 0; M.arm2.k += (want - M.arm2.k) * Math.min(1, dt * 8);   // 選 02 副武時展開成 L，其他時候收成 V
+      const wg = wq2.active === 'mg' && !bOn ? 1 : 0; M.arm2.g = (M.arm2.g || 0) + (wg - (M.arm2.g || 0)) * Math.min(1, dt * 8);   // v4.1 槍臂：選 02（機槍）時舉槍
+      const k = M.arm2.k, g = M.arm2.g; let bsx = 0.9 * (1 - k) + 1.3 * k, bex = 3.6 * (1 - k) + 1.2 * k;   // 收：折在機鼻下（螳螂）；v3.9 選 02 時架刀：雙臂往前、前臂交叉擋在機鼻前
+      if (!bOn){ const gsx = 1.0, gex = Math.PI / 2 + clamp(P.pitch, -0.45, 0.6) - gsx; bsx = 0.9 * (1 - g) + gsx * g; bex = 3.6 * (1 - g) + gex * g; }   // v4.1 槍臂：上臂斜前下、前臂（槍管）平舉跟著準星上下
       // v3.9b 螳螂鐮揮臂（弧形）：舉臂 → 中途點 → 斜劈 → 順勢多帶一點 → 停 → 收回；肘關節晚 0.02 秒、側擺用正弦緩動，刀尖畫出弧線
       const ml = (cfg.weapon ? cfg.weapon() : state.weapon).melee;
       for (const A of M.arm2.arms){
-        let sx = bsx, ex = bex, sz = -A.sd * 0.42 * k;
-        if (ml && ml.vis != null && (ml.side || 1) === A.sd){
+        let sx = bsx, ex = bex, sz = bOn ? -A.sd * 0.42 * k : 0;
+        if (bOn && ml && ml.vis != null && (ml.side || 1) === A.sd){
           const v = ml.vis, sd = A.sd, base = [bsx, -sd * 0.42 * k, bex];
           sx = swingKey(v, 0, base, sd); sz = swingKey(v, 1, base, sd); ex = swingKey(Math.max(0, v - 0.02), 2, base, sd);
           if (v >= 0.25 && v <= 0.33){ const q = (v - 0.25) / 0.08, e = 0.5 - 0.5 * Math.cos(Math.PI * q); sz = (0.55 + (-0.75 - 0.55) * e) * sd; }   // 側擺：整段斜劈用正弦緩動
@@ -2516,10 +2536,16 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     M.rc = Math.max(0, (M.rc || 0) - dt / 0.28); const rk = M.rc * M.rc * (3 - 2 * M.rc);
     M.body.position.set(0, -0.12 * rk, 0.42 * rk); M.body.rotation.x = 0.09 * rk;
     // 碟形發射器轉向勾住的錨點（沒勾就朝前）
+    if (M.launchers){   // v4.1 鋼索發射器：按住／勾住 → 艙蓋打開、發射器伸出並轉向錨點；勾上瞬間往回頓一下；放開就收回
+      M.launchers.forEach((Lc, i) => { const r = ropes[i], on = !!(r && (r.hooked || r.wasHeld));
+        Lc.e = clamp(Lc.e + (on ? dt / 0.16 : -dt / 0.35), 0, 1);
+        if (r && r.hooked && !Lc.was) Lc.kick = 1; Lc.was = !!(r && r.hooked); Lc.kick = Math.max(0, Lc.kick - dt / 0.2);
+        Lc.pose(Lc.e, r && r.hooked ? r.anchor : null, dt); }); }
+    else {
     const hk = ropes.find(r => r.hooked);
     if (hk){ M.dish.worldToLocal(_k.copy(hk.anchor)); const t = Math.atan2(-_k.x, -_k.z); M.dish.rotation.y += Math.atan2(Math.sin(t), Math.cos(t)) * Math.min(1, dt * 10); }
     else M.dish.rotation.y *= Math.exp(-dt * 4);
-    M.claws.forEach((c, i) => { c.rotation.x = ropes[i].hooked ? 0.9 : 0.35; });
+    M.claws.forEach((c, i) => { c.rotation.x = ropes[i].hooked ? 0.9 : 0.35; }); }
     // v2.2 蜘蛛步態：腳踩下去就固定在世界座標（身體往前移、腳不動），落後太多才快速抬腳跨一小步；
     //  對角兩腳一組交替；落點用射線貼齊地形；膝蓋高高拱在身體上方。空中收腳、鋼索擺盪時張開
     const hs = Math.hypot(P.vel.x, P.vel.z), air = !P.grounded && !P.pinned, swing = ropes.some(r => r.hooked);
@@ -2632,46 +2658,63 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     for (const ch of [...M.body.children]) if (ch !== mdl && ch !== M.dish) ch.visible = false;
     // 找一個金屬材質給加裝零件用，風格才一致
     let metal = null; gltf.scene.traverse(o => { if (!metal && o.isMesh && /Scratched_?Metal/.test(o.name)) metal = o.material; });
-    if (metal){ M.dish.traverse(o => { if (o.isMesh && o.material !== undefined && o.material.type !== 'MeshBasicMaterial') o.material = metal; }); }
-    // 碟形鋼索發射器：放在機身背部頂端
-    const core = new THREE.Box3().setFromObject(gltf.scene.getObjectByName('Cockpit_Procedural_Scratched_Metal_0') || gltf.scene);
-    M.dish.position.set((core.min.x + core.max.x) / 2, core.max.y + 0.05, core.min.z + (core.max.z - core.min.z) * 0.72); M.dish.visible = true;   // 機身頂端偏後
-    M.dish.scale.setScalar(0.85);
+    // v4.1 背部碟形鋼索發射器已拿掉，改成機身左右艙口（在機身變形之後建立，見下方「鋼索發射器」）
     // 格鬥臂：移除左刀臂，右刀臂加裝 14.5mm 機槍
     const bl = gltf.scene.getObjectByName('Blade_L'), br = gltf.scene.getObjectByName('Blade_R');   // 載入器會把空白換成底線、拿掉點
     if (bl) bl.visible = false;
-    // v2.9 依玩家側視草圖：機槍裝在機身頂部前段；機頭下方是兩節式格鬥臂 —— 收＝兩節折成 V 收在機頭下（像螳螂），展＝上臂朝下、前臂往前平伸成 L
+    // v2.9 依玩家側視草圖：機槍裝在機身頂部前段（v4.1 改裝到右格鬥臂上）；機頭下方是兩節式格鬥臂 —— 收＝兩節折成 V 收在機頭下（像螳螂），展＝上臂朝下、前臂往前平伸成 L
+    // v4.1 加裝零件共用材質（每台機體一組；格鬥臂與鋼索艙蓋共用）
+    const mat = metal || new THREE.MeshStandardMaterial({ color: 0x555b60, metalness: 0.7, roughness: 0.45 });
+    const matD = mat.clone(); matD.color = new THREE.Color(0x2e3338); matD.flatShading = true; const matF = mat.clone(); matF.flatShading = true;
+    const matEdge = new THREE.MeshBasicMaterial({ color: 0xa8fff2 });   // v4.1 刃口：亮青色（高週波刃），不受光照影響，遠看也認得出是刀
+    const matAcc = (M.paintMats.accent && M.paintMats.accent[0]) || glow;   // 點綴色（跟塗裝走）
     if (br){ br.visible = false;
-      const mat = metal || new THREE.MeshStandardMaterial({ color: 0x555b60, metalness: 0.7, roughness: 0.45 });
-      const matD = mat.clone(); matD.color = new THREE.Color(0x2e3338); matD.flatShading = true; const matF = mat.clone(); matF.flatShading = true;
       const blade = (len, w0, w1, th, m) => { const g = new THREE.CylinderGeometry(w1, w0, len, 4); g.rotateY(Math.PI / 4); g.scale(th, 1, 1); g.translate(0, -len / 2, 0); return new THREE.Mesh(g, m); };   // 菱形斷面、往 -Y 延伸的刃狀臂節
       const joint = (r, m) => new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), m);
       const core = new THREE.Box3().setFromObject(gltf.scene.getObjectByName('Cockpit_Procedural_Scratched_Metal_0') || gltf.scene);
       // 格鬥臂：v3.6 肩關節移到機鼻前端、位置比較高（平常像螳螂一樣折在機鼻下）
       // v3.9 螳螂鐮：左右各一隻刃臂（平常折在機鼻兩側下方），交叉斬一次揮一邊
-      const L1 = 1.4, L2 = 2.3, ARM_X = 0.62;   // v2.9 縮短：避免手肘戳進地面、前臂插進機鼻
+      const L1 = 1.4, ARM_X = 0.62;   // v2.9 縮短：避免手肘戳進地面、前臂插進機鼻
+      // v4.1 前臂改成「套件」：同一組肩／肘關節（揮刀動畫不變），依 02 欄選裝切換顯示哪一組（只切 visible，不重建幾何）
+      //  blade 套件＝細長彎曲的螳螂鐮（刀背＋發光刃口、收成針尖）；mg 套件＝加粗的槍臂（右臂裝 14.5mm 機槍、兩臂各留一支短爪）
+      const scy = scytheGeo(2.5, 0.66, 0.12, 1.1), claw = scytheGeo(0.8, 0.3, 0.1, 1.5, 6);   // 幾何兩隻手臂共用
       const mkArm = sd => { const S = new THREE.Group(); S.position.set((core.min.x + core.max.x) / 2 + sd * ARM_X, core.min.y + 0.5, core.min.z - 0.6); M.body.add(S); S.add(joint(0.4, matD));
         S.add(blade(L1, 0.5, 0.34, 0.45, matF));
         const E = new THREE.Group(); E.position.y = -L1; S.add(E); E.add(joint(0.3, matD));
-        E.add(blade(L2, 0.4, 0.04, 0.4, matF));                                                // 前臂收尖（刃狀）
-        const spur = blade(0.9, 0.16, 0.02, 0.5, matD); spur.rotation.x = -2.4; E.add(spur);   // 肘部的倒刺
+        // blade 套件：短護套＋鐮刃（刃口朝 +Z＝下劈時的前緣，收起時朝內，像螳螂前腳）＋肘部倒刺
+        const KB = new THREE.Group(); KB.userData.kit = 'blade'; E.add(KB);
+        KB.add(blade(0.75, 0.36, 0.2, 0.42, matF));
+        const sb = new THREE.Group(); sb.position.set(0, -0.35, -0.12); KB.add(sb); sb.add(new THREE.Mesh(scy.body, matF), new THREE.Mesh(scy.edge, matEdge));
+        const spur = blade(0.9, 0.16, 0.02, 0.5, matD); spur.rotation.x = -2.4; KB.add(spur);   // 肘部的倒刺
+        // mg 套件：粗前臂（八角柱）＋前端短爪；右臂另外掛機槍（槍在前臂上方 −Z 側，舉槍時朝上）
+        const KG = new THREE.Group(); KG.userData.kit = 'mg'; KG.visible = false; E.add(KG);
+        const fa = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.32, 1.55, 8).translate(0, -0.85, 0), matF); fa.scale.z = 0.85; KG.add(fa);
+        const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.22, 8).translate(0, -0.35, 0), matD); KG.add(cuff);
+        const cg = new THREE.Group(); cg.position.set(0, -1.5, 0.12); KG.add(cg); cg.add(new THREE.Mesh(claw.body, matF), new THREE.Mesh(claw.edge, matEdge));
+        let gun = null, muz = null;
+        if (sd > 0){ gun = new THREE.Group(); gun.position.set(0, 0, -0.36); KG.add(gun);
+          const rcv = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.0, 0.3).translate(0, -1.0, 0), matD); gun.add(rcv);
+          const shr = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.7, 8).translate(0, -1.8, 0), matF); gun.add(shr);
+          const brl = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.3, 8).translate(0, -2.5, 0), matD); gun.add(brl);
+          const brk = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.2, 8).translate(0, -3.15, 0), matD); gun.add(brk);
+          const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.2, 10).rotateZ(Math.PI / 2).translate(0.27, -0.95, 0.12), matF); gun.add(drum);   // 外側彈鼓
+          const tip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 0.05).translate(0, -3.1, -0.1), matAcc); gun.add(tip);   // 準星（點綴色）
+          muz = new THREE.Object3D(); muz.position.set(0, -3.3, 0); gun.add(muz); }
         // v3.9b 刀光：弧形月牙（右臂＝右上往左下、左臂鏡像；兩刀合起來是 X）。中段往前鼓、外緣厚內緣薄、兩端收尖；用 drawRange 從刀尖起點「劃開」
         const sl = new THREE.Mesh(crescentGeo(), new THREE.MeshBasicMaterial({ vertexColors: true, color: new THREE.Color(0x7ff5e0).multiplyScalar(PROMO ? 2.4 : 1.4), transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
         sl.position.set((core.min.x + core.max.x) / 2 - 0.8 * sd, core.min.y + 0.5 + 1.6, core.min.z - 2.0); sl.rotation.set(0.30, -sd * 0.35, 0); if (sd < 0) sl.scale.x = -1;
         sl.visible = false; sl.userData.noCast = true; sl.frustumCulled = false; M.body.add(sl);
-        return { S, E, sd, slash: sl }; };
+        return { S, E, sd, slash: sl, KB, KG, gun, muz }; };
       const armR = mkArm(1), armL = mkArm(-1);
       M.arm2 = { arms: [armR, armL], k: 0 };
       M.slashPts = (side, n) => { const A = M.arm2.arms.find(x => x.sd === (side || 1)), out = []; if (!A) return out; A.slash.updateMatrixWorld(true); const pa = A.slash.geometry.attributes.position;
         for (let j = 0; j < n; j++){ const i = Math.round((CRES.N * (j + 0.5)) / n) * 2; out.push(new THREE.Vector3().fromBufferAttribute(pa, Math.min(i, pa.count - 2)).applyMatrix4(A.slash.matrixWorld)); } return out; };   // v3.9b 沿刀光外緣取點（火花用）
-      // 機槍：機身頂部前段（草圖藍色箭頭位置）
-      const G = new THREE.Group(); G.position.set((core.min.x + core.max.x) / 2 + 0.55, core.max.y - 0.05, core.min.z + 1.6); M.body.add(G);
-      G.add(joint(0.18, matD));
-      const rcv = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.24, 0.8), matF); rcv.position.set(0, 0.12, -0.2); G.add(rcv);
-      const brl = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.3, 8), matD); brl.rotation.x = Math.PI / 2; brl.position.set(0, 0.14, -1.25); G.add(brl);
-      const muz = new THREE.Object3D(); muz.position.set(0, 0.14, -1.92); G.add(muz);
-      G.visible = false;   // v3.9 機槍改成螳螂鐮：槍身不顯示（槍口位置保留給特效）
-      M.mgArm = G; M.mgWrist = null; M.mgMuzzle = muz; }
+      // v4.1 機槍改裝在右格鬥臂上（以前在機身頂部）：槍口就是右臂槍管前端
+      M.mgArm = armR.gun; M.mgWrist = null; M.mgMuzzle = armR.muz;
+      // v4.1 依 02 欄選裝切換前臂套件（只在變更時動 visible）
+      M.setKit = s2 => { const kk = s2 === 'mg' ? 'mg' : 'blade'; if (M.kit === kk) return; M.kit = kk;
+        for (const A of M.arm2.arms){ A.KB.visible = kk === 'blade'; A.KG.visible = kk === 'mg'; } };
+      M.setKit('blade'); }
     // 57mm 砲口位置（砲管不參與機身變形）
     { const cn = gltf.scene.getObjectByName('Cannon'); if (cn){ const cbx = new THREE.Box3().setFromObject(cn), mz = new THREE.Object3D();
         mz.position.copy(M.body.worldToLocal(new THREE.Vector3((cbx.min.x + cbx.max.x) / 2, cbx.max.y - (cbx.max.y - cbx.min.y) * 0.35, cbx.min.z))); M.body.add(mz); M.cannonMuzzle = mz; } }
@@ -2691,6 +2734,41 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
         warpMesh(o, v => { if (v.z < zM){ const t = clamp((zM - v.z) / (zM - zF), 0, 1.3), e = t * t * (3 - 2 * Math.min(t, 1));
             v.x *= 1 - 0.55 * Math.min(e, 1); v.y = yc + (v.y - yc) * (1 - 0.35 * Math.min(e, 1)); v.z -= 0.6 * Math.min(t, 1); }
           else { const t = clamp((v.z - zM) / (zB - zM), 0, 1), e = Math.pow(t, 1.3); v.x *= 1 - 0.42 * e; v.y = yc + (v.y - yc) * (1 - 0.22 * e); } }); }); }   // v3.6 後半部流線型往內收
+    // v4.1 鋼索發射器改成「機身開兩個艙口、發射器從洞裡伸出來」：拿掉背上的碟形發射器，左右肩各一個艙口
+    //  位置：機身變形後，從上往下打射線找機背表面（左＝ropes[0]、右＝ropes[1]）；艙口 +Y＝表面朝外方向
+    { for (const ch of [...M.dish.children]) M.dish.remove(ch);
+      M.dish.position.set(0, 0, 0); M.dish.rotation.set(0, 0, 0); M.dish.scale.setScalar(1); M.dish.visible = true;
+      const cb = new THREE.Box3().setFromObject(gltf.scene.getObjectByName('Cockpit_Procedural_Scratched_Metal_0') || gltf.scene), cx = (cb.min.x + cb.max.x) / 2;
+      const rc = new THREE.Raycaster(), hidden = o => { for (let q = o; q; q = q.parent) if (!q.visible) return true; return false; };
+      const matHole = new THREE.MeshBasicMaterial({ color: 0x050607 });
+      const hatchGeo = new THREE.CylinderGeometry(0.3, 0.36, 0.16, 8), holeGeo = new THREE.CircleGeometry(0.23, 8).rotateX(-Math.PI / 2), doorGeo = new THREE.BoxGeometry(0.235, 0.035, 0.44).translate(0.1175, 0, 0);
+      const brlGeo = new THREE.CylinderGeometry(0.1, 0.12, 1.2, 8).translate(0, 0.05, 0), colGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.12, 8), mzGeo = new THREE.CylinderGeometry(0.085, 0.12, 0.12, 8).translate(0, 0.7, 0), hdGeo = new THREE.ConeGeometry(0.12, 0.24, 6).translate(0, 0.88, 0);
+      M.launchers = [-1, 1].map(sd => {
+        const ox = cx + sd * (cb.max.x - cb.min.x) * 0.27, oz = cb.min.z + (cb.max.z - cb.min.z) * 0.6;
+        rc.set(new THREE.Vector3(ox, cb.max.y + 3, oz), new THREE.Vector3(0, -1, 0));
+        const hit = rc.intersectObject(gltf.scene, true).find(h => h.object.isMesh && !hidden(h.object) && !isLegPart(h.object) && !skipBody(h.object));
+        const pos = hit ? hit.point.clone() : new THREE.Vector3(ox, cb.max.y, oz), nrm = hit && hit.face ? hit.face.normal.clone().transformDirection(hit.object.matrixWorld) : UP.clone();
+        if (nrm.y < 0) nrm.negate(); nrm.lerp(new THREE.Vector3(sd * 0.55, 1, 0.1).normalize(), 0.6).normalize();   // 法線不穩時往「上＋外側」靠
+        const H = new THREE.Group(); H.position.copy(M.body.worldToLocal(pos)); H.quaternion.setFromUnitVectors(UP, nrm); M.dish.add(H);
+        const rim = new THREE.Mesh(hatchGeo, matD); rim.position.y = 0.0; H.add(rim);                     // 艙口外框（一半埋進機殼）
+        const hole = new THREE.Mesh(holeGeo, matHole); hole.position.y = 0.082; H.add(hole);               // 黑色洞口
+        const doors = [-1, 1].map(s => { const hg = new THREE.Group(); hg.position.set(s * 0.235, 0.1, 0); H.add(hg); const d = new THREE.Mesh(doorGeo, matF); if (s > 0) d.rotation.y = Math.PI; hg.add(d); return hg; });   // 左右對開的艙蓋
+        const piv = new THREE.Group(); piv.position.y = -0.05; H.add(piv);                                 // 轉向用的支點（在機殼裡）
+        const sl = new THREE.Group(); piv.add(sl);                                                         // 伸縮
+        sl.add(new THREE.Mesh(brlGeo, matD)); const col = new THREE.Mesh(colGeo, matF); col.position.y = 0.45; sl.add(col);
+        sl.add(new THREE.Mesh(mzGeo, matAcc)); const head = new THREE.Mesh(hdGeo, matF); sl.add(head);   // 槍口環（點綴色）＋鉤頭（射出去就不見）
+        const muz = new THREE.Object3D(); muz.position.y = 0.78; sl.add(muz);
+        const _d = new THREE.Vector3(), _qt = new THREE.Quaternion(), _qi = new THREE.Quaternion();
+        const Lc = { H, sl, piv, doors, head, muz, e: 0, kick: 0, was: false };
+        Lc.pose = (e, anchor, dt2) => { const ss = x => x * x * (3 - 2 * x), od = ss(clamp(e / 0.45, 0, 1)), ex = ss(clamp((e - 0.2) / 0.8, 0, 1));
+          doors[0].rotation.z = od * 1.95; doors[1].rotation.z = -od * 1.95;
+          sl.position.y = -0.92 + 1.17 * ex - 0.16 * Lc.kick;   // 收：整支縮在機殼裡；伸：槍口離艙口約 1m head.visible = !anchor; sl.visible = e > 0.01;
+          if (anchor && e > 0.05){ H.updateWorldMatrix(true, false); H.worldToLocal(_d.copy(anchor)); _d.normalize();
+            const cy = Math.cos(70 * DEG); if (_d.y < cy){ const hz = Math.hypot(_d.x, _d.z) || 1; _d.set(_d.x / hz * Math.sin(70 * DEG), cy, _d.z / hz * Math.sin(70 * DEG)); }   // 最多偏 70°
+            _qt.setFromUnitVectors(UP, _d); piv.quaternion.slerp(_qt, dt2 == null ? 1 : Math.min(1, dt2 * 16)); }
+          else piv.quaternion.slerp(_qi, dt2 == null ? 1 : Math.min(1, dt2 * 8)); };
+        Lc.pose(0, null); return Lc; });
+      M.launchPose = e => { for (const Lc of M.launchers){ Lc.e = e; Lc.pose(e, null); } }; }   // 零件圖用
     // 腳變細：沿骨軸（髖→膝、膝→腳底）把粗細縮成 60%
     function thinAlong(node, a, b, k){ if (!node) return; const ab = new THREE.Vector3().subVectors(b, a), L2 = ab.lengthSq();
       node.traverse(o => { if (!o.isMesh) return; warpMesh(o, v => { const t = ((v.x - a.x) * ab.x + (v.y - a.y) * ab.y + (v.z - a.z) * ab.z) / L2, px = a.x + ab.x * t, py = a.y + ab.y * t, pz = a.z + ab.z * t;
@@ -2758,12 +2836,14 @@ function partThumbs(M){
   const cam = new THREE.PerspectiveCamera(26, W / H, 0.05, 200), pr = renderer.getPixelRatio(), size = renderer.getSize(new THREE.Vector2());
   const oc = renderer.getClearColor(new THREE.Color()), oa = renderer.getClearAlpha();
   M.root.updateMatrixWorld(true); const bq = M.body.getWorldQuaternion(new THREE.Quaternion());
-  const list = { cannon: M.parts && M.parts.cannon, blade: M.arm2 && M.arm2.arms[0].S, mg: M.mgArm, nail: M.legs && M.legs.length ? (M.legs.find(L => L.rest.z < 0) || M.legs[0]).kneeG : null, dish: M.dish };   // 釘槍＝前腳的樁腳（重組關節後掛在膝關節下）
+  const list = { cannon: M.parts && M.parts.cannon, blade: M.arm2 && M.arm2.arms[0].S, mg: M.arm2 ? M.arm2.arms[0].S : M.mgArm, nail: M.legs && M.legs.length ? (M.legs.find(L => L.rest.z < 0) || M.legs[0]).kneeG : null, dish: M.launchers ? M.launchers[1].H : M.dish };   // v4.1 鋼索：拍右側艙口的發射器   // 釘槍＝前腳的樁腳（重組關節後掛在膝關節下）
   for (const [k, obj] of Object.entries(list)){ if (!obj) continue;
-    obj.updateMatrixWorld(true); const c = obj.clone(true); c.traverse(o => { o.visible = true; if (o.material && o.material.opacity === 0 && o.material.blending === THREE.AdditiveBlending) o.visible = false; });
+    if (k === 'dish' && M.launchPose) M.launchPose(1);   // v4.1 鋼索發射器：拍伸出來的樣子
+    obj.updateMatrixWorld(true); const c = obj.clone(true); c.traverse(o => { o.visible = !(o.userData.kit && o.userData.kit !== k); if (o.material && o.material.opacity === 0 && o.material.blending === THREE.AdditiveBlending) o.visible = false; });   // v4.1 格鬥臂只顯示該選裝的前臂套件
+    if (k === 'dish' && M.launchPose) M.launchPose(0);
     c.matrixAutoUpdate = false; c.matrix.copy(obj.matrixWorld);
-    if (k === 'blade'){ c.matrixAutoUpdate = true; c.matrix.decompose(c.position, c.quaternion, c.scale); c.quaternion.copy(bq).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(1.45, 0, 0)));
-      const E = c.children.find(o => o.isGroup && o.position.y < 0); if (E) E.rotation.x = 0.75; }   // 刃臂擺成往前伸的姿勢
+    if (k === 'blade' || (k === 'mg' && M.arm2)){ c.matrixAutoUpdate = true; c.matrix.decompose(c.position, c.quaternion, c.scale); c.quaternion.copy(bq).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(1.45, 0, 0)));
+      const E = c.children.find(o => o.isGroup && o.position.y < 0); if (E) E.rotation.x = k === 'mg' ? 0.35 : 0.75; }   // 刃臂擺成往前伸的姿勢（槍臂：槍管再放平一點）
     ts.add(c); c.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(c), ctr = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3()), md = Math.max(sz.x, sz.y, sz.z);
     const dir = new THREE.Vector3(1, 0.55, -0.55).normalize().applyQuaternion(bq), dist = md / (2 * Math.tan(cam.fov * DEG / 2)) * 0.95 / Math.min(1, cam.aspect * 0.8);
@@ -3936,7 +4016,7 @@ function mechPortrait(M, w, faceRight){   // 黑底、白底各渲染一次，�
   const oc = renderer.getClearColor(new THREE.Color()), oa = renderer.getClearAlpha();
   const ts = new THREE.Scene(); ts.environment = scene.environment; ts.add(new THREE.HemisphereLight(0xd8ecff, 0x40382c, 0.9));
   const dl = new THREE.DirectionalLight(0xfff0d8, 3.0); dl.position.set(-4, 7, 5); ts.add(dl); const rl = new THREE.DirectionalLight(0xa8ccff, 1.6); rl.position.set(5, 3, -6); ts.add(rl);
-  if (M.mgArm) M.mgArm.visible = !bladeOn(w);
+  if (M.setKit) M.setKit(bladeOn(w) ? 'blade' : 'mg');   // v4.1 前臂套件照選裝
   M.root.updateMatrixWorld(true); const c = M.root.clone(true); c.visible = true; c.matrixAutoUpdate = false; c.matrix.copy(M.root.matrixWorld); ts.add(c); c.updateMatrixWorld(true);
   c.traverse(o => { if (o.material && o.material.blending === THREE.AdditiveBlending) o.visible = false; });
   const box = new THREE.Box3().setFromObject(c), ctr = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
