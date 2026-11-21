@@ -403,6 +403,7 @@
     </section>
     <section data-page="aid">
       <label class="row"><span class="tx"><b>鎖定敵人</b><i>放手時準星附近有敵人，擺盪中視角一直看著它</i></span><input type="checkbox" class="sw" id="optLockEnemy" checked></label>
+      <label class="row"><span class="tx"><b>射控預判</b><i>主砲進入射程時，用虛線畫出敵人中彈當下的位置</i></span><input type="checkbox" class="sw" id="optFcs" checked></label>
       <label class="row"><span class="tx"><b>按住等勾點</b><i>沒勾點時按住鋼索，勾點出現就自動勾上（最多 1 秒）</i></span><input type="checkbox" class="sw" id="optRopeBuffer" checked></label>
     </section>
     <section data-page="gyro">
@@ -1142,6 +1143,7 @@ const newWeapon = () => ({ s2: LOADOUT.s2, active: 'main', cannon: { ammo: CONFI
 const state = { tick: 0, player: newPlayerState(S, CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon() };
 const events = []; // {type, ...} 給 render/hud/audio 用
 const opts = { shadows: true, paint: 'steel', view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true };
+try { opts.fcs = localStorage.getItem('wfm.fcs') !== '0'; } catch(_){ opts.fcs = true; }   // v4.3 射控預判（預設開）
 
 // =====================================================================
 // v3.0 玩家列表＋隊伍（LocalPlayer／BotPlayer；之後的 NetworkPlayer 用同樣欄位）
@@ -1659,7 +1661,7 @@ const r2 = x => Math.round(x * 100) / 100, r3 = x => Math.round(x * 1000) / 1000
 const v3a = (v, f = r2) => [f(v.x), f(v.y), f(v.z)];
 function netSnap(){
   const P = state.player, p = P.currPos;
-  return { s: Math.round(performance.now()), p: v3a(p), v: v3a(P.vel), y: r3(P.yaw), pi: r3(P.pitch), g: P.grounded ? 1 : 0,
+  return { s: Math.round(performance.now()), p: v3a(p), v: v3a(P.vel), y: r3(P.yaw), pi: r3(P.pitch), gy: r3(P.gunY ?? P.yaw), gp: r3(P.gunP ?? P.pitch), g: P.grounded ? 1 : 0,   // v4.3 gy/gp＝砲管方向（對手的紅外線）
     gn: P.grounded && P.groundN ? v3a(P.groundN, r3) : 0, pn: P.pinned && P.pinned.normal ? v3a(P.pinned.normal, r3) : 0,
     r: state.ropes.map(r => r.hooked ? v3a(r.anchor) : 0), w: state.weapon.active, l: state.weapon.s2 === 'mg' ? 1 : 0, hp: Math.round(local.hp), sf: P.safe ? 1 : 0, fx: NET.fx };
 }
@@ -1698,19 +1700,20 @@ function netSample(){
   const b = NET.buf; if (!b.length) return null;
   const t = performance.now() - NET.off - NETCFG.interpMs;
   let k = -1; for (let i = b.length - 1; i >= 0; i--) if (b[i].s <= t){ k = i; break; }
-  if (k < 0){ const s = b[0]; _ns.p.fromArray(s.p); _ns.v.fromArray(s.v); return { s, yaw: s.y, pitch: s.pi }; }
-  if (k === b.length - 1){ const s = b[k], dt2 = Math.min(t - s.s, NETCFG.extrapMs) / 1000; _ns.v.fromArray(s.v); _ns.p.fromArray(s.p).addScaledVector(_ns.v, dt2); return { s, yaw: s.y, pitch: s.pi }; }
+  const gy = s => s.gy ?? s.y, gp = s => s.gp ?? s.pi;   // v4.3 舊版對手沒有 gy/gp → 用視角方向代替
+  if (k < 0){ const s = b[0]; _ns.p.fromArray(s.p); _ns.v.fromArray(s.v); return { s, yaw: s.y, pitch: s.pi, gy: gy(s), gp: gp(s) }; }
+  if (k === b.length - 1){ const s = b[k], dt2 = Math.min(t - s.s, NETCFG.extrapMs) / 1000; _ns.v.fromArray(s.v); _ns.p.fromArray(s.p).addScaledVector(_ns.v, dt2); return { s, yaw: s.y, pitch: s.pi, gy: gy(s), gp: gp(s) }; }
   const A = b[k], B = b[k + 1], q = (t - A.s) / Math.max(1, B.s - A.s);
   _ns.p.set(A.p[0] + (B.p[0] - A.p[0]) * q, A.p[1] + (B.p[1] - A.p[1]) * q, A.p[2] + (B.p[2] - A.p[2]) * q);
   _ns.v.set(A.v[0] + (B.v[0] - A.v[0]) * q, A.v[1] + (B.v[1] - A.v[1]) * q, A.v[2] + (B.v[2] - A.v[2]) * q);
   if (k > 0) b.splice(0, k - 1);   // 丟掉太舊的
-  return { s: q < 0.5 ? A : B, yaw: lerpAng(A.y, B.y, q), pitch: A.pi + (B.pi - A.pi) * q };
+  return { s: q < 0.5 ? A : B, yaw: lerpAng(A.y, B.y, q), pitch: A.pi + (B.pi - A.pi) * q, gy: lerpAng(gy(A), gy(B), q), gp: gp(A) + (gp(B) - gp(A)) * q };
 }
 // 每個物理 tick：把對手機體放到插值位置（剛體留著給子彈／砲彈判定）
 function netApplyRemote(){
   const smp = netSample(), a = bot; if (!smp || !a) return;
   const s = smp.s, P = a.P;
-  P.prevPos.copy(P.currPos); P.currPos.copy(_ns.p); P.vel.copy(_ns.v); P.yaw = smp.yaw; P.pitch = smp.pitch; P.grounded = !!s.g;
+  P.prevPos.copy(P.currPos); P.currPos.copy(_ns.p); P.vel.copy(_ns.v); P.yaw = smp.yaw; P.pitch = smp.pitch; P.gunY = smp.gy; P.gunP = smp.gp; P.grounded = !!s.g;
   P.groundN = s.gn ? (P.groundN && P.groundN.isVector3 ? P.groundN : V()).fromArray(s.gn) : null;
   P.pinned = s.pn ? { normal: V().fromArray(s.pn), pos: _ns.p.clone() } : null; P.safe = !!s.sf;
   s.r.forEach((r, i) => { a.ropes[i].hooked = !!r; if (r) a.ropes[i].anchor.fromArray(r); });
@@ -1877,6 +1880,7 @@ function findHook(side, yaw, pitch, origin){
 function simTick(cmd, sub = false){   // v3.0 sub＝替其他機體（AI）跑的一格：不推進世界時間、不動靶
   const P = state.player;
   P.yaw = cmd.yaw; P.pitch = cmd.pitch;
+  P.gunY = cmd.gunYaw ?? cmd.yaw; P.gunP = cmd.gunPitch ?? cmd.pitch;   // v4.3 記下這格的砲管方向（紅外線瞄準、連線同步用）
   const tr = playerBody.translation(), lv = playerBody.linvel();
   _p.set(tr.x, tr.y, tr.z); _v.set(lv.x, lv.y, lv.z);
   const dt = CONFIG.physics.dt;
@@ -2327,6 +2331,8 @@ function autoFireCheck(cmd, dt, range){
 }
 // v1.9 主武：57mm 滑膛炮。按住會以 0.8 秒間隔連續射擊；砲彈是實體彈道（700 m/s、受重力）
 const CN = CONFIG.cannon;
+// v4.3 射控預判：砲彈飛到敵人那裡要 t 秒（距離／砲速；用預判位置的距離再算一次），預判位置＝現在位置＋速度×t（不算加速度）；回傳 t
+function fcsPredict(from, pos, vel, out){ let t = from.distanceTo(pos) / CN.speed; out.copy(pos).addScaledVector(vel, t); t = from.distanceTo(out) / CN.speed; out.copy(pos).addScaledVector(vel, t); return t; }
 function cannonTick(cmd, dt){
   const w = state.weapon, c = w.cannon, P = state.player;
   c.cool = Math.max(0, c.cool - dt); autoFireCheck(cmd, dt, CN.range);
@@ -2338,10 +2344,12 @@ function cannonTick(cmd, dt){
   const dir = dirFromYawPitch(gy, gp, V());
   const tr = playerBody.translation(), origin = eyePos(V(tr.x, tr.y, tr.z));
   // 射控輔助：彈道 2° 內有活靶 → 修正到靶上，並自動補上彈道下墜（抬高槍口）
-  { let best = null, bestA = CONFIG.fireControl.coneDeg * DEG;
+  { let best = null, bestA = CONFIG.fireControl.coneDeg * DEG, bestP = null;
+    const lead = opts.fcs && curActor === local;   // v4.3 開著「射控預判」時，準星對著虛線敵人（預判位置）也算：修正到預判位置，不會被拉回機體本身
     for (const t of targets){ if (t.dead) continue; const to = V().subVectors(t.mesh.position, origin), d = to.length(); if (d > CN.range) continue;
-      const ang = dir.angleTo(to); if (ang < bestA){ bestA = ang; best = t; } }
-    if (best){ const to = V().subVectors(best.mesh.position, origin), d = to.length(), tf = d / CN.speed; to.y += 0.5 * -CONFIG.physics.gravity * tf * tf; dir.copy(to.normalize()); w.assisted = (w.assisted || 0) + 1; } }
+      const ang = dir.angleTo(to); if (ang < bestA){ bestA = ang; best = t; bestP = t.mesh.position; }
+      if (lead && t.actor){ const fp = V(); fcsPredict(origin, t.mesh.position, t.actor.P.vel, fp); const a2 = dir.angleTo(fp.clone().sub(origin)); if (a2 < bestA){ bestA = a2; best = t; bestP = fp; } } }
+    if (best){ const to = V().subVectors(bestP, origin), d = to.length(), tf = d / CN.speed; to.y += 0.5 * -CONFIG.physics.gravity * tf * tf; dir.copy(to.normalize()); w.assisted = (w.assisted || 0) + 1; } }
   w.shells.push({ p: origin.clone(), v: dir.clone().multiplyScalar(CN.speed), life: CN.range / CN.speed + 0.5, id: w.shots });   // v3.9 從機身中心（眼睛）出發：以前從前方 1.5m 出發，貼臉時砲彈直接出現在敵人身體裡、判定不到
   w.recoil += CN.recoilDeg;
   if (!P.grounded && !P.pinned){ const lv = playerBody.linvel(); playerBody.setLinvel({ x: lv.x - dir.x * CN.knockback, y: lv.y - dir.y * CN.knockback, z: lv.z - dir.z * CN.knockback }, true); }   // 空中開砲會被後座力往後推
@@ -2456,7 +2464,76 @@ function worldTick(dt){
 const predLine = (()=>{ const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(CONFIG.rope.predictPoints*3), 3));
   const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.5, depthTest: false })); l.frustumCulled = false; l.visible = false; scene.add(l); return l; })();
 let wasInWin = false;
-const ropeMeshes = state.ropes.map(()=>{ const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1,6,1,true), new THREE.MeshBasicMaterial({ color: 0x9fe8ff })); m.visible = false; scene.add(m); return m; });
+// v4.3 主砲紅外線瞄準：每台機體一條細紅雷射（砲口 → 砲管方向打到的第一個東西）＋命中點紅點。所有人都看得到：
+//  自己看得清楚打哪裡，對方也看得到你的槍線、容易躲（反之亦然）。雷射是直線＝砲管方向；砲彈有重力下墜，遠距離會比紅點低一點
+const laserDotTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.22, 'rgba(255,70,50,1)'); gr.addColorStop(0.6, 'rgba(255,20,10,0.35)'); gr.addColorStop(1, 'rgba(255,0,0,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+function makeLaser(){   // 每台機體只建一次，之後每幀重複使用
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+  const line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xff2010, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  line.frustumCulled = false; line.visible = false; scene.add(line);
+  const dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: laserDotTex, color: 0xff5040, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  dot.visible = false; scene.add(dot); return { line, dot };
+}
+// v4.3 射控預判：虛線「幽靈」敵人（低模：扁機身＋炮塔＋砲管＋四隻腳）畫在砲彈到達時它會在的位置，只有自己看得到
+const fcsGhost = (() => {
+  const P = [], box = (cx, cy, cz, sx, sy, sz) => { const x = [cx - sx, cx + sx], y = [cy - sy, cy + sy], z = [cz - sz, cz + sz];
+    for (const a of y) for (const b of z) P.push(x[0], a, b, x[1], a, b); for (const a of x) for (const b of z) P.push(a, y[0], b, a, y[1], b); for (const a of x) for (const b of y) P.push(a, b, z[0], a, b, z[1]); };
+  box(0, 0, 0, 1.2, 0.45, 1.5); box(0, 0.7, -0.2, 0.6, 0.25, 0.7);   // 機身、炮塔
+  P.push(0, 0.72, -0.9, 0, 0.72, -3.4);   // 砲管
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) P.push(sx * 1.0, -0.2, sz * 1.1, sx * 2.0, 0.5, sz * 1.8, sx * 2.0, 0.5, sz * 1.8, sx * 2.3, -2.1, sz * 2.2);   // 腳：髖 → 膝 → 腳掌
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+  const mat = new THREE.LineDashedMaterial({ color: 0xffb030, dashSize: 0.5, gapSize: 0.25, transparent: true, opacity: 0.9, depthTest: false, depthWrite: false, toneMapped: false });
+  const m = new THREE.LineSegments(g, mat); m.computeLineDistances(); m.frustumCulled = false; m.visible = false; m.renderOrder = 5; scene.add(m);
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3)); lg.setAttribute('lineDistance', new THREE.BufferAttribute(new Float32Array(2), 1));
+  const link = new THREE.Line(lg, new THREE.LineDashedMaterial({ color: 0xffb030, dashSize: 0.6, gapSize: 0.45, transparent: true, opacity: 0.55, depthTest: false, depthWrite: false, toneMapped: false }));
+  link.frustumCulled = false; link.visible = false; link.renderOrder = 5; scene.add(link);
+  // 落差補正後的瞄準記號：小圓圈（畫面上大小固定），把準星放在這裡＝打中虛線敵人
+  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); x.strokeStyle = '#ffc050'; x.lineWidth = 7; x.beginPath(); x.arc(32, 32, 24, 0, Math.PI * 2); x.stroke(); x.fillStyle = '#ffc050'; x.fillRect(28, 28, 8, 8);
+  const mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, opacity: 0.8, depthTest: false, depthWrite: false, toneMapped: false })); mark.visible = false; mark.renderOrder = 6; scene.add(mark);
+  return { m, link, mark };
+})();
+const _fz = { o: V(), d: V(), m: V(), e: V(), c: V(), p: V() };
+function fcsHide(){ for (const a of actors) if (a.laser){ a.laser.line.visible = a.laser.dot.visible = false; } fcsGhost.m.visible = fcsGhost.link.visible = fcsGhost.mark.visible = false; }
+function drawFcs(alpha){
+  const Z = _fz, intro = match.state === 'intro';
+  // 紅外線：本機、AI、連線對手都畫
+  for (const a of actors){
+    if (!a.laser) a.laser = makeLaser();
+    const L = a.laser, P = a.P, M = a === local ? mech : a.mech;
+    if (!a.active || a.hp <= 0 || intro || a.weapon.active !== 'main' || (a !== local && !(M && M.root.visible))){ L.line.visible = L.dot.visible = false; continue; }
+    Z.o.lerpVectors(P.prevPos, P.currPos, alpha); Z.o.y += CONFIG.camera.eye;   // 砲彈實際從機身中心（眼睛）沿砲管方向出發
+    dirFromYawPitch(P.gunY ?? P.yaw, P.gunP ?? P.pitch, Z.d);
+    const hit = withActor(a, () => castRay(Z.o, Z.d, CN.range));
+    if (hit) Z.e.copy(hit.point).addScaledVector(Z.d, -0.15); else Z.e.copy(Z.o).addScaledVector(Z.d, CN.range);
+    const fp = a === local && !opts.view3P;   // 第一人稱：自己的雷射光束會擋在眼前 → 只畫紅點
+    if (!fp && M && M.loaded && M.muzzle('cannon', Z.m)){ const pa = L.line.geometry.attributes.position; pa.setXYZ(0, Z.m.x, Z.m.y, Z.m.z); pa.setXYZ(1, Z.e.x, Z.e.y, Z.e.z); pa.needsUpdate = true; L.line.visible = true; }
+    else L.line.visible = false;
+    L.dot.visible = !!hit; if (hit){ L.dot.position.copy(Z.e); L.dot.scale.setScalar(clamp(Z.e.distanceTo(camera.position) * 0.022, 0.45, 12)); }   // 畫面上大約固定大小
+  }
+  // 射控預判：只有本機、拿主砲、射程內、看得到的敵人
+  const G2 = fcsGhost; let tg = null, bestD = -2;
+  if (opts.fcs && !intro && match.state !== 'over' && local.weapon.active === 'main' && local.hp > 0){
+    eyePos(local.P.currPos, Z.o); const fwd = dirFromYawPitch(local.P.yaw, local.P.pitch, Z.d);
+    for (const t of targets){ const a = t.actor; if (!a || !a.active || t.dead) continue;
+      Z.c.lerpVectors(a.P.prevPos, a.P.currPos, alpha); const to = Z.m.subVectors(Z.c, Z.o), dist = to.length(); if (dist > CN.range || dist < 3) continue;
+      const dot = to.divideScalar(dist).dot(fwd); if (dot <= bestD) continue;   // 好幾台時挑最靠近準星的
+      const h = castRay(Z.o, to, dist); if (h && h.handle !== a.col.handle && h.toi < dist - 2) continue;   // 被地形擋住＝看不到
+      bestD = dot; tg = a; }
+  }
+  if (!tg){ G2.m.visible = G2.link.visible = G2.mark.visible = false; return; }
+  Z.c.lerpVectors(tg.P.prevPos, tg.P.currPos, alpha);
+  const tf = fcsPredict(Z.o, Z.c, tg.P.vel, Z.p);
+  G2.m.position.copy(Z.p); G2.m.rotation.set(0, tg.P.yaw, 0); G2.m.visible = true;
+  const cd = Z.p.distanceTo(camera.position); G2.m.material.scale = clamp(25 / cd, 0.2, 1);   // 遠的時候虛線段拉長，不會糊成實線
+  const lk = Z.c.distanceTo(Z.p);
+  if (lk > 1){ const pa = G2.link.geometry.attributes.position, ld = G2.link.geometry.attributes.lineDistance; pa.setXYZ(0, Z.c.x, Z.c.y, Z.c.z); pa.setXYZ(1, Z.p.x, Z.p.y, Z.p.z); ld.setX(1, lk);
+    pa.needsUpdate = ld.needsUpdate = true; G2.link.material.scale = G2.m.material.scale; G2.link.visible = true; } else G2.link.visible = false;
+  G2.mark.position.copy(Z.p); G2.mark.position.y += 0.5 * -CONFIG.physics.gravity * tf * tf;   // 補上砲彈下墜：準星要放高一點
+  G2.mark.scale.setScalar(clamp(cd * 0.045, 0.6, 40)); G2.mark.visible = true;
+}
+const ropeMeshes =state.ropes.map(()=>{ const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1,6,1,true), new THREE.MeshBasicMaterial({ color: 0x9fe8ff })); m.visible = false; scene.add(m); return m; });
 const botRopeMeshes = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,1,6,1,true), new THREE.MeshBasicMaterial({ color: 0xffa040 })); m.visible = false; scene.add(m); return m; });
 if (PROMO) for (const m of [...ropeMeshes, ...botRopeMeshes]){ m.geometry = new THREE.CylinderGeometry(0.12, 0.12, 1, 8, 1, true); m.material.color.multiplyScalar(2.6); }   // v3.7 宣傳片：鋼索粗一點、發光
 const anchorMeshes = state.ropes.map(()=>{ const m = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), new THREE.MeshBasicMaterial({ color: 0x40e0ff })); m.visible = false; scene.add(m); return m; });
@@ -3349,6 +3426,8 @@ document.getElementById('bView').addEventListener('click', e => { e.stopPropagat
 document.getElementById('bView').innerHTML = opts.view3P ? IC_3P : IC_1P;
 document.getElementById('optLockEnemy').addEventListener('change', e => opts.lockEnemy = e.target.checked);
 document.getElementById('optRopeBuffer').addEventListener('change', e => opts.ropeBuffer = e.target.checked);
+document.getElementById('optFcs').checked = opts.fcs;   // v4.3 射控預判：記在 localStorage（wfm.fcs）
+document.getElementById('optFcs').addEventListener('change', e => { opts.fcs = e.target.checked; try { localStorage.setItem('wfm.fcs', opts.fcs ? '1' : '0'); } catch(_){} });
 document.getElementById('optRoll').addEventListener('change', e => opts.roll = e.target.checked);
 // v4.1 靈敏度依裝置分開記：電腦預設 0.12、手機 0.32
 function syncDeviceUI(){ const sl = document.getElementById('optSens'); sl.value = opts.sens; document.getElementById('optSensV').textContent = opts.sens.toFixed(2);
@@ -3653,7 +3732,7 @@ const _eye = V(), _cam = V(); const stab = { point: null, fast: 0, target: null 
 function frame(now){
   requestAnimationFrame(frame);
   let dt = Math.min((now - last) / 1000, 0.25); last = now;
-  if (!running){ if (frame.lh){ frame.lh = false; document.getElementById('lockHint').style.display = 'none'; } menuFrame(dt); netFrame(dt); drawFrame(); return; }
+  if (!running){ if (frame.lh){ frame.lh = false; document.getElementById('lockHint').style.display = 'none'; } fcsHide(); menuFrame(dt); netFrame(dt); drawFrame(); return; }
   if (paused && match.mode === 'net') togglePause(false);
   { const want = mouseMode && !paused && !document.pointerLockElement && !setEl.classList.contains('open') && match.state !== 'intro'; if (want !== frame.lh){ frame.lh = want; document.getElementById('lockHint').style.display = want ? 'block' : 'none'; } }   // v4.1 電腦：提示點畫面鎖定滑鼠
   if ((paused || setEl.classList.contains('open')) && match.mode !== 'net'){ netFrame(dt); drawFrame(); return; }   // v4.1 P 鍵暫停也一樣   // v4.1 開著設定＝暫停（物理、AI、計時都停）；線上對戰為了公平不暫停
@@ -3830,6 +3909,7 @@ function frame(now){
     if (r && r.hooked && bot.mech.loaded){ placeCylinder(m, bot.mech.dishTip(i, V()), r.anchor); m.visible = true; }
     else if (i === 1 && fr && fr.t > 0 && bot.mech.loaded){ fr.t -= dt; placeCylinder(m, bot.mech.dishTip(i, V()), fr.to); m.visible = true; }
     else m.visible = false; }
+  drawFcs(alpha);   // v4.3 紅外線瞄準＋射控預判
   // 特效
   for (const t of tracers) if (t.life > 0){ t.life -= dt; t.m.material.opacity = Math.max(0, t.life/0.3); if (t.life <= 0) t.m.visible = false; }
   drawShells(dt);
