@@ -58,13 +58,13 @@
     65% { opacity:.6; background-color:rgba(var(--c),.08); } 100% { opacity:0; background-color:rgba(var(--c),0); } }
   @keyframes woJit { 0% { background-position:0 0, 0 0; } 14% { background-position:-41px 23px, 0 1px; } 28% { background-position:17px -61px, 0 2px; }
     42% { background-position:-73px -9px, 0 0; } 57% { background-position:31px 47px, 0 1px; } 71% { background-position:-11px 88px, 0 2px; } 85%, 100% { background-position:57px -33px, 0 0; } }
-  #vs.on .vs-card, #settings.open .panel, .m-modal.on .m-panel, .m-sub.on, .m-scr.on .m-hangar { will-change:transform, opacity;
+  #vs.on .vs-card, #settings.open .panel, .m-modal.on .m-panel, .m-sub.on, .m-scr.on .m-hangar, #pause.on .pz-win { will-change:transform, opacity;
     animation:woOpen var(--wo-t, .55s) var(--wo-dl, 0s) both, woFlk calc(var(--wo-t, .55s) * 1.5) var(--wo-dl, 0s) steps(1, end) both; }
-  .wo-n::after, #vs.on .vs-card::after, #settings.open .panel::after, .m-modal.on .m-panel::after, .m-sub.on::after, .m-scr.on .m-hangar::after { content:''; position:absolute; inset:0; z-index:5; pointer-events:none;
+  .wo-n::after, #vs.on .vs-card::after, #settings.open .panel::after, .m-modal.on .m-panel::after, .m-sub.on::after, .m-scr.on .m-hangar::after, #pause.on .pz-win::after { content:''; position:absolute; inset:0; z-index:5; pointer-events:none;
     background-image:var(--wo-noise, none), repeating-linear-gradient(0deg, rgba(0,0,0,.4) 0 1px, transparent 1px 3px); background-size:256px 256px, 100% 3px;
     animation:woNoise calc(var(--wo-t, .55s) * 1.6) var(--wo-dl, 0s) ease-out both, woJit calc(var(--wo-t, .55s) * 1.6) var(--wo-dl, 0s) steps(1, end) both; }
-  @media (prefers-reduced-motion: reduce) { #vs.on .vs-card, #settings.open .panel, .m-modal.on .m-panel, .m-sub.on, .m-scr.on .m-hangar { animation:none; }
-    #vs.on .vs-card::after, #settings.open .panel::after, .m-modal.on .m-panel::after, .m-sub.on::after, .m-scr.on .m-hangar::after { display:none; } }
+  @media (prefers-reduced-motion: reduce) { #vs.on .vs-card, #settings.open .panel, .m-modal.on .m-panel, .m-sub.on, .m-scr.on .m-hangar, #pause.on .pz-win { animation:none; }
+    #vs.on .vs-card::after, #settings.open .panel::after, .m-modal.on .m-panel::after, .m-sub.on::after, .m-scr.on .m-hangar::after, #pause.on .pz-win::after { display:none; } }
   /* 開場對戰畫面：背景是繞圈運鏡的戰場，雙方名片直接浮在戰場上（沒有底下的深色帶子） */
   #vs { position:fixed; inset:0; z-index:9; display:none; pointer-events:none; overflow:hidden; font-family:var(--f-disp); }
   #vs.on { display:block; } #vs.out { opacity:0; transition:opacity .35s; }
@@ -324,6 +324,18 @@
   .m-roomno { border-radius:0; border-color:rgba(var(--mint),.7); background:rgba(6,20,22,.8); box-shadow:0 0 5px rgba(var(--mint),.22); font-family:var(--f-disp); }
   .m-roomno button { border-radius:0; border-color:rgba(var(--mint),.5); background:rgba(var(--mint),.04); }
   .m-slot { border-radius:0; }
+  /* v4.1 暫停視窗（電腦按 P）、滑鼠鎖定提示、觸控換彈鈕 */
+  #pause { position:fixed; inset:0; z-index:19; display:none; align-items:center; justify-content:center; background:rgba(2,6,10,.45); font-family:var(--f-disp); }
+  #pause.on { display:flex; }
+  .pz-win { --c:var(--mint); position:relative; min-width:min(320px, 86vw); padding:22px 24px 18px; border:1px solid rgba(var(--c),.75); background:rgba(6,20,22,.9); box-shadow:0 0 5px rgba(var(--c),.22); color:#eafff8; text-align:center; }
+  .pz-win::before { content:'PAUSE 暫停'; position:absolute; top:-18px; left:-1px; height:18px; line-height:18px; padding:0 10px; background:rgb(var(--c)); color:var(--ink); font-size:12px; font-weight:700; letter-spacing:.16em; }
+  .pz-win p { margin:0 0 14px; font-size:15px; } .pz-win p b { color:rgb(var(--c)); }
+  .pz-b { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .pz-b button { min-height:44px; min-width:92px; padding:0 14px; border-radius:0; border:1px solid rgba(var(--c),.5); background:rgba(var(--c),.04); color:#eafff8; font:inherit; font-size:15px; cursor:pointer; }
+  .pz-b button:first-child { border-color:rgb(var(--c)); background:rgba(var(--c),.14); } .pz-b button:active { background:rgba(var(--c),.5); color:var(--ink); }
+  #lockHint { position:fixed; left:50%; top:58%; transform:translateX(-50%); z-index:6; display:none; padding:6px 14px; border:1px solid rgba(var(--mint),.6); background:rgba(6,20,22,.7); color:#eafff8; font-size:14px; pointer-events:none; }
+  #bReload { --c:#9fe8ff; width:calc(var(--Hk)*0.6); height:calc(var(--Hk)*0.6); right:calc(var(--pad) + var(--sr) + var(--Fk)*1.18 + 3vmin + var(--Hk)*0.2); bottom:calc(var(--pad) + var(--sb) + var(--Fk)*0.45 + var(--Hk) + 2.5vmin); }
+  #bReload b { font-size:13px; letter-spacing:.05em; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -348,6 +360,7 @@
   <div class="btn rope" id="bRopeR"><b class="ropeic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v8.5"/><circle cx="12" cy="2.8" r="1.4"/><path d="M12 11c-3.6 0-5.8 2.6-5.8 5.6M12 11c3.6 0 5.8 2.6 5.8 5.6M12 11v9.5"/><path d="M4.3 15.4l1.9 1.2 1.2-1.9M19.7 15.4l-1.9 1.2-1.2-1.9M10.4 19.2l1.6 1.4 1.6-1.4"/></svg><i class="side">▶</i></b><small id="sRopeR">—</small></div>
   <div class="btn xb" id="bJump"><b>跳</b></div><div class="btn xb" id="bBoost"><b>推</b></div>
   <div class="btn xb" id="bW1"></div><div class="btn xb" id="bW2"></div><div class="btn xb" id="bW3"></div>
+  <div class="btn" id="bReload"><b>換彈</b></div>
   <div class="btn fire" id="bFire"><b id="lFire"></b><small id="sFire">1000</small></div>
   <div id="swapHint" style="display:none"><span id="swapCur">主武</span></div>
   <div class="wslot" id="ws_main" data-s="main"></div><div class="wslot" id="ws_mg" data-s="mg"></div><div class="wslot" id="ws_sub" data-s="sub"></div>
@@ -360,6 +373,8 @@
   <button class="small" id="bSet" aria-label="設定">⚙</button>
   <button class="small" id="bFS" aria-label="回到全螢幕" style="display:none">⛶</button>
 </div>
+<div id="pause"><div class="pz-win"><p>按 <b>P</b> 或「繼續」回到戰鬥</p><div class="pz-b"><button id="pzGo">繼續</button><button id="pzSet">設定</button><button id="pzHome">回到首頁</button></div></div></div>
+<div id="lockHint">點一下畫面鎖定滑鼠（Esc 放開＝暫停）</div>
 <div id="settings">
   <div class="panel">
     <div class="sh"><span>設定</span><span style="display:flex;gap:8px;align-items:center"><b id="setPause" class="set-pz"></b><button id="setHome" aria-label="回到首頁" style="display:none;width:auto;padding:0 12px;font-size:15px">⌂ 回到首頁</button><button id="setClose" aria-label="關閉">✕</button></span></div>
@@ -368,11 +383,12 @@
     </nav>
     <div class="pages">
     <section data-page="ctl" class="on">
+      <label class="row"><span class="tx"><b>裝置</b><i id="optDeviceTx">電腦＝鍵盤滑鼠；手機平板＝觸控按鈕</i></span><select id="optDevice"><option value="auto">自動判斷</option><option value="pc">電腦</option><option value="mobile">行動裝置</option></select></label>
       <label class="row"><span class="tx"><b>速度區間</b><i>越快越刺激，也越容易掉下去</i></span><select id="optSpeed"><option value="0.75">穩定 ×0.75</option><option value="1" selected>標準</option><option value="1.3">快 ×1.3</option><option value="1.7">極速 ×1.7</option></select></label>
       <label class="row"><span class="tx"><b>微調倍率</b><i>0.5 ～ 2.0 自由調整</i></span><span class="ctl"><input type="range" id="optSpeedK" min="0.5" max="2" step="0.05" value="1"> <span id="optSpeedV" class="val">×1.00</span></span></label>
       <label class="row"><span class="tx"><b>跟手準星</b><i>按住按鈕拖曳時，準星跟著手指走</i></span><select id="optFollow"><option value="none">關（畫面中央）</option><option value="weapon">武器</option><option value="rope">鋼索</option></select></label>
       <label class="row"><span class="tx"><b>自動開火</b><i>準星對到敵人就射（57mm）</i></span><input type="checkbox" class="sw" id="optAutoFire"></label>
-      <label class="row"><span class="tx"><b>拖曳靈敏度</b><i>滑動畫面轉視角的速度</i></span><span class="ctl"><input type="range" id="optSens" min="0.1" max="0.6" step="0.05" value="0.25"></span></label>
+      <label class="row"><span class="tx"><b>視角靈敏度</b><i id="optSensTx">滑動畫面轉視角的速度</i></span><span class="ctl"><input type="range" id="optSens" min="0.04" max="0.6" step="0.01" value="0.25"><span id="optSensV" class="val"></span></span></label>
       <div class="row"><span class="tx"><b>設定教學</b><i>一步步帶你調速度、按鈕大小和位置</i></span><button id="optTutSet" class="lay">開始</button></div>
       <div class="row"><span class="tx"><b>自訂按鈕位置</b><i>拖曳射擊鈕、左右鋼索鈕到順手的地方，也能個別調大小</i></span><button id="optLayout" class="lay">編輯</button></div>
       <label class="row"><span class="tx"><b>按鈕大小</b><i>手大或平板可以調大</i></span><span class="ctl"><input type="range" id="optSize" min="0.8" max="1.3" step="0.05" value="1"></span></label>
@@ -415,7 +431,7 @@
   <div class="vs-count"><span>開打倒數</span><b id="vsCount">3</b></div></div>
 <div id="start" class="loading">
   <div id="mProfile" class="m-profile" role="button" aria-label="個人資料"><div class="m-av">◆</div><div class="m-pt"><b id="mName">PILOT</b><small id="mRec">對戰紀錄</small></div></div>
-  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v3.9（測試版：螳螂鐮＋連線）</span></div>
+  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v4.1（測試版：螳螂鐮＋連線＋電腦操作）</span></div>
   <button id="mSet" class="m-icon" aria-label="設定">⚙</button>
   <div class="m-scr on" data-scr="home">
     <div class="m-left">
@@ -461,7 +477,11 @@
   <div id="mModal" class="m-modal"><div class="m-panel">
     <button class="m-x" id="mModalX" aria-label="關閉">✕</button>
     <div id="mHelpBody">
-      <h3>操作說明</h3><details open><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
+      <h3>操作說明</h3><details open><summary style="cursor:pointer;color:#9fe4ff">電腦操作（鍵盤＋滑鼠）</summary><ul>
+    <li>點一下畫面鎖定滑鼠，移動滑鼠＝轉視角；<b>Esc</b> 放開滑鼠（同時暫停）</li>
+    <li><b>WASD</b> 移動　<b>空白鍵</b> 跳躍（按著方向鍵＝往那邊跳）　<b>Shift</b> 噴氣</li>
+    <li><b>Q／E</b> 左／右鋼索　<b>左鍵</b> 射擊　<b>右鍵</b> 直接用 02 副武器（放開切回）　<b>中鍵</b> 換武器（也可以按 1／2／3）</li>
+    <li><b>R</b> 換彈（手機按「換彈」鈕；每種武器身上帶 3 個備用彈匣，站上補給平台補回）　<b>P</b> 暫停（線上對戰不能暫停）　<b>V</b> 切換第一／第三人稱</li></ul></details><details open><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
   <ul>
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
     <li><b style="color:#c99bff">線上對戰</b>（1v1，真人）：首頁按「MAIN LOBBY」進大廳。「QUICK MATCH」自動找人，20 秒沒找到就改打 AI；「ROOM」建立房間，把房間代碼告訴朋友，對方在「JOIN」輸入代碼加入，房主按「BATTLE」開打。房主從基地 A、加入者從基地 B 出發，規則和對戰 AI 相同</li>
@@ -528,12 +548,13 @@ const CONFIG = Object.freeze({
   render: { dprMax: 1.5, dprFallback: 1.0, fallbackFps: 50, fpsWindow: 2 },
   // v1.9 主武：57mm 滑膛炮（實體彈道：有飛行時間與彈道下墜、落點爆炸範圍傷害）
   cannon: { rpm: 75, speed: 700, range: 600, damage: 1500, splash: 700, splashR: 5,   // v3.9 加強：直擊 700→1500（4 發擊破）、爆風 350→700、半徑 4→5m
-             mag: 6, reserve: 24, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
+             mag: 6, reserve: 18, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
   nail: { crawlSpeed: 5, crawlPerNail: 6, damage: 1000, mag: 6, reserve: 18, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6, brake: 0.3 },   // 副武：釘槍（5×2 發）
   safeZone: { radius: 18 },
   melee: { dmg: 6000, range: 7.5, vReach: 5, arcDeg: 60, guardDeg: 60, parryPush: 12, windup: 0.25, recoverHit: 0.25, recoverMiss: 0.6, cooldown: 3, lunge: 6 },   // v3.9 螳螂鐮：前搖 0.25 秒（對手看得到手臂舉起）→ 下劈；揮空硬直 0.6 秒、冷卻 3 秒
   pvp: { hp: 6000, killLimit: 5, timeLimit: 300, spawnB: { x: 354, y: 12.2, z: 0 } },   // v3.0b 機體 6000 HP＝之後的螳螂鐮（6000，近戰）一刀滿血擊破；先擊破 5 次、5 分鐘
-  weapon: { rpm: 600, range: 500, damage: 100, ammo: 1000, reload: 3,   // v1.9 起為副武：14.5mm 機槍（格鬥臂）
+  weapon: { rpm: 600, range: 500, damage: 100, ammo: 200, reserve: 600, reload: 3,   // v4.1 改成彈匣制：一匣 200 發、身上帶 3 個備用彈匣
+      // v1.9 起為副武：14.5mm 機槍（格鬥臂）
     spread: { base: 0.3, moving: 0.5, swinging: 1.0, swingSpeed: 12, max: 2.0, bloomPerShot: 0.08, recover: 0.3 },
     recoilDeg: 0.3, recoilTau: 0.15, tracerEvery: 5 },
   target: { hp: 1000, respawn: 3 },
@@ -1113,7 +1134,7 @@ const newRopes = () => [
 // v3.9 機庫選裝：02 欄可選螳螂鐮（blade）或 14.5mm 機槍（mg）；欄位 id 仍是 'mg'，用 w.s2 區分
 const LOADOUT = { s2: (() => { try { return localStorage.getItem('wfm.s2') === 'mg' ? 'mg' : 'blade'; } catch(_){ return 'blade'; } })() };
 const bladeOn = w => !w || w.s2 !== 'mg';
-const newWeapon = () => ({ s2: LOADOUT.s2, active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0, melee: { cd: 0, t: 0, ph: 0, prev: false, vis: null } });
+const newWeapon = () => ({ s2: LOADOUT.s2, active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, reserve: CONFIG.weapon.reserve, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0, melee: { cd: 0, t: 0, ph: 0, prev: false, vis: null } });
 const state = { tick: 0, player: newPlayerState(S, CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon() };
 const events = []; // {type, ...} 給 render/hud/audio 用
 const opts = { shadows: true, paint: 'steel', view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true };
@@ -1734,11 +1755,14 @@ function buildCommand(){
   let mx = input.stickX, mz = input.stickZ;
   if (k.has('KeyA')) mx -= 1; if (k.has('KeyD')) mx += 1; if (k.has('KeyW')) mz += 1; if (k.has('KeyS')) mz -= 1;
   const len = Math.hypot(mx, mz); if (len > 1){ mx/=len; mz/=len; }
+  let fire2 = false;   // v4.1 右鍵：按住＝切到 02 並使用，放開切回原本的武器
+  if (k.has('Mouse2')){ fire2 = true; if (state.weapon.active !== 'mg'){ if (input.s2Back == null) input.s2Back = state.weapon.active; input.swapTo = 'mg'; } }
+  else if (input.s2Back != null){ if (!(state.weapon.melee && state.weapon.melee.ph === 1)){ input.swapTo = input.s2Back; input.s2Back = null; } }   // 等刀揮出去再切回
   const cmd = { seq: seq++, tick: state.tick, moveX: mx, moveZ: mz, yaw: state.player.yaw, pitch: state.player.pitch,
-    fire: input.fire || input.fireTap || k.has('Mouse0'), hookL: input.hookL || k.has('KeyQ'), hookR: input.hookR || k.has('KeyE'),
+    fire: input.fire || input.fireTap || k.has('Mouse0') || fire2, hookL: input.hookL || k.has('KeyQ'), hookR: input.hookR || k.has('KeyE'),
     hookMain: input.hookMain || k.has('KeyF'), smart: opts.smart && !mouseMode, autoFire: opts.autoFire && !mouseMode,
     swap: input.swapQueued, swapTo: input.swapTo || null, gunYaw: input.gunYaw, gunPitch: input.gunPitch, ropeYaw: input.ropeYaw, ropePitch: input.ropePitch,
-    jump: input.jumpQueued, jumpPow: input.jumpPow || 1, jumpX: input.jumpX || 0, jumpZ: input.jumpZ == null ? 0 : input.jumpZ, boost: input.boost || k.has('ShiftLeft') || k.has('ShiftRight') || k.has('Space'), thrust: input.thrust, reload: input.reloadQueued };
+    jump: input.jumpQueued, jumpPow: input.jumpPow || 1, jumpX: input.jumpX || 0, jumpZ: input.jumpZ == null ? 0 : input.jumpZ, boost: input.boost || k.has('ShiftLeft') || k.has('ShiftRight'), thrust: input.thrust, reload: input.reloadQueued };
   // v2.1 第三人稱：鏡頭在機體後上方，從鏡頭中心射線打到的點反推槍口方向，子彈才會打在準星上
   { const a3 = aim3P(); if (a3){ cmd.aimYaw = a3[0]; cmd.aimPitch = a3[1]; if (cmd.gunYaw == null){ cmd.gunYaw = a3[0]; cmd.gunPitch = a3[1]; } } }
   if (window.__aimOverride){ const o = window.__aimOverride; cmd.aimYaw = cmd.gunYaw = o[0]; cmd.aimPitch = cmd.gunPitch = o[1]; }   // 測試／宣傳片用：直接指定瞄準方向
@@ -2184,8 +2208,10 @@ function weaponTick(cmd, dt){
   if (w.blocked && cmd.fire) return;
   w.cooldown = Math.max(0, w.cooldown - dt);
   w.bloom = Math.max(0, w.bloom - dt * (W.spread.max / W.spread.recover));
-  if (w.reloading > 0){ w.reloading -= dt; if (w.reloading <= 0){ w.reloading = 0; w.ammo = W.ammo; events.push({ type: 'reloaded' }); } return; }
-  if ((cmd.reload && w.ammo < W.ammo) || w.ammo <= 0){ w.reloading = W.reload; events.push({ type: 'reload' }); return; }
+  if (w.reserve == null) w.reserve = W.reserve;
+  if (w.reloading > 0){ w.reloading -= dt; if (w.reloading <= 0){ const n = Math.min(W.ammo - w.ammo, Math.floor(w.reserve)); w.ammo += n; w.reserve -= n; w.reloading = 0; events.push({ type: 'reloaded' }); } return; }   // v4.1 從備用彈匣補
+  if (((cmd.reload && w.ammo < W.ammo) || w.ammo <= 0) && w.reserve >= 1){ w.reloading = W.reload; events.push({ type: 'reload' }); return; }
+  if (w.ammo <= 0) return;   // 彈匣和備用都打光：到補給平台補
   autoFireCheck(cmd, dt, W.range);
   if (!(cmd.fire || w.autoOn) || w.cooldown > 0) return;
   w.cooldown += 60 / W.rpm;
@@ -2312,7 +2338,8 @@ function shellsTick(dt){
 function nailTick(cmd, dt, fireEdge){
   const w = state.weapon, n = w.nail, N = CONFIG.nail, P = state.player;
   n.cool = Math.max(0, n.cool - dt);
-  if (n.reloading > 0){ n.reloading -= dt; if (n.reloading <= 0){ n.reloading = 0; const take = Math.min(N.mag, n.reserve); n.ammo = take; n.reserve -= take; } return; }
+  if (n.reloading > 0){ n.reloading -= dt; if (n.reloading <= 0){ n.reloading = 0; const take = Math.min(N.mag - n.ammo, n.reserve); n.ammo += take; n.reserve -= take; } return; }   // v4.1 換彈不丟掉彈匣裡剩下的
+  if (cmd.reload && n.ammo < N.mag && n.reserve > 0){ n.reloading = N.reload; events.push({ type: 'reload' }); return; }   // v4.1 手動換彈（R／換彈鈕）
   if (n.ammo <= 0){ if (n.reserve > 0){ n.reloading = N.reload; events.push({ type: 'reload' }); } return; }
   if (!fireEdge || n.cool > 0 || w.blocked) return;
   n.cool = N.cooldown; n.ammo--; w.fired++;
@@ -2375,7 +2402,7 @@ function actorEnvTick(dt){   // v3.0 每台機體各自：後座回復、保護�
     P.safe = safeZones.some(z => p.y > z.y - 0.5 && Math.hypot(p.x - z.x, p.y - z.y, p.z - z.z) < z.r);   // v2.5 只有基地表面上方的半球算保護區；島下方可以開火（例如釘在島底）   // 無敵區（日後 PvP：區內不受傷、不能開火）
     if (P.grounded) for (const pad of supplyPads){ if (Math.hypot(pad.x - p.x, pad.z - p.z) < pad.r && Math.abs(p.y - pad.y) < 4){
       P.onPad = true; P.fuel = Math.min(CONFIG.boost.fuel, P.fuel + CONFIG.boost.regenPad * dt);
-      const w = state.weapon; if (w.reloading <= 0) w.ammo = Math.min(W.ammo, w.ammo + CONFIG.supply.ammoPerSec * dt);
+      const w = state.weapon; w.reserve = Math.min(W.reserve, (w.reserve ?? W.reserve) + CONFIG.supply.ammoPerSec * dt);   // v4.1 補給平台補備用彈匣
       w.nail.reserve = CONFIG.nail.reserve; if (!w.nail.reloading) w.nail.ammo = CONFIG.nail.mag;
       w.cannon.reserve = Math.min(CN.reserve, w.cannon.reserve + CN.ammoPerSec * dt); } } }
   if (curActor) curActor.tgt.mesh.position.set(_p.x, _p.y, _p.z);   // 給別台瞄準／判定用的位置
@@ -2963,7 +2990,7 @@ function look(dx, dy, speed = 200){
 // v0.9：改回看得見的按鈕（荒野亂鬥風格），不再用隱形手勢
 //  左：搖桿（左半邊任何地方都能浮動）＋「左索」鈕：按住＝勾住，按著直接拖曳＝收放／擺盪
 //  右：「射擊」大鈕：按住＝開火，按著拖曳＝邊射邊瞄；「右索」鈕：按住＝勾住，按著拖曳＝瞄準；其他地方拖曳＝瞄準
-const btnRoles = { bRopeL: 'ropeL', bRopeR: 'ropeR', bFire: 'fire', bJump: 'jump', bBoost: 'boost', bW1: 'w1', bW2: 'w2', bW3: 'w3' };   // v3.9 後五個是三指以上用的選用按鈕
+const btnRoles = { bReload: 'reload', bRopeL: 'ropeL', bRopeR: 'ropeR', bFire: 'fire', bJump: 'jump', bBoost: 'boost', bW1: 'w1', bW2: 'w2', bW3: 'w3' };   // v3.9 後五個是三指以上用的選用按鈕
 function startFire(p){ // 射擊鈕判定為「開火」：開始射擊，之後拖曳＝瞄準（或移動跟手準星）
   p.firePending = false; setRole('fire', true); slotsOpen(false);
   if (opts.follow === 'weapon'){ p.drag = 'aimGun'; aimReturn = false; } else p.drag = 'look';
@@ -3023,10 +3050,13 @@ function setRole(role, on){
   else if (role === 'swap'){ if (on){ input.swapQueued = true; buzz(10); } }
   else if (role === 'jump'){ if (on){ const m = Math.hypot(input.stickX || 0, input.stickZ || 0); input.jumpQueued = true; input.jumpPow = 1; input.jumpX = m > 0.3 ? input.stickX / m : 0; input.jumpZ = m > 0.3 ? input.stickZ / m : 0; tutSig.tap = true; buzz(12); } }   // 搖桿有推就往那個方向跳
   else if (role === 'boost'){ input.boost = on; }
+  else if (role === 'reload'){ if (on){ input.reloadQueued = true; buzz(10); } }   // v4.1 換彈鈕
   else if (role === 'w1' || role === 'w2' || role === 'w3'){ if (on){ input.swapTo = role === 'w1' ? 'main' : role === 'w2' ? 'mg' : 'sub'; buzz(10); swapHint(); } }
   const id = Object.keys(btnRoles).find(k => btnRoles[k] === role); if (id) document.getElementById(id).classList.toggle('on', on);
 }
 touchEl.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'mouse' && mouseMode){ unlockAudio(); if (!document.pointerLockElement && running && !paused) touchEl.requestPointerLock?.(); return; }   // v4.1 電腦：點畫面鎖定滑鼠
+  if (e.pointerType === 'touch' && mouseMode && DEVICE === 'mobile'){ mouseMode = false; }   // 平板外接鍵盤後又用手指 → 回到觸控
   e.preventDefault(); unlockAudio(); showTouchUI(true);
   const now = performance.now();
   let bEl = e.target.closest ? e.target.closest('.btn') : null;
@@ -3123,14 +3153,32 @@ document.addEventListener('selectionchange', () => { const sel = getSelection &&
 document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 document.addEventListener('contextmenu', e => e.preventDefault());
 
-let mouseMode = false;
+// v4.1 裝置判斷：行動裝置（觸控按鈕）或電腦（鍵盤＋滑鼠）；設定 → 操作 → 裝置 可以手動切換
+const DEVICE_AUTO = (() => { const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod|Android|Mobi/i.test(ua)) return 'mobile';
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return 'mobile';   // iPadOS 會假裝成 Mac
+  return matchMedia('(pointer:coarse)').matches && !matchMedia('(any-pointer:fine)').matches ? 'mobile' : 'pc'; })();
+const lsGet = k => { try { return localStorage.getItem(k); } catch(_){ return null; } }, lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch(_){} };
+let DEVICE = ['pc', 'mobile'].includes(lsGet('wfm.device')) ? lsGet('wfm.device') : DEVICE_AUTO;
+const SENS_DEF = { pc: 0.12, mobile: 0.32 };   // 電腦（滑鼠每像素）調低、手機（手指拖曳）調高
+const sensFor = d => { const v = parseFloat(lsGet('wfm.sens.' + d)); return v > 0 ? v : SENS_DEF[d]; };
+opts.sens = sensFor(DEVICE);
+let mouseMode = DEVICE === 'pc';
+let paused = false;   // v4.1 P 鍵暫停（線上對戰不行）
 // v3.9 自訂按鈕位置的存檔（showTouchUI 會用到，所以放在前面）
 let LAYOUT = {}; try { LAYOUT = JSON.parse(localStorage.getItem('wfm.layout') || '{}') || {}; } catch(_){ LAYOUT = {}; }
-function showTouchUI(on){ document.querySelectorAll('.btn').forEach(b => b.style.display = on && !(b.classList.contains('xb') && !(LAYOUT[b.id] && LAYOUT[b.id].on)) ? 'flex' : 'none'); if (!on) { stickBase.style.display = stickKnob.style.display = 'none'; } }
+function showTouchUI(on){ if (mouseMode && !(typeof layEd !== 'undefined' && layEd.on)) on = false;   // v4.1 電腦模式不顯示觸控按鈕
+  document.querySelectorAll('.btn').forEach(b => b.style.display = on && !(b.classList.contains('xb') && !(LAYOUT[b.id] && LAYOUT[b.id].on)) ? 'flex' : 'none'); if (!on) { stickBase.style.display = stickKnob.style.display = 'none'; } }
 addEventListener('keydown', e => {
+  if (e.target && e.target.matches && e.target.matches('input, select, textarea')) return;   // 在輸入框打字不算操作
   if (e.repeat) return; unlockAudio();
   if (!mouseMode){ mouseMode = true; showTouchUI(false); }
   input.keys.add(e.code);
+  // v4.1 電腦操作：WASD 移動、Q/E 鋼索、空白鍵跳躍（按著方向鍵＝往那邊跳）、Shift 噴氣、R 換彈、P 暫停、1/2/3 選武器
+  if (e.code === 'Space'){ e.preventDefault(); const k = input.keys, x = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0), z = (k.has('KeyW') ? 1 : 0) - (k.has('KeyS') ? 1 : 0), m = Math.hypot(x, z);
+    input.jumpQueued = true; input.jumpPow = 1; input.jumpX = m ? x / m : 0; input.jumpZ = m ? z / m : 0; tutSig.tap = true; }
+  if (e.code === 'KeyP') togglePause();
+  if (e.code === 'Digit1') input.swapTo = 'main'; if (e.code === 'Digit2') input.swapTo = 'mg'; if (e.code === 'Digit3') input.swapTo = 'sub';
 
   if (e.code === 'KeyR') input.reloadQueued = true;
   if (e.code === 'KeyX') input.swapQueued = true;
@@ -3138,8 +3186,14 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => input.keys.delete(e.code));
 renderer.domElement.addEventListener('mousedown', ()=>{});
-addEventListener('mousedown', e => { if (e.pointerType === 'touch') return; if (mouseMode && document.pointerLockElement){ if (e.button===0) input.keys.add('Mouse0'); } });
-addEventListener('mouseup', e => { if (e.button===0) input.keys.delete('Mouse0'); });
+addEventListener('mousedown', e => { if (e.pointerType === 'touch') return; if (!mouseMode || !document.pointerLockElement) return;
+  if (e.button === 0) input.keys.add('Mouse0');          // 左鍵：射擊（目前的武器）
+  else if (e.button === 2) input.keys.add('Mouse2');     // 右鍵：直接用 02 副武器（螳螂鐮揮刀／機槍），放開切回原本的武器
+  else if (e.button === 1){ e.preventDefault(); input.swapQueued = true; } });   // 中鍵：輪流換武器
+addEventListener('mouseup', e => { if (e.button === 0) input.keys.delete('Mouse0'); if (e.button === 2) input.keys.delete('Mouse2'); });
+addEventListener('auxclick', e => e.preventDefault());
+document.addEventListener('pointerlockchange', () => {   // 按 Esc 放開滑鼠＝自動暫停（線上對戰除外）
+  if (!document.pointerLockElement && running && mouseMode && !paused && !setEl.classList.contains('open') && match.mode !== 'net' && match.state !== 'intro') togglePause(true); });
 addEventListener('mousemove', e => { if (document.pointerLockElement) look(e.movementX, e.movementY, 200); });
 touchEl.addEventListener('click', e => { if (mouseMode && !document.pointerLockElement) touchEl.requestPointerLock?.(); });
 
@@ -3153,8 +3207,13 @@ function updateHomeBtn(){ homeBtn.style.display = running && match.mode !== 'net
   const pz = document.getElementById('setPause'), net = running && match.mode === 'net'; pz.textContent = !running ? '' : net ? '連線對戰中・不會暫停' : '‖ 已暫停'; pz.classList.toggle('net', net); }   // v4.1 暫停提示
 document.getElementById('bSet').addEventListener('click', updateHomeBtn);
 homeBtn.addEventListener('click', e => { e.stopPropagation(); goHome(); });
+function togglePause(want){ if (!running) return; want = want ?? !paused;   // v4.1 暫停：P 鍵、Esc 放開滑鼠；線上對戰為了公平不能暫停
+  if (want && match.mode === 'net'){ toast('線上對戰不能暫停', 1500); return; }
+  paused = want; document.getElementById('pause').classList.toggle('on', paused);
+  if (paused){ input.keys.clear(); for (const k of ['fire', 'fireTap', 'boost']) input[k] = false; if (document.pointerLockElement) document.exitPointerLock?.(); }
+  else { last = performance.now(); if (mouseMode && !document.pointerLockElement) touchEl.requestPointerLock?.(); } }
 function goHome(){   // 設定裡的按鈕在線上對戰中會隱藏；結果畫面的「回到首頁」則會一併離開連線
-  setEl.classList.remove('open');
+  setEl.classList.remove('open'); paused = false; document.getElementById('pause').classList.remove('on');
   if (typeof netReset === 'function' && window.__net && window.__net.state !== 'idle'){ netReset(); netShow(null); }   // 練習場裡正在等配對 → 一起取消
   if (tutorial.on) tutorial.finish(false);
   match.start('practice');
@@ -3193,7 +3252,15 @@ document.getElementById('bView').innerHTML = opts.view3P ? IC_3P : IC_1P;
 document.getElementById('optLockEnemy').addEventListener('change', e => opts.lockEnemy = e.target.checked);
 document.getElementById('optRopeBuffer').addEventListener('change', e => opts.ropeBuffer = e.target.checked);
 document.getElementById('optRoll').addEventListener('change', e => opts.roll = e.target.checked);
-document.getElementById('optSens').addEventListener('input', e => opts.sens = parseFloat(e.target.value));
+// v4.1 靈敏度依裝置分開記：電腦預設 0.12、手機 0.32
+function syncDeviceUI(){ const sl = document.getElementById('optSens'); sl.value = opts.sens; document.getElementById('optSensV').textContent = opts.sens.toFixed(2);
+  document.getElementById('optSensTx').textContent = DEVICE === 'pc' ? '滑鼠移動轉視角的速度（電腦）' : '手指滑動轉視角的速度（行動裝置）';
+  const sel = document.getElementById('optDevice'); sel.value = ['pc', 'mobile'].includes(lsGet('wfm.device')) ? lsGet('wfm.device') : 'auto';
+  sel.options[0].textContent = '自動判斷（' + (DEVICE_AUTO === 'pc' ? '電腦' : '行動裝置') + '）'; }
+document.getElementById('optSens').addEventListener('input', e => { opts.sens = parseFloat(e.target.value); lsSet('wfm.sens.' + DEVICE, opts.sens); document.getElementById('optSensV').textContent = opts.sens.toFixed(2); });
+document.getElementById('optDevice').addEventListener('change', e => { const v = e.target.value; lsSet('wfm.device', v); DEVICE = v === 'auto' ? DEVICE_AUTO : v;
+  mouseMode = DEVICE === 'pc'; opts.sens = sensFor(DEVICE); showTouchUI(running && !mouseMode); try { applyLayout(); } catch(_){} syncDeviceUI(); });
+syncDeviceUI();
 document.getElementById('optFollow').addEventListener('change', e => { opts.follow = e.target.value; aimOff.x = aimOff.y = 0; input.ropeLatch = false; });
 document.getElementById('optAutoFire').addEventListener('change', e => opts.autoFire = e.target.checked);
 document.getElementById('optGyro').addEventListener('change', e => enableGyro(e.target.checked));
@@ -3203,7 +3270,7 @@ document.getElementById('optGyroInvX').addEventListener('change', e => gyro.invX
 if (matchMedia('(pointer:coarse)').matches) document.getElementById('gyroStartRow').style.display = 'block';
 document.getElementById('optSize').addEventListener('input', e => { document.documentElement.style.setProperty('--k', e.target.value); applyLayout(); });
 // ---- v3.9 自訂按鈕位置：位置存成螢幕比例（轉向、換裝置也大致不變），大小是在「按鈕大小」之上再乘一個倍率 ----
-const LAYOUT_IDS = ['bFire', 'bRopeR', 'bRopeL', 'bJump', 'bBoost', 'bW1', 'bW2', 'bW3'], LAYOUT_NAME = { bFire: '射擊鈕', bRopeR: '右鋼索', bRopeL: '左鋼索', bJump: '跳躍', bBoost: '推進', bW1: '01 主砲', bW2: '02 螳螂鐮', bW3: '03 釘槍' };
+const LAYOUT_IDS = ['bFire', 'bReload', 'bRopeR', 'bRopeL', 'bJump', 'bBoost', 'bW1', 'bW2', 'bW3'], LAYOUT_NAME = { bFire: '射擊鈕', bReload: '換彈', bRopeR: '右鋼索', bRopeL: '左鋼索', bJump: '跳躍', bBoost: '推進', bW1: '01 主砲', bW2: '02 螳螂鐮', bW3: '03 釘槍' };
 const XB_DEF = { bJump: [0.88, 0.42], bBoost: [0.76, 0.42], bW1: [0.62, 0.14], bW2: [0.71, 0.14], bW3: [0.80, 0.14] };   // 選用按鈕的預設位置（右上方，給食指）
 for (const [id, k] of [['bW1', 'main'], ['bW2', 'mg'], ['bW3', 'sub']]) document.getElementById(id).innerHTML = iconSVG(k) + `<small>${id.slice(-1).padStart(2, '0')}</small>`;
 function applyLayout(){
@@ -3247,7 +3314,10 @@ document.getElementById('layDone').addEventListener('click', () => layoutEdit(fa
 document.getElementById('optLayout').addEventListener('click', e => { e.preventDefault(); layoutEdit(true); });
 document.getElementById('portraitOK').addEventListener('click', ()=> document.body.classList.add('portraitOK'));
 document.getElementById('rotate').addEventListener('pointerdown', e => e.stopPropagation());
-for (const el of [setEl, document.getElementById('topbar')]) el.addEventListener('pointerdown', e => e.stopPropagation());
+for (const el of [setEl, document.getElementById('topbar'), document.getElementById('pause')]) el.addEventListener('pointerdown', e => e.stopPropagation());
+document.getElementById('pzGo').addEventListener('click', () => togglePause(false));
+document.getElementById('pzSet').addEventListener('click', () => { updateHomeBtn(); setEl.classList.add('open'); });
+document.getElementById('pzHome').addEventListener('click', () => goHome());
 
 // =====================================================================
 // HUD 繪製
@@ -3417,7 +3487,7 @@ function drawHUD(dt){
     if (hitMarkT > 0){ for (const [a2,b2] of [[-1,-1],[1,-1],[-1,1],[1,1]]) line([[cx+a2*7*sc, cy+b2*7*sc], [cx+a2*13*sc, cy+b2*13*sc]], '#ff5050', 2); }
     // 彈種資訊（準星附近）：弧頂＝彈量、弧頂上方＝彈種；準星下方＝武器欄位
     c.shadowBlur = 4;
-    const cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : isMG ? (mlS.cd > 0 ? mlS.cd.toFixed(1) + 's' : 'READY') : isGun ? (wst2.reloading > 0 ? 'RLD' : String(Math.floor(wst2.ammo)).padStart(4, '0')) : (wst2.cannon.reloading > 0 ? 'RLD' : wst2.cannon.ammo + '/' + Math.floor(wst2.cannon.reserve));
+    const cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : isMG ? (mlS.cd > 0 ? mlS.cd.toFixed(1) + 's' : 'READY') : isGun ? (wst2.reloading > 0 ? 'RLD' : Math.floor(wst2.ammo) + '/' + Math.floor(wst2.reserve ?? 0)) : (wst2.cannon.reloading > 0 ? 'RLD' : wst2.cannon.ammo + '/' + Math.floor(wst2.cannon.reserve));
     const wcol = blocked ? '#9aa6b2' : sub ? '#ffd770' : isMG || isGun ? '#ffc890' : MINT;
     c.font = `700 ${Math.round(13*sc)}px ui-monospace, Menlo, monospace`; c.fillStyle = wcol; c.textAlign = 'center';
     
@@ -3466,7 +3536,7 @@ function updateButtons(){
     if (lastUI['c'+i] !== cls){ lastUI['c'+i] = cls; el.classList.toggle('hooked', cls === 'hooked'); el.classList.toggle('none', cls === 'none'); el.classList.toggle('thrustmode', cls === 'thrustmode'); }
   });
   const w = state.weapon, sub = w.active === 'sub', mg = w.active === 'mg';
-  const ft = sub ? (w.nail.reloading > 0 ? IC_RELOAD : w.nail.ammo + '/' + w.nail.reserve) : mg ? (bladeOn(w) ? (w.melee && w.melee.cd > 0 ? w.melee.cd.toFixed(1) + 's' : '斬') : (w.reloading > 0 ? IC_RELOAD : String(Math.floor(w.ammo)))) : (w.cannon.reloading > 0 ? IC_RELOAD : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
+  const ft = sub ? (w.nail.reloading > 0 ? IC_RELOAD : w.nail.ammo + '/' + w.nail.reserve) : mg ? (bladeOn(w) ? (w.melee && w.melee.cd > 0 ? w.melee.cd.toFixed(1) + 's' : '斬') : (w.reloading > 0 ? IC_RELOAD : Math.floor(w.ammo) + '/' + Math.floor(w.reserve ?? 0))) : (w.cannon.reloading > 0 ? IC_RELOAD : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
   if (lastUI.f !== ft){ lastUI.f = ft; elSF.innerHTML = ft; }
   const fl = (w.blocked ? 'x' : '') + (sub ? 'sub' : mg ? iconKey('mg') : 'main');
   if (lastUI.fl !== fl){ lastUI.fl = fl; document.getElementById('lFire').innerHTML = iconSVG(w.active); elFire.classList.toggle('none', !!w.blocked); }
@@ -3485,8 +3555,10 @@ const _eye = V(), _cam = V(); const stab = { point: null, fast: 0, target: null 
 function frame(now){
   requestAnimationFrame(frame);
   let dt = Math.min((now - last) / 1000, 0.25); last = now;
-  if (!running){ menuFrame(dt); netFrame(dt); drawFrame(); return; }
-  if (setEl.classList.contains('open') && match.mode !== 'net'){ netFrame(dt); drawFrame(); return; }   // v4.1 開著設定＝暫停（物理、AI、計時都停）；線上對戰為了公平不暫停
+  if (!running){ if (frame.lh){ frame.lh = false; document.getElementById('lockHint').style.display = 'none'; } menuFrame(dt); netFrame(dt); drawFrame(); return; }
+  if (paused && match.mode === 'net') togglePause(false);
+  { const want = mouseMode && !paused && !document.pointerLockElement && !setEl.classList.contains('open') && match.state !== 'intro'; if (want !== frame.lh){ frame.lh = want; document.getElementById('lockHint').style.display = want ? 'block' : 'none'; } }   // v4.1 電腦：提示點畫面鎖定滑鼠
+  if ((paused || setEl.classList.contains('open')) && match.mode !== 'net'){ netFrame(dt); drawFrame(); return; }   // v4.1 P 鍵暫停也一樣   // v4.1 開著設定＝暫停（物理、AI、計時都停）；線上對戰為了公平不暫停
   // FPS 監測 → 降 DPR
   fpsFrames++; fpsTime += dt;
   if (fpsTime >= CONFIG.render.fpsWindow){ const fps = fpsFrames / fpsTime; fpsFrames = 0; fpsTime = 0;
@@ -3846,7 +3918,8 @@ function enterPlay(mode, noTut = false){
   startMode = mode; menuHide();
   match.start(mode);
   if (mode === 'practice' && !noTut && !tutorial.done() && !tutorial.on) setTimeout(() => tutorial.start(), 600);   // 第一次玩：自動開始教學（可以跳過）
-  last = performance.now(); running = true; idleStick(); setTimeout(updateFSBtn, 400);
+  last = performance.now(); running = true; showTouchUI(!mouseMode); idleStick();   // v4.1 電腦模式一開始就藏觸控按鈕
+  setTimeout(updateFSBtn, 400);
 }
 async function startClick(mode, noTut = false){ if (await prepStart()) enterPlay(mode, noTut); }
 function playMode(mode){ if (running) match.start(mode); else enterPlay(mode, true); }   // 配對結果（打 AI／開打）：在選單時直接進遊戲
