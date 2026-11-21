@@ -1238,7 +1238,8 @@ function setPractice(on){
 // ---- v3.0 電腦 AI：輸出和玩家一樣的 command 物件（之後可直接拿來當網路測試的假對手）----
 //  導航：每座島取數個「落腳點」，兩點之間 58m 內、視線沒被擋就連一條「鋼索可達」的邊；移動＝瞄準下一個落腳點射鋼索、收索拉過去、到了放手
 //  戰鬥：挑一個看得到你、距離 60–220m、不在保護區的落腳點；瞄準有前置量＋隨時間收斂的誤差；遠距 57mm、近距 14.5mm
-const BOTCFG = { ropeRange: 90, thinkS: 0.1, errDegStart: 4.5, errDegMin: 1.1, settleS: 2.2, turnRate: 3.2, hopTimeout: 6, fightMin: 40, fightMax: 150, fightBest: 95, mgRange: 90, regoalS: [6, 10] };   // v3.0c 更主動：理想距離 95m、每 6–10 秒換位置
+const BOTCFG = { ropeRange: 90, thinkS: 0.1, errDegStart: 7.5, errDegMin: 2.6, settleS: 4.5, turnRate: 2.4, leadK: [0.35, 0.85], moveErrK: 0.035, react: 0.65, reactCover: 0.3, mgBurst: 0.5,   // v4.2 削弱 AI：誤差加大、瞄準收斂變慢、提前量不準、目標移動越快越不準、反應變慢、機槍點放變短
+  hopTimeout: 6, fightMin: 40, fightMax: 150, fightBest: 95, mgRange: 90, regoalS: [6, 10] };   // v3.0c 更主動：理想距離 95m、每 6–10 秒換位置
 let NAV = null;
 function buildNav(){
   const pts = [], up = { x: 0, y: -1, z: 0 };
@@ -1343,15 +1344,16 @@ function createBotBrain(a){
       if (ep && see && dist < 600){
         if (!st.climb) st.wantW = bladeOn(a.weapon) ? (dist < CONFIG.melee.range * 1.1 ? 'mg' : 'main') : (dist < B.mgRange ? 'mg' : 'main');   // v3.9 帶刀：進入斬擊距離才換刀；帶機槍：90m 內換機槍
         st.dist = dist;
-        if (!bladeOn(a.weapon) && st.wantW === 'mg' && st.burst <= -0.5) st.burst = 0.8;   // 機槍點放
+        if (!bladeOn(a.weapon) && st.wantW === 'mg' && st.burst <= -0.7) st.burst = B.mgBurst;   // 機槍點放（v4.2 縮短、間隔拉長）
         const ev = enemy.actor ? enemy.actor.P.vel : V(), tf = st.wantW === 'main' ? dist / CN.speed : 0;
-        const aim = V().copy(ep).addScaledVector(ev, tf); aim.y += 0.5 * -CONFIG.physics.gravity * tf * tf;
-        st.errT -= dt; if (st.errT <= 0){ st.errT = 0.6;   // 誤差每 0.6 秒換一次，持續看著目標會越來越準
-          const deg = Math.max(B.errDegMin, B.errDegStart - (B.errDegStart - B.errDegMin) * Math.min(1, st.seeT / B.settleS));
+        if (st.leadK == null) st.leadK = B.leadK[0] + rnd() * (B.leadK[1] - B.leadK[0]);   // v4.2 提前量只估 35–85%，不會算得剛剛好
+        const aim = V().copy(ep).addScaledVector(ev, tf * st.leadK); aim.y += 0.5 * -CONFIG.physics.gravity * tf * tf;
+        st.errT -= dt; if (st.errT <= 0){ st.errT = 0.6; st.leadK = B.leadK[0] + rnd() * (B.leadK[1] - B.leadK[0]);   // 誤差每 0.6 秒換一次，持續看著目標會越來越準
+          const deg = Math.max(B.errDegMin, B.errDegStart - (B.errDegStart - B.errDegMin) * Math.min(1, st.seeT / B.settleS)) * (1 + B.moveErrK * ev.length());   // v4.2 你動得越快越難打中
           const m = Math.tan(deg * DEG) * dist; st.err.set((rnd() - 0.5) * 2, (rnd() - 0.5) * 1.4, (rnd() - 0.5) * 2).multiplyScalar(m); }
         aim.add(st.err);
         const d = V().subVectors(aim, eye).normalize(); st.tYaw = Math.atan2(-d.x, -d.z); st.tPitch = Math.asin(clamp(d.y, -1, 1));
-        st.wantFire = st.seeT > (st.atCover ? 0.12 : 0.35) && !st.climb;   // 反應時間（跳射時很短，不然跳到頂點還沒開砲）
+        st.wantFire = st.seeT > (st.atCover ? B.reactCover : B.react) && !st.climb;   // 反應時間（跳射時很短，不然跳到頂點還沒開砲）
       } else if (ep){ const d = V().subVectors(ep, eye).normalize(); st.tYaw = Math.atan2(-d.x, -d.z); st.tPitch = clamp(Math.asin(d.y), -0.3, 0.3); }
       // ---- 卡住偵測 ----
       if (pos.distanceTo(st.lastP) < 0.8 && !P.grounded) st.stuckT += dt; else st.stuckT = 0; st.lastP.copy(pos);
