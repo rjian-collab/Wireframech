@@ -3224,19 +3224,20 @@ function drawHUD(dt){
     }
     // 內圈括弧＝射擊散布（散得越開括弧越開），各帶兩條刻度
     const spread = currentSpread(), Ri = (0.62 + spread * 0.08 + crossPulse * 0.08) * R0, hb = 0.48;
-    if (isMG){   // v3.9 螳螂鐮準星：大 X（兩道刃痕）；剛揮的那一邊亮起；敵人進入斬擊範圍時變紅；冷卻中變暗
+    if (isMG){   // v3.9 螳螂鐮準星：大 X（兩道刃痕）；剛揮的那一邊亮起；敵人進入斬擊範圍時兩道軌跡亮起來；冷卻中變暗
       const ready = !(mlS.cd > 0) && !mlS.ph, inR = meleeInRange(), Lx = 1.05 * R0, Ly = 0.8 * R0;
       const lastSide = mlS.vis != null ? (mlS.side || 1) : 0, glow = mlS.vis != null ? clamp(1 - Math.max(0, mlS.vis - 0.25) / 0.6, 0, 1) : 0;
       // v3.9b 每一刀畫成兩端收尖的月牙（外緣、內緣兩條二次曲線共用端點），往下外側鼓；剛揮的那邊有亮點沿弧劃過
       const kk = 0.7071, bow = 0.26 * R0, th = 2 * sc, v = mlS.vis;
       for (const sd of [1, -1]){   // sd=1：右上→左下（右鐮）；sd=-1：左上→右下（左鐮）
         const P0x = cx + sd * 0.8 * R0 * kk, P0y = cy - 0.8 * R0 * kk, P1x = cx - sd * 0.8 * R0 * kk, P1y = cy + 0.8 * R0 * kk, nx = sd * kk, ny = kk;
-        const lit = lastSide === sd && glow > 0, col = lit ? `rgba(200,255,250,${0.45 + 0.55 * glow})` : inR && ready ? '#ff5a48' : ready ? MINT : DIM;
+        const hotR = inR && ready, pulse = 0.82 + 0.18 * Math.sin(performance.now() / 110);   // v3.9 進入斬擊範圍：兩道軌跡亮起來（白青色＋光暈，輕微呼吸）
+        const lit = (lastSide === sd && glow > 0) || hotR, col = lastSide === sd && glow > 0 ? `rgba(200,255,250,${0.45 + 0.55 * glow})` : hotR ? `rgba(225,255,250,${pulse})` : ready ? MINT : DIM;
         const ob = bow + th * (lit ? 1.6 : 1), ib = bow - th * (lit ? 1.6 : 1);
-        c.save(); c.shadowBlur = lit ? 16 : ready ? 6 : 0; c.shadowColor = lit ? '#7ff5e0' : inR && ready ? 'rgba(255,90,72,.6)' : 'rgba(127,245,224,.65)';
+        c.save(); c.shadowBlur = lit ? 16 * (hotR ? pulse : 1) : ready ? 6 : 0; c.shadowColor = lit ? '#7ff5e0' : 'rgba(127,245,224,.65)';
         c.fillStyle = col; c.beginPath(); c.moveTo(P0x, P0y);
         c.quadraticCurveTo(cx + nx * 2 * ob, cy + ny * 2 * ob, P1x, P1y); c.quadraticCurveTo(cx + nx * 2 * ib, cy + ny * 2 * ib, P0x, P0y); c.closePath(); c.fill();
-        if (lit && v != null && v >= 0.25 && v <= 0.36){   // 斜劈那一瞬間：亮點沿外緣從起點劃到終點
+        if (lastSide === sd && glow > 0 && v != null && v >= 0.25 && v <= 0.36){   // 斜劈那一瞬間：亮點沿外緣從起點劃到終點
           const u = clamp((v - 0.25) / 0.08, 0, 1), q = 1 - Math.pow(1 - u, 3), Cx = cx + nx * 2 * ob, Cy = cy + ny * 2 * ob;
           const bx = (1 - q) * (1 - q) * P0x + 2 * (1 - q) * q * Cx + q * q * P1x, by = (1 - q) * (1 - q) * P0y + 2 * (1 - q) * q * Cy + q * q * P1y;
           c.shadowBlur = 12; c.fillStyle = '#ffffff'; c.beginPath(); c.arc(bx, by, 3 * sc, 0, Math.PI * 2); c.fill(); }
