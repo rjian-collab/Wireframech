@@ -2607,7 +2607,11 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
   M.applyPaint = name => { const P2 = PAINTS[name] || PAINTS.steel; if (!M.paintMats) return;
     for (const m of M.paintMats.armor){ m.color.setHex(P2.armor); }
     for (const m of (M.paintMats.metal || [])){ m.color.setHex(P2.metal); }
-    for (const m of M.paintMats.accent){ m.color.setHex(P2.accent); if (m.emissive){ m.emissive.setHex(P2.accent); m.emissiveIntensity = P2.glow; } } };
+    for (const m of M.paintMats.accent){ m.color.setHex(P2.accent); if (m.emissive){ m.emissive.setHex(P2.accent); m.emissiveIntensity = P2.glow; } }
+    // v4.2 格鬥臂（刀臂／槍臂）、機槍、鋼索發射器也跟著塗裝：主體＝裝甲色、關節＝裝甲色壓暗、刃口＝點綴色提亮
+    for (const m of (M.paintMats.armArmor || [])) m.color.setHex(P2.armor);
+    for (const m of (M.paintMats.armDark || [])) m.color.setHex(P2.armor).multiplyScalar(0.42);
+    for (const m of (M.paintMats.edge || [])) m.color.setHex(P2.accent).lerp(new THREE.Color(0xffffff), 0.45); };
   M.loadModel = async () => {
     const [{ GLTFLoader }, { MeshoptDecoder }, { RoomEnvironment }] = await Promise.all([
       import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js'), import('three/addons/environments/RoomEnvironment.js')]);
@@ -2666,7 +2670,8 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     // v4.1 加裝零件共用材質（每台機體一組；格鬥臂與鋼索艙蓋共用）
     const mat = metal || new THREE.MeshStandardMaterial({ color: 0x555b60, metalness: 0.7, roughness: 0.45 });
     const matD = mat.clone(); matD.color = new THREE.Color(0x2e3338); matD.flatShading = true; const matF = mat.clone(); matF.flatShading = true;
-    const matEdge = new THREE.MeshBasicMaterial({ color: 0xa8fff2 });   // v4.1 刃口：亮青色（高週波刃），不受光照影響，遠看也認得出是刀
+    const matEdge = new THREE.MeshBasicMaterial({ color: 0xa8fff2 });
+    M.paintMats.armArmor = [matF]; M.paintMats.armDark = [matD]; M.paintMats.edge = [matEdge];   // v4.2 格鬥臂套用塗裝   // v4.1 刃口：亮青色（高週波刃），不受光照影響，遠看也認得出是刀
     const matAcc = (M.paintMats.accent && M.paintMats.accent[0]) || glow;   // 點綴色（跟塗裝走）
     if (br){ br.visible = false;
       const blade = (len, w0, w1, th, m) => { const g = new THREE.CylinderGeometry(w1, w0, len, 4); g.rotateY(Math.PI / 4); g.scale(th, 1, 1); g.translate(0, -len / 2, 0); return new THREE.Mesh(g, m); };   // 菱形斷面、往 -Y 延伸的刃狀臂節
@@ -2710,7 +2715,7 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
       M.slashPts = (side, n) => { const A = M.arm2.arms.find(x => x.sd === (side || 1)), out = []; if (!A) return out; A.slash.updateMatrixWorld(true); const pa = A.slash.geometry.attributes.position;
         for (let j = 0; j < n; j++){ const i = Math.round((CRES.N * (j + 0.5)) / n) * 2; out.push(new THREE.Vector3().fromBufferAttribute(pa, Math.min(i, pa.count - 2)).applyMatrix4(A.slash.matrixWorld)); } return out; };   // v3.9b 沿刀光外緣取點（火花用）
       // v4.1 機槍改裝在右格鬥臂上（以前在機身頂部）：槍口就是右臂槍管前端
-      M.mgArm = armR.gun; M.mgWrist = null; M.mgMuzzle = armR.muz;
+      M.mgArm = armR.gun; M.mgWrist = null; M.mgMuzzle = armR.muz; M.applyPaint(cfg.paint || opts.paint);   // v4.2 手臂建好後套一次塗裝
       // v4.1 依 02 欄選裝切換前臂套件（只在變更時動 visible）
       M.setKit = s2 => { const kk = s2 === 'mg' ? 'mg' : 'blade'; if (M.kit === kk) return; M.kit = kk;
         for (const A of M.arm2.arms){ A.KB.visible = kk === 'blade'; A.KG.visible = kk === 'mg'; } };
