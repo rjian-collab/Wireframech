@@ -199,6 +199,8 @@
   .m-h { font-size:12px; color:#8fb9cf; margin:10px 0 6px; letter-spacing:.1em; }
   .m-paints { display:flex; flex-wrap:wrap; gap:8px; } .m-paints button { min-height:44px; padding:0 12px; border-radius:10px; border:1px solid rgba(140,220,255,.4); background:rgba(255,255,255,.05); color:#e6f4ff; font-size:14px; }
   .m-paints button.on { border-color:#6ff0bd; background:rgba(111,240,189,.16); color:#bff8e2; }
+  .m-thumb { width:84px; height:52px; border-radius:6px; object-fit:cover; vertical-align:middle; margin-right:8px; background:#0d1a24; border:1px solid rgba(140,220,255,.25); }
+  .m-thumb:not([src]) { visibility:hidden; } .m-pick button { display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 10px; } .m-pick .m-thumb { margin:0; }
   .m-load { list-style:none; margin:0; padding:0; font-size:14px; line-height:2; } .m-load b { color:#63e6ff; display:inline-block; width:2em; }
   .m-note { font-size:12px; color:#8fa9bb; margin-top:8px; }
   .m-foot { position:absolute; left:50%; bottom:calc(8px + var(--sb)); transform:translateX(-50%); display:flex; gap:12px; align-items:center; white-space:nowrap; }
@@ -318,6 +320,7 @@
       <div id="gyroStatus"></div>
     </section>
     <section data-page="look">
+      <label class="row"><span class="tx"><b>反鋸齒</b><i>邊緣比較平滑；iPad 太卡會自動降為標準</i></span><select id="optAA"><option value="high">高</option><option value="std">標準</option></select></label>
       <label class="row"><span class="tx"><b>機體塗裝</b><i></i></span><select id="optPaint"><option value="steel" selected>鋼灰＋青綠</option><option value="night">夜戰深灰</option><option value="desert">沙漠＋橘</option><option value="white">原色白＋紅</option></select></label>
     </section>
     </div>
@@ -364,9 +367,11 @@
     <div class="m-panel m-hangar">
       <h3>機庫 HANGAR</h3>
       <div class="m-h">塗裝</div><div id="mPaints" class="m-paints"></div>
-      <div class="m-h">武裝（目前固定）</div>
-      <ul class="m-load"><li><b>01</b> 主武　57mm 滑膛炮</li><li><b>02</b> 副武　14.5mm 機槍</li><li><b>03</b> 腿部　釘槍</li><li><b>＋</b> 雙鋼索（固定配備）</li></ul>
-      <div class="m-note">出擊前換武器（選裝）之後開放</div>
+      <div class="m-h">武裝</div>
+      <ul class="m-load"><li><img class="m-thumb" data-part="cannon" alt=""><b>01</b> 主武　57mm 滑膛炮</li><li><img class="m-thumb" id="mS2Img" alt=""><b>02</b> 副武　<span id="mS2"></span></li><li><img class="m-thumb" data-part="nail" alt=""><b>03</b> 腿部　釘槍</li><li><img class="m-thumb" data-part="dish" alt=""><b>＋</b> 雙鋼索（固定配備）</li></ul>
+      <div class="m-h">02 副武選裝</div><div id="mS2Pick" class="m-paints m-pick"><button data-s2="blade"><img class="m-thumb" data-part="blade" alt="">螳螂鐮</button><button data-s2="mg"><img class="m-thumb" data-part="mg" alt="">14.5mm 機槍</button></div>
+      <div class="m-note" id="mS2Note"></div>
+      <div class="m-note">在左邊空白處拖曳可以轉動機體</div>
     </div>
     <button class="m-exit" data-back="BACKTO" id="mHangarBack">BACK <span>⇥</span></button>
   </div>
@@ -529,7 +534,7 @@ const hud = document.getElementById('hud');
 const hctx = hud.getContext('2d');
 let hudScale = 1;
 function resize(){
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(innerWidth, innerHeight); try { if (aaComposer) aaComposer.setSize(innerWidth, innerHeight); } catch(_){}   /* 初始化時反鋸齒還沒建立 */
   camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
   hudScale = Math.min(window.devicePixelRatio||1, 2);
   hud.width = innerWidth*hudScale; hud.height = innerHeight*hudScale;
@@ -988,6 +993,19 @@ applyShadows();
 // v3.7 宣傳片模式（?promo=1）：泛光、較細的陰影、隱藏重生點綠圈；一般遊玩不受影響
 const PROMO = (() => { try { return new URLSearchParams(location.search).get('promo') === '1'; } catch(_){ return false; } })();
 let composer = null;
+// v3.9 反鋸齒：「高」＝多重取樣的渲染目標 ＋ SMAA 邊緣平滑；「標準」＝只用瀏覽器內建的多重取樣（比較省電）
+let aaComposer = null, aaLoading = false, aaMode = (() => { try { return localStorage.getItem('wfm.aa') || 'high'; } catch(_){ return 'high'; } })();
+async function setupAA(){
+  if (PROMO || aaMode !== 'high' || aaComposer || aaLoading) return; aaLoading = true;
+  try { const [{ EffectComposer }, { RenderPass }, { OutputPass }, { SMAAPass }] = await Promise.all([import('three/addons/postprocessing/EffectComposer.js'), import('three/addons/postprocessing/RenderPass.js'), import('three/addons/postprocessing/OutputPass.js'), import('three/addons/postprocessing/SMAAPass.js')]);
+    const rt = new THREE.WebGLRenderTarget(innerWidth * dpr, innerHeight * dpr, { type: THREE.HalfFloatType, samples: 4 });
+    const c = new EffectComposer(renderer, rt); c.setPixelRatio(dpr); c.setSize(innerWidth, innerHeight);
+    c.addPass(new RenderPass(scene, camera)); c.addPass(new OutputPass()); c.addPass(new SMAAPass()); aaComposer = c;
+  } catch (err){ console.warn('反鋸齒（高）無法啟用，改用標準', err); aaMode = 'std'; }
+  aaLoading = false; }
+function setAA(m){ aaMode = m === 'std' ? 'std' : 'high'; try { localStorage.setItem('wfm.aa', aaMode); } catch(_){} const el = document.getElementById('optAA'); if (el) el.value = aaMode; setupAA(); }
+function drawFrame(){ if (composer) composer.render(); else if (aaMode === 'high' && aaComposer) aaComposer.render(); else renderer.render(scene, camera); }
+setupAA();
 if (PROMO){ sun.shadow.mapSize.set(4096, 4096);
   scene.traverse(o => { if (o.isMesh && o.material && o.material.isMeshBasicMaterial && o.material.color.getHex() === 0x40ffb0) o.visible = false; });
   Promise.all([import('three/addons/postprocessing/EffectComposer.js'), import('three/addons/postprocessing/RenderPass.js'), import('three/addons/postprocessing/UnrealBloomPass.js'), import('three/addons/postprocessing/OutputPass.js')])
@@ -1011,7 +1029,10 @@ const newPlayerState = (sp, yaw) => ({ yaw, pitch: 0, grounded: false, fuel: CON
 const newRopes = () => [
     { side: 'L', hooked: false, anchor: V(), L: 0, tension: 0, reeling: false },
     { side: 'R', hooked: false, anchor: V(), L: 0, tension: 0, reeling: false } ];
-const newWeapon = () => ({ active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0, melee: { cd: 0, t: 0, ph: 0, prev: false, vis: null } });
+// v3.9 機庫選裝：02 欄可選螳螂鐮（blade）或 14.5mm 機槍（mg）；欄位 id 仍是 'mg'，用 w.s2 區分
+const LOADOUT = { s2: (() => { try { return localStorage.getItem('wfm.s2') === 'mg' ? 'mg' : 'blade'; } catch(_){ return 'blade'; } })() };
+const bladeOn = w => !w || w.s2 !== 'mg';
+const newWeapon = () => ({ s2: LOADOUT.s2, active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0, melee: { cd: 0, t: 0, ph: 0, prev: false, vis: null } });
 const state = { tick: 0, player: newPlayerState(S, CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon() };
 const events = []; // {type, ...} 給 render/hud/audio 用
 const opts = { shadows: true, paint: 'steel', view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true };
@@ -1039,7 +1060,7 @@ function placeActor(a, p, yaw){
 }
 // v3.9 高周波刀（螳螂鐮）架刀：拿著刀、沒在揮的時候，正面 ±60° 來的子彈、砲彈、刀全部擋掉；刀對刀＝兩台都被彈開
 let dmgKind = null;
-function isGuarding(v){ const w = v.weapon, ml = w && w.melee; return !!w && w.active === 'mg' && !(ml && (ml.ph || ml.vis != null)); }
+function isGuarding(v){ const w = v.weapon, ml = w && w.melee; return !!w && w.active === 'mg' && bladeOn(w) && !(ml && (ml.ph || ml.vis != null)); }
 function guardBlocks(v, from){ if (!from || !isGuarding(v)) return false;
   const dx = from.x - v.P.currPos.x, dz = from.z - v.P.currPos.z, d = Math.hypot(dx, dz); if (d < 0.5) return true;
   return (dx * -Math.sin(v.P.yaw) + dz * -Math.cos(v.P.yaw)) / d >= Math.cos(CONFIG.melee.guardDeg * DEG); }
@@ -1070,7 +1091,7 @@ const match = {
     { const guest = mode === 'net' && !NET.host, SA = V(S.x, S.y, S.z), SB = V(CONFIG.pvp.spawnB.x, CONFIG.pvp.spawnB.y, CONFIG.pvp.spawnB.z), ya = CONFIG.map.spawnYaw;   // v3.8 連線：房主＝基地 A、加入者＝基地 B
       local.team = guest ? 1 : 0; local.spawn.copy(guest ? SB : SA); local.spawnYaw = guest ? -ya : ya;
       if (bot){ bot.team = guest ? 0 : 1; bot.spawn.copy(guest ? SA : SB); bot.spawnYaw = guest ? ya : -ya; } }
-    for (const a of actors) if (a.active){ a.hp = CONFIG.pvp.hp; Object.assign(a.weapon, newWeapon()); placeActor(a, a.spawn, a.spawnYaw); }
+    for (const a of actors) if (a.active){ a.hp = CONFIG.pvp.hp; Object.assign(a.weapon, newWeapon()); if (a.kind === 'bot') a.weapon.s2 = 'blade'; placeActor(a, a.spawn, a.spawnYaw); }   // AI 一律帶螳螂鐮
     if (bot && bot.active && bot.kind === 'bot') bot.brain.reset();
     state.weapon = local.weapon;
     this.state = mode === 'ai' || mode === 'net' ? 'live' : 'idle';
@@ -1525,7 +1546,7 @@ function netSnap(){
   const P = state.player, p = P.currPos;
   return { s: Math.round(performance.now()), p: v3a(p), v: v3a(P.vel), y: r3(P.yaw), pi: r3(P.pitch), g: P.grounded ? 1 : 0,
     gn: P.grounded && P.groundN ? v3a(P.groundN, r3) : 0, pn: P.pinned && P.pinned.normal ? v3a(P.pinned.normal, r3) : 0,
-    r: state.ropes.map(r => r.hooked ? v3a(r.anchor) : 0), w: state.weapon.active, hp: Math.round(local.hp), sf: P.safe ? 1 : 0, fx: NET.fx };
+    r: state.ropes.map(r => r.hooked ? v3a(r.anchor) : 0), w: state.weapon.active, l: state.weapon.s2 === 'mg' ? 1 : 0, hp: Math.round(local.hp), sf: P.safe ? 1 : 0, fx: NET.fx };
 }
 function netSendMs(){ NET.send('ms', { sc: match.score, tl: Math.round(match.timeLeft * 10) / 10, st: match.state }); }
 // 收到對方的訊息
@@ -1578,7 +1599,7 @@ function netApplyRemote(){
   P.groundN = s.gn ? (P.groundN && P.groundN.isVector3 ? P.groundN : V()).fromArray(s.gn) : null;
   P.pinned = s.pn ? { normal: V().fromArray(s.pn), pos: _ns.p.clone() } : null; P.safe = !!s.sf;
   s.r.forEach((r, i) => { a.ropes[i].hooked = !!r; if (r) a.ropes[i].anchor.fromArray(r); });
-  a.weapon.active = s.w; a.hp = s.hp;
+  a.weapon.active = s.w; a.weapon.s2 = s.l ? 'mg' : 'blade'; a.hp = s.hp;   // v3.9 對手的 02 欄選裝（決定外觀、格擋）
   a.body.setTranslation({ x: _ns.p.x, y: _ns.p.y, z: _ns.p.z }, true); a.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
   a.tgt.mesh.position.copy(_ns.p);
 }
@@ -2051,12 +2072,12 @@ function weaponTick(cmd, dt){
   // v3.9 螳螂鐮：按下（上升緣）→ 前搖 → 下劈判定 → 硬直；揮刀期間不能開火
   { const ml = w.melee || (w.melee = { cd: 0, t: 0, ph: 0, prev: false, vis: null }), MC = CONFIG.melee;
     ml.cd = Math.max(0, ml.cd - dt);
-    const want = w.active === 'mg' && cmd.fire;   // 02 欄＝螳螂鐮（欄位 id 沿用 'mg'，連線與教學不用改）：按下射擊鈕的瞬間出刀
+    const want = w.active === 'mg' && bladeOn(w) && cmd.fire;   // 02 欄＝螳螂鐮（欄位 id 沿用 'mg'，連線與教學不用改）：按下射擊鈕的瞬間出刀
     if (want && !ml.prev && ml.ph === 0 && ml.cd <= 0 && !P.safe){ ml.ph = 1; ml.t = MC.windup; ml.vis = 0; ml.hit = false; ml.stop = 0; ml.side = -(ml.side || -1); ml.yaw = cmd.gunYaw ?? P.yaw; events.push({ type: 'meleeStart', from: P.currPos.clone(), side: ml.side }); }
     ml.prev = !!want;
     if (ml.ph === 1){ ml.t -= dt; if (ml.t <= 0){ const hit = meleeStrike(cmd.gunYaw ?? ml.yaw); ml.ph = 2; ml.t = hit ? MC.recoverHit : MC.recoverMiss; ml.cd = MC.cooldown; } }
     else if (ml.ph === 2){ ml.t -= dt; if (ml.t <= 0) ml.ph = 0; }
-    if (ml.ph || w.active === 'mg'){ w.prevFire = cmd.fire; w.blocked = !!P.safe; shellsTick(dt); return; } }   // 揮刀期間不能開火；02 欄沒有槍
+    if (ml.ph || (w.active === 'mg' && bladeOn(w))){ w.prevFire = cmd.fire; w.blocked = !!P.safe; shellsTick(dt); return; } }   // 揮刀期間不能開火；02 欄沒有槍
   const fireEdge = cmd.fire && !w.prevFire; w.prevFire = cmd.fire;
   w.blocked = !!P.safe;
   shellsTick(dt);
@@ -2342,7 +2363,8 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     _q.setFromUnitVectors(UP, M.up); M.root.quaternion.setFromAxisAngle(UP, M.yaw).premultiply(_q);
     // 炮塔與砲管跟著準星；機槍臂也指向準星
     M.turret.rotation.y = 0; M.mantlet.rotation.x = clamp(P.pitch, -0.5, 0.9); M.arm.rotation.x = clamp(P.pitch, -0.6, 0.9); if (M.mgArm) M.mgArm.rotation.x = clamp(P.pitch, -0.4, 0.7);   // 機槍跟準星上下
-    if (M.arm2){ const want = (cfg.weapon ? cfg.weapon() : state.weapon).active === 'mg' ? 1 : 0; M.arm2.k += (want - M.arm2.k) * Math.min(1, dt * 8);   // 選 02 副武時展開成 L，其他時候收成 V
+    { const wq = cfg.weapon ? cfg.weapon() : state.weapon; if (M.mgArm) M.mgArm.visible = !bladeOn(wq); }   // v3.9 選機槍時顯示槍身
+    if (M.arm2){ const wq2 = cfg.weapon ? cfg.weapon() : state.weapon, want = wq2.active === 'mg' && bladeOn(wq2) ? 1 : 0; M.arm2.k += (want - M.arm2.k) * Math.min(1, dt * 8);   // 選 02 副武時展開成 L，其他時候收成 V
       const k = M.arm2.k, bsx = 0.9 * (1 - k) + 1.3 * k, bex = 3.6 * (1 - k) + 1.2 * k;   // 收：折在機鼻下（螳螂）；v3.9 選 02 時架刀：雙臂往前、前臂交叉擋在機鼻前
       // v3.9b 螳螂鐮揮臂（弧形）：舉臂 → 中途點 → 斜劈 → 順勢多帶一點 → 停 → 收回；肘關節晚 0.02 秒、側擺用正弦緩動，刀尖畫出弧線
       const ml = (cfg.weapon ? cfg.weapon() : state.weapon).melee;
@@ -2573,6 +2595,7 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
         ik: { psi0: Math.atan2(h0.x, h0.z), n0, L1: Math.hypot(kr, ky), L2: Math.hypot(fr, fy), a10: Math.atan2(ky, kr), a20: Math.atan2(fy, fr) } });
     }
     M.legs.length = 0; M.legs.push(...legs); M.model = mdl; M.loaded = true;
+    M.parts = { cannon: gltf.scene.getObjectByName('Cannon'), nail: gltf.scene.getObjectByName('PileDriver_1') };   // v3.9 機庫零件圖用
     M.root.position.copy(savePos); M.root.quaternion.copy(saveQ); M.root.updateMatrixWorld(true);
     return true;
   };
@@ -2598,7 +2621,31 @@ async function loadPines(){
   } catch (e){ console.warn('松樹模型載入失敗，改用簡化樹', e); }
 }
 loadPines();
-mech.loadModel().then(ok => { applyShadows(mech.root); if (!ok){ mech.failed = true; console.warn('機體模型結構不符，改用過渡模型'); } }).catch(err => { mech.failed = true; console.warn('機體模型載入失敗，改用過渡模型', err); });
+// v3.9 機庫零件圖：把機體上的零件各自複製到小場景，用主畫面渲染一張小圖（沿用同一套光照、色調）
+let PART_IMG = {};
+function partThumbs(M){
+  const out = {}, W = 168, H = 104, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+  const ts = new THREE.Scene(); ts.environment = scene.environment; ts.add(new THREE.HemisphereLight(0xd8ecff, 0x40382c, 0.9));
+  const dl = new THREE.DirectionalLight(0xfff0d8, 2.8); dl.position.set(-3, 6, 4); ts.add(dl); const rl = new THREE.DirectionalLight(0xa8ccff, 1.2); rl.position.set(4, 2, -5); ts.add(rl);
+  const cam = new THREE.PerspectiveCamera(26, W / H, 0.05, 200), pr = renderer.getPixelRatio(), size = renderer.getSize(new THREE.Vector2());
+  const oc = renderer.getClearColor(new THREE.Color()), oa = renderer.getClearAlpha();
+  M.root.updateMatrixWorld(true); const bq = M.body.getWorldQuaternion(new THREE.Quaternion());
+  const list = { cannon: M.parts && M.parts.cannon, blade: M.arm2 && M.arm2.arms[0].S, mg: M.mgArm, nail: M.legs && M.legs.length ? (M.legs.find(L => L.rest.z < 0) || M.legs[0]).kneeG : null, dish: M.dish };   // 釘槍＝前腳的樁腳（重組關節後掛在膝關節下）
+  for (const [k, obj] of Object.entries(list)){ if (!obj) continue;
+    obj.updateMatrixWorld(true); const c = obj.clone(true); c.traverse(o => { o.visible = true; if (o.material && o.material.opacity === 0 && o.material.blending === THREE.AdditiveBlending) o.visible = false; });
+    c.matrixAutoUpdate = false; c.matrix.copy(obj.matrixWorld);
+    if (k === 'blade'){ c.matrixAutoUpdate = true; c.matrix.decompose(c.position, c.quaternion, c.scale); c.quaternion.copy(bq).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(1.45, 0, 0)));
+      const E = c.children.find(o => o.isGroup && o.position.y < 0); if (E) E.rotation.x = 0.75; }   // 刃臂擺成往前伸的姿勢
+    ts.add(c); c.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(c), ctr = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3()), md = Math.max(sz.x, sz.y, sz.z);
+    const dir = new THREE.Vector3(1, 0.55, -0.55).normalize().applyQuaternion(bq), dist = md / (2 * Math.tan(cam.fov * DEG / 2)) * 0.95 / Math.min(1, cam.aspect * 0.8);
+    cam.position.copy(ctr).addScaledVector(dir, dist); cam.lookAt(ctr); cam.near = dist / 20; cam.far = dist * 4; cam.updateProjectionMatrix();
+    renderer.setScissorTest(true); renderer.setViewport(0, 0, W, H); renderer.setScissor(0, 0, W, H); renderer.setClearColor(0x0d1a24, 1); renderer.clear(); renderer.render(ts, cam);
+    ctx.clearRect(0, 0, W, H); ctx.drawImage(renderer.domElement, 0, renderer.domElement.height - H * pr, W * pr, H * pr, 0, 0, W, H); out[k] = cv.toDataURL('image/png');
+    ts.remove(c); }
+  renderer.setScissorTest(false); renderer.setViewport(0, 0, size.x, size.y); renderer.setClearColor(oc, oa);
+  return out; }
+mech.loadModel().then(ok => { applyShadows(mech.root); if (ok) setTimeout(() => { try { PART_IMG = partThumbs(mech); menuS2(); } catch (err){ console.warn('零件圖', err); } }, 400); if (!ok){ mech.failed = true; console.warn('機體模型結構不符，改用過渡模型'); } }).catch(err => { mech.failed = true; console.warn('機體模型載入失敗，改用過渡模型', err); });
 function updateMech(dt, alpha){ const P = state.player; mech.update(dt, V().lerpVectors(P.prevPos, P.currPos, alpha), P, state.ropes);
   if (bot){ const on = bot.active && (bot.mech.loaded || bot.mech.failed); bot.mech.root.visible = on;
     if (on) withActor(bot, () => bot.mech.update(dt, V().lerpVectors(bot.P.prevPos, bot.P.currPos, alpha), bot.P, bot.ropes)); } }
@@ -2836,6 +2883,7 @@ function flickSlot(p){ const dx = p.x - p.ox, up = p.oy - p.y; return Math.hypot
 // v2.5 武器圖示（SVG 路徑，viewBox 0 0 30 16）：01 57mm 滑膛炮、02 螳螂鐮（v3.9 取代 14.5mm 機槍）、03 腿部釘槍
 const WICON = {
   main: 'M1 6h9v5H1z M10 7.1h16v2.3H10z M25.5 6h3.5v4.5h-3.5z M3 11h5v2.5H3z M4 4h4v2H4z',
+  mgun: 'M2 6h11v4.2H2z M13 7.3h11v1.5H13z M22.5 6.4h1.8v3.3h-1.8z M5 10.2h4.2v4H5z M2 4h3.5v2H2z M24.5 7.1h4v1.9h-4z',   // 14.5mm 機槍（選裝）
   mg:   'M2 13.5L4 11l9-4.5 1.2 1.6L5.2 14.8z M12.6 6.2C17 2.5 23.5 1.6 29 3.8 24.5 3.6 19.5 4.6 15.4 7.6z M12 5l2.2-1.4 1.6 2.4-2.2 1.4z',   // v3.9 螳螂鐮
   sub:  'M2 3.5h3.2v9H2z M5.2 7h15v2h-15z M20.2 6.4L28.5 8l-8.3 1.6z M8 5.2h1.4v5.6H8z M12 5.6h1.4v4.8H12z' };
 const IC_THRUST = '<svg class="ic s" viewBox="0 0 24 24"><path d="M12 3v11M7.5 7.5L12 3l4.5 4.5"/><path d="M9 17c0 2.2 1.4 3.6 3 4.5 1.6-.9 3-2.3 3-4.5"/></svg>';   // 推進（往上的箭頭＋火焰）
@@ -2843,11 +2891,15 @@ const IC_REEL = '<svg class="ic s" viewBox="0 0 24 24"><path d="M12 20V6M7 10l5-
 const IC_RELOAD = '<svg class="ic s" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>';   // 裝填
 const IC_3P = '<svg viewBox="0 0 24 24"><circle cx="15" cy="7" r="2.6"/><path d="M10.5 20l1.5-5.5 3-2 3 2 1.5 5.5"/><path d="M3 12h5M5.5 9.5v5"/></svg>';   // 第三人稱（看得到自己）
 const IC_1P = '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';   // 第一人稱（眼睛）
-const iconSVG = k => `<svg viewBox="0 0 30 16" aria-hidden="true"><path d="${WICON[k]}"/></svg>`;
+const iconKey = k => k === 'mg' && !bladeOn(local && local.weapon) ? 'mgun' : k;   // 02 欄圖示依選裝
+const iconSVG = k => `<svg viewBox="0 0 30 16" aria-hidden="true"><path d="${WICON[iconKey(k)]}"/></svg>`;
 const WICON2D = {}; for (const k in WICON) WICON2D[k] = new Path2D(WICON[k]);
 const SLOT_ANG = { main: 90, mg: 0, sub: 180 };   // v3.9 上／右／左（右邊靠螢幕邊緣，圖示會往內收、往上抬一點）
 const SLOT_DIR = {}; for (const k in SLOT_ANG){ const a = SLOT_ANG[k] * DEG; SLOT_DIR[k] = [Math.cos(a) + 1e-6, -Math.sin(a), k === 'main' ? '01' : k === 'mg' ? '02' : '03']; }
-for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k); el.innerHTML = iconSVG(k) + `<span class="dir">${SLOT_DIR[k][2]}</span>`; }
+function refreshWIcons(){ for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k); el.innerHTML = iconSVG(k) + `<span class="dir">${SLOT_DIR[k][2]}</span>`; }
+  for (const [id, k] of [['bW1', 'main'], ['bW2', 'mg'], ['bW3', 'sub']]){ const el = document.getElementById(id); if (el) el.innerHTML = iconSVG(k) + `<small>${id.slice(-1).padStart(2, '0')}</small>`; }
+  try { lastUI.fl = lastUI.sw = lastUI.f = null; } catch(_){} }   // 初始化時 lastUI 還沒宣告
+refreshWIcons();
 function layoutSlots(){ const r = document.getElementById('bFire').getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width * 1.3;
   for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k), [dx, dy] = SLOT_DIR[k], l = Math.hypot(dx, dy);
     let x = cx + dx / l * R, y = cy + dy / l * R; const over = x - (innerWidth - 28); if (over > 0){ x -= over; y -= over * 0.8; }   // 超出螢幕右邊就往內、往上收
@@ -3018,6 +3070,7 @@ for (const t of setEl.querySelectorAll('.tabs button')) t.addEventListener('clic
 document.getElementById('bReset').addEventListener('click', respawn);
 document.getElementById('optShake').addEventListener('change', e => opts.shake = e.target.checked);
 document.getElementById('optShadows').addEventListener('change', e => opts.shadows = e.target.checked);
+document.getElementById('optAA').value = aaMode; document.getElementById('optAA').addEventListener('change', e => setAA(e.target.value));
 document.getElementById('optStab').addEventListener('change', e => opts.stab = e.target.checked);
 // v2.5 速度區間（像 86 一樣依駕駛習慣調整）：同時縮放地面速度、地面加速、推進水平上限、撲擊速度、最高速度
 const SPEED_STD = 0.8;   // v3.9「標準」戰速整體慢 20%（玩家回饋：太快瞄不到）；×1.0 現在＝舊版 ×0.8
@@ -3158,7 +3211,7 @@ function drawHUD(dt){
     c.strokeStyle = col; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 14, 0, Math.PI*2); c.stroke();
     c.beginPath(); c.moveTo(x-22, y); c.lineTo(x-8, y); c.moveTo(x+8, y); c.lineTo(x+22, y); c.moveTo(x, y-22); c.lineTo(x, y-8); c.moveTo(x, y+8); c.lineTo(x, y+22); c.stroke();
     c.fillStyle = col; c.font = '600 11px sans-serif'; c.textAlign = 'center'; c.fillText(label, x, y + 36); };
-  if (opts.follow === 'weapon' && !mouseMode && (aimOff.x || aimOff.y)) drawReticle(aimOff.x, aimOff.y, '#ff6a50', state.weapon.active === 'main' ? '57mm' : state.weapon.active === 'mg' ? '螳螂鐮' : '釘槍');
+  if (opts.follow === 'weapon' && !mouseMode && (aimOff.x || aimOff.y)) drawReticle(aimOff.x, aimOff.y, '#ff6a50', state.weapon.active === 'main' ? '57mm' : state.weapon.active === 'mg' ? (bladeOn(state.weapon) ? '螳螂鐮' : '14.5mm') : '釘槍');
   if (ropeAiming) drawReticle(ropeOff.x, ropeOff.y, '#3de0ff', '放開＝射出右索');
   // 狀態橫幅：無敵區／釘在牆上
   { const msgs = []; if (P.safe) msgs.push(['出生保護區：不會受傷，也不能開火', '#40ffb0']); if (P.pinned) msgs.push(['釘在牆上：勾索、推進或撲擊就會脫離', '#ffc94a']);
@@ -3184,18 +3237,18 @@ function drawHUD(dt){
     }
     // 兩側梯狀刻度：左＝推進燃料、右＝彈量（由下往上點亮）
     const nL = 9, gapL = 0.3 * R0, top = cy - (nL - 1) / 2 * gapL;
-    const fuelFr = P.fuel / CONFIG.boost.fuel, isMG = wst2.active === 'mg', mlS = wst2.melee || {}, ammoFr = sub ? wst2.nail.ammo / CONFIG.nail.mag : isMG ? 1 - (mlS.cd || 0) / CONFIG.melee.cooldown : wst2.cannon.ammo / CONFIG.cannon.mag;   // v3.9 02＝螳螂鐮：右側刻度改成冷卻
+    const fuelFr = P.fuel / CONFIG.boost.fuel, isMG = wst2.active === 'mg' && bladeOn(wst2), isGun = wst2.active === 'mg' && !isMG, mlS = wst2.melee || {}, ammoFr = sub ? wst2.nail.ammo / CONFIG.nail.mag : isMG ? 1 - (mlS.cd || 0) / CONFIG.melee.cooldown : isGun ? wst2.ammo / W.ammo : wst2.cannon.ammo / CONFIG.cannon.mag;   // isMG＝螳螂鐮、isGun＝機槍（選裝）   // v3.9 02＝螳螂鐮：右側刻度改成冷卻
     const lowFuel = fuelFr < 0.25, blink = Math.floor(performance.now() / 250) % 2;
     for (let i = 0; i < nL; i++){
       const y = top + i * gapL; if (Math.abs(y - yL) < gapL * 0.5) continue;
       const lit = (nL - 1 - i) / (nL - 1);
       line([[cx - 2.9*R0, y], [cx - 2.35*R0, y]], lit < fuelFr ? (lowFuel ? (blink ? '#ff6050' : '#ffa080') : (P.thrusting ? '#ffd060' : '#ffb040')) : DIM, 1.6);
-      line([[cx + 2.35*R0, y], [cx + 2.9*R0, y]], lit < ammoFr ? (blocked ? '#8a96a2' : sub ? '#ffc94a' : isMG ? '#ffa860' : '#ff7a5c') : DIM, 1.6);
+      line([[cx + 2.35*R0, y], [cx + 2.9*R0, y]], lit < ammoFr ? (blocked ? '#8a96a2' : sub ? '#ffc94a' : isMG || isGun ? '#ffa860' : '#ff7a5c') : DIM, 1.6);
     }
     c.shadowBlur = 0; c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`;
     c.fillStyle = lowFuel ? '#ff8070' : '#ffcf8a'; c.textAlign = 'center';
     txt(P.onPad ? 'SUPPLY' : 'BST ' + Math.round(fuelFr * 100) + '%', cx - 2.62*R0, top - 8*sc);
-    c.fillStyle = sub ? '#ffd770' : '#ffa08a'; txt(sub ? 'NAIL' : isMG ? 'BLADE' : '57mm', cx + 2.62*R0, top - 8*sc);
+    c.fillStyle = sub ? '#ffd770' : '#ffa08a'; txt(sub ? 'NAIL' : isMG ? 'BLADE' : isGun ? 'MG' : '57mm', cx + 2.62*R0, top - 8*sc);
     // 讀數：左尖峰＝高度、右尖峰＝速度
     c.font = `700 ${Math.round(12*sc)}px ui-monospace, Menlo, monospace`; c.fillStyle = MINT;
     const alt = state.player.currPos.y;
@@ -3262,16 +3315,16 @@ function drawHUD(dt){
     if (hitMarkT > 0){ for (const [a2,b2] of [[-1,-1],[1,-1],[-1,1],[1,1]]) line([[cx+a2*7*sc, cy+b2*7*sc], [cx+a2*13*sc, cy+b2*13*sc]], '#ff5050', 2); }
     // 彈種資訊（準星附近）：弧頂＝彈量、弧頂上方＝彈種；準星下方＝武器欄位
     c.shadowBlur = 4;
-    const cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : isMG ? (mlS.cd > 0 ? mlS.cd.toFixed(1) + 's' : 'READY') : (wst2.cannon.reloading > 0 ? 'RLD' : wst2.cannon.ammo + '/' + Math.floor(wst2.cannon.reserve));
-    const wcol = blocked ? '#9aa6b2' : sub ? '#ffd770' : isMG ? '#ffc890' : MINT;
+    const cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : isMG ? (mlS.cd > 0 ? mlS.cd.toFixed(1) + 's' : 'READY') : isGun ? (wst2.reloading > 0 ? 'RLD' : String(Math.floor(wst2.ammo)).padStart(4, '0')) : (wst2.cannon.reloading > 0 ? 'RLD' : wst2.cannon.ammo + '/' + Math.floor(wst2.cannon.reserve));
+    const wcol = blocked ? '#9aa6b2' : sub ? '#ffd770' : isMG || isGun ? '#ffc890' : MINT;
     c.font = `700 ${Math.round(13*sc)}px ui-monospace, Menlo, monospace`; c.fillStyle = wcol; c.textAlign = 'center';
     
     c.font = `700 ${Math.round(9*sc)}px ui-monospace, Menlo, monospace`;
-    const wname = blocked ? 'SAFE ZONE · HOLD FIRE' : sub ? 'NAIL GUN' : isMG ? 'MANTIS BLADE' : '57mm SMOOTHBORE', yB = cy + R0 + 24*sc; // 武器資訊集中在大弧下方（弧上留給敵人方向）
+    const wname = blocked ? 'SAFE ZONE · HOLD FIRE' : sub ? 'NAIL GUN' : isMG ? 'MANTIS BLADE' : isGun ? '14.5mm MG' : '57mm SMOOTHBORE', yB = cy + R0 + 24*sc; // 武器資訊集中在大弧下方（弧上留給敵人方向）
     c.font = `700 ${Math.round(15*sc)}px ui-monospace, Menlo, monospace`; txt(cnt, cx, yB);
-    c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'right'; txt((sub ? '03' : isMG ? '02' : '01'), cx - 2*sc, yB + 18*sc);
+    c.font = `700 ${Math.round(10*sc)}px ui-monospace, Menlo, monospace`; c.textAlign = 'right'; txt((sub ? '03' : isMG || isGun ? '02' : '01'), cx - 2*sc, yB + 18*sc);
 
-    { const key = sub ? 'sub' : isMG ? 'mg' : 'main', k2 = 0.9 * sc; c.save(); c.translate(cx + 4*sc, yB + 6*sc); c.scale(k2, k2); c.shadowBlur = 0;
+    { const key = sub ? 'sub' : isMG ? 'mg' : isGun ? 'mgun' : 'main', k2 = 0.9 * sc; c.save(); c.translate(cx + 4*sc, yB + 6*sc); c.scale(k2, k2); c.shadowBlur = 0;
       c.lineWidth = 2.5; c.strokeStyle = 'rgba(0,18,26,.75)'; c.stroke(WICON2D[key]); c.fillStyle = wcol; c.fill(WICON2D[key]);
       if (blocked){ c.strokeStyle = '#ff5050'; c.lineWidth = 2; c.beginPath(); c.moveTo(-2, 15); c.lineTo(32, 1); c.stroke(); } c.restore(); }   // v2.5 用圖示顯示武器
     if (opts.autoFire && !mouseMode){ c.fillStyle = wst2.autoOn ? '#ff7060' : DIM; txt('AUTO', cx, yB + 40*sc); }
@@ -3311,11 +3364,11 @@ function updateButtons(){
     if (lastUI['c'+i] !== cls){ lastUI['c'+i] = cls; el.classList.toggle('hooked', cls === 'hooked'); el.classList.toggle('none', cls === 'none'); el.classList.toggle('thrustmode', cls === 'thrustmode'); }
   });
   const w = state.weapon, sub = w.active === 'sub', mg = w.active === 'mg';
-  const ft = sub ? (w.nail.reloading > 0 ? IC_RELOAD : w.nail.ammo + '/' + w.nail.reserve) : mg ? (w.melee && w.melee.cd > 0 ? w.melee.cd.toFixed(1) + 's' : '斬') : (w.cannon.reloading > 0 ? IC_RELOAD : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
+  const ft = sub ? (w.nail.reloading > 0 ? IC_RELOAD : w.nail.ammo + '/' + w.nail.reserve) : mg ? (bladeOn(w) ? (w.melee && w.melee.cd > 0 ? w.melee.cd.toFixed(1) + 's' : '斬') : (w.reloading > 0 ? IC_RELOAD : String(Math.floor(w.ammo)))) : (w.cannon.reloading > 0 ? IC_RELOAD : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
   if (lastUI.f !== ft){ lastUI.f = ft; elSF.innerHTML = ft; }
-  const fl = (w.blocked ? 'x' : '') + (sub ? 'sub' : mg ? 'mg' : 'main');
+  const fl = (w.blocked ? 'x' : '') + (sub ? 'sub' : mg ? iconKey('mg') : 'main');
   if (lastUI.fl !== fl){ lastUI.fl = fl; document.getElementById('lFire').innerHTML = iconSVG(w.active); elFire.classList.toggle('none', !!w.blocked); }
-  const sw = sub ? '腿部' : mg ? '副武' : '主武';
+  const sw = (sub ? '腿部' : mg ? '副武' : '主武') + iconKey('mg');
   if (lastUI.sw !== sw){ lastUI.sw = sw; document.getElementById('swapCur').innerHTML = iconSVG(w.active); for (const k of ['main', 'mg', 'sub']) document.getElementById('ws_' + k).classList.toggle('cur', k === w.active); }
 }
 function buzz(ms){ try { navigator.vibrate && navigator.vibrate(ms); } catch(_){} } // Android 有效，iOS 不支援會略過
@@ -3330,11 +3383,12 @@ const _eye = V(), _cam = V(); const stab = { point: null, fast: 0, target: null 
 function frame(now){
   requestAnimationFrame(frame);
   let dt = Math.min((now - last) / 1000, 0.25); last = now;
-  if (!running){ menuFrame(dt); netFrame(dt); renderer.render(scene, camera); return; }
+  if (!running){ menuFrame(dt); netFrame(dt); drawFrame(); return; }
   // FPS 監測 → 降 DPR
   fpsFrames++; fpsTime += dt;
   if (fpsTime >= CONFIG.render.fpsWindow){ const fps = fpsFrames / fpsTime; fpsFrames = 0; fpsTime = 0;
-    if (!dprLowered && fps < CONFIG.render.fallbackFps && dpr > CONFIG.render.dprFallback){ dpr = CONFIG.render.dprFallback; renderer.setPixelRatio(dpr); dprLowered = true; } }
+    if (fps < CONFIG.render.fallbackFps && aaMode === 'high' && aaComposer){ setAA('std'); toast('畫面有點卡，已自動把反鋸齒降為「標準」（設定 → 外觀可以調回來）', 2600); }   // v3.9 太卡時先降反鋸齒，再降解析度
+    else if (!dprLowered && fps < CONFIG.render.fallbackFps && dpr > CONFIG.render.dprFallback){ dpr = CONFIG.render.dprFallback; renderer.setPixelRatio(dpr); if (aaComposer) aaComposer.setPixelRatio(dpr); dprLowered = true; } }
 
   // 跟手準星（武器）：把螢幕上的準星位置換成射擊方向；放開射擊鈕後準星滑回中央
   if (aimReturn){ const k = Math.exp(-dt * 10); aimOff.x *= k; aimOff.y *= k; if (Math.hypot(aimOff.x, aimOff.y) < 1){ aimOff.x = aimOff.y = 0; aimReturn = false; } }
@@ -3382,7 +3436,7 @@ function frame(now){
       case 'boom': sfx('boom', ev.hitTarget ? 1 : 0.6); spawnBoom(ev.at, ev.normal); if (ev.hitTarget){ hitMarkT = 0.18; sfx('hit'); } break;
       case 'shot': { sfx('shot'); const mz = opts.view3P ? mech.muzzle(ev.nail ? 'nail' : 'mg', V()) : null; const from = mz || ev.from; if (mz) spawnSparks(mz, null); if (ev.tracer) spawnTracer(from, ev.to); } if (ev.hit) spawnSparks(ev.to, ev.normal); if (ev.hitTarget){ hitMarkT = 0.12; sfx('hit'); } break;
       case 'kill': sfx('clank', 0.6); break;
-      case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '01 主武：57mm 滑膛炮' : state.weapon.active === 'mg' ? '02 副武：螳螂鐮（近身按射擊）' : '03 腿部：釘槍（靠牆開槍＝釘住；也能當武器）', 1200); break;
+      case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '01 主武：57mm 滑膛炮' : state.weapon.active === 'mg' ? (bladeOn(state.weapon) ? '02 副武：螳螂鐮（近身按射擊）' : '02 副武：14.5mm 機槍') : '03 腿部：釘槍（靠牆開槍＝釘住；也能當武器）', 1200); break;
       case 'pin': sfx('clank', 0.8); buzz(25); flashT = 0.05; break;
       case 'unpin': sfx('miss'); break;
       case 'nailOut': toast('釘子用完了！', 1500); break;
@@ -3511,7 +3565,7 @@ function frame(now){
 
   skyDome.position.copy(camera.position); skyMat.uniforms.uT.value = now / 1000; vegWind.value = now / 1000;
   { const pp = state.player.currPos; sun.target.position.set(Math.round(pp.x / 4) * 4, Math.round(pp.y / 4) * 4, Math.round(pp.z / 4) * 4); sun.position.copy(sun.target.position).add(SUN_OFF); rim.target.position.copy(sun.target.position); rim.position.copy(sun.target.position).add(RIM_OFF); sun.castShadow = opts.shadows !== false; }
-  if (composer) composer.render(); else renderer.render(scene, camera);
+  drawFrame();
   drawHUD(dt);
   updateButtons();
 }
@@ -3529,6 +3583,15 @@ function menuShow(scr = 'home'){ startEl.style.display = ''; menuGo(scr); }
 function menuHide(){ menuBackdrop(false); startEl.style.display = 'none';   // 一定要把遊戲按鈕層顯示回來（v3.9 的 bug：進遊戲後按鈕層一直隱藏，只剩陀螺儀能用）
   $('mModal').classList.remove('on'); $('mOffSub').classList.remove('on'); }
 function $(id){ return document.getElementById(id); }
+// v3.9 選單背景的機體可以拖曳旋轉（只在首頁、機庫；按鈕、面板上的觸控不算）
+startEl.addEventListener('pointerdown', e => {
+  if (!['home', 'hangar'].includes(MENU.scr) || e.target.closest('button, input, select, a, label, details, .m-panel, .m-modal, .m-sub, .m-profile, .m-foot')) return;
+  MENU.drag = { id: e.pointerId, x: e.clientX, t: performance.now() }; MENU.rotV = 0; try { startEl.setPointerCapture(e.pointerId); } catch(_){} });
+startEl.addEventListener('pointermove', e => { const d = MENU.drag; if (!d || d.id !== e.pointerId) return;
+  const now = performance.now(), dx = e.clientX - d.x, k = 6 / Math.max(320, innerWidth);   // 拖過整個畫面寬度約轉一圈
+  MENU.rot = (MENU.rot || 0) + dx * k; MENU.rotV = clamp(dx * k / Math.max(0.008, (now - d.t) / 1000), -8, 8); d.x = e.clientX; d.t = now; });
+const menuDragEnd = e => { const d = MENU.drag; if (!d || d.id !== e.pointerId) return; if (performance.now() - d.t > 80) MENU.rotV = 0; MENU.drag = null; };
+startEl.addEventListener('pointerup', menuDragEnd); startEl.addEventListener('pointercancel', menuDragEnd);
 function menuGo(scr){
   if (scr === 'hangar' && MENU.scr !== 'hangar') MENU.back = MENU.scr;
   MENU.scr = scr; startEl.dataset.scr = scr;
@@ -3539,7 +3602,7 @@ function menuGo(scr){
 // v3.9d 還沒開放的功能先上鎖：正式版鎖線上大廳；機庫、個人資料兩版都先鎖（網址加 ?unlock=1 可打開機庫、個人資料，測試用）
 const BUILD_ONLINE = true;   // 正式版（main）＝false
 const UNLOCK_ALL = new URLSearchParams(location.search).get('unlock') === '1';
-const LOCKS = { mToLobby: !BUILD_ONLINE, mHangar: !UNLOCK_ALL, mProfile: !UNLOCK_ALL };   // 線上只看版本開關：正式版不能用網址參數打開
+const LOCKS = { mToLobby: !BUILD_ONLINE, mHangar: false, mProfile: !UNLOCK_ALL };   // v3.9 有了螳螂鐮選裝 → 機庫開放   // 線上只看版本開關：正式版不能用網址參數打開
 function menuLocks(){
   for (const [id, on] of Object.entries(LOCKS)){ const el = $(id); el.classList.toggle('locked', on);
     const sm = el.querySelector('small'); if (sm){ if (!sm.dataset.orig) sm.dataset.orig = sm.textContent; sm.textContent = on ? (id === 'mProfile' ? '尚未開放' : sm.dataset.orig + '・尚未開放') : sm.dataset.orig; } }
@@ -3611,6 +3674,15 @@ function menuPaints(){ const sel = $('optPaint'), box = $('mPaints'); box.innerH
     b.addEventListener('click', () => { sel.value = o.value; sel.dispatchEvent(new Event('change')); menuPaints(); }); box.appendChild(b); } }
 $('optPaint').addEventListener('change', () => menuPaints());
 $('mHangar').addEventListener('click', () => menuGo('hangar'));
+// v3.9 機庫選裝：02 欄＝螳螂鐮／14.5mm 機槍（存在本機，下一場開始生效；練習中換也立刻生效）
+const S2_INFO = { blade: ['螳螂鐮', '近身一刀擊破（冷卻 3 秒）；拿著刀時正面 ±60° 的子彈、砲彈、刀都擋得掉'], mg: ['14.5mm 機槍', '每分鐘 600 發、射程 500m；不能格擋'] };
+function menuS2(){ $('mS2').textContent = S2_INFO[LOADOUT.s2][0]; $('mS2Note').textContent = S2_INFO[LOADOUT.s2][1];
+  for (const im of document.querySelectorAll('img.m-thumb[data-part]')) if (PART_IMG[im.dataset.part]) im.src = PART_IMG[im.dataset.part];
+  if (PART_IMG[LOADOUT.s2]) $('mS2Img').src = PART_IMG[LOADOUT.s2];   // 選裝的零件圖
+  for (const b of $('mS2Pick').children) b.classList.toggle('on', b.dataset.s2 === LOADOUT.s2); }
+for (const b of $('mS2Pick').children) b.addEventListener('click', () => { LOADOUT.s2 = b.dataset.s2; try { localStorage.setItem('wfm.s2', LOADOUT.s2); } catch(_){}
+  if (match.state !== 'live') local.weapon.s2 = LOADOUT.s2; refreshWIcons(); menuS2(); });
+menuS2();
 // ---- 選單背景：自己的機體正視、炮口朝左上（機庫時機體移到左邊，讓出右邊面板）----
 const _mf = V(), _mr = V(), _mc = V(), _ml = V(), _md = V(), _mUp = V(0, 1, 0);
 let menuBg = false;
@@ -3627,6 +3699,9 @@ function menuFrame(dt){
   camera.position.copy(_mc); camera.lookAt(_ml); if (camera.fov !== 42){ camera.fov = 42; camera.updateProjectionMatrix(); }
   // 機頭轉向畫面左前方、整台微微抬頭 → 砲口朝左上；加一點呼吸感
   _md.copy(_mf).multiplyScalar(-0.55).addScaledVector(_mr, 1).normalize();
+  // v3.9 拖曳旋轉：首頁、機庫在空白處左右拖曳轉動機體，放開後帶慣性慢慢停下
+  if (!MENU.drag){ MENU.rot = (MENU.rot || 0) + (MENU.rotV || 0) * dt; MENU.rotV = (MENU.rotV || 0) * Math.exp(-dt * 2.5); }
+  { const r = MENU.rot || 0, cr = Math.cos(r), sr = Math.sin(r); _md.set(_md.x * cr + _md.z * sr, 0, -_md.x * sr + _md.z * cr); }
   P.yaw = Math.atan2(-_md.x, -_md.z) + Math.sin(MENU.t * 0.5) * 0.03; P.pitch = 0.5;
   P.grounded = true; P.groundN = _mUp.set(0, 1, 0).addScaledVector(_md, -0.28 - Math.sin(MENU.t * 0.8) * 0.02).normalize(); P.pinned = null; P.vel.set(0, 0, 0);
   if (mech.loaded || mech.failed){ mech.root.visible = true; mech.update(dt, p, P, state.ropes); }
