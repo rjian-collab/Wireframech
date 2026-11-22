@@ -415,7 +415,7 @@
     </section>
     <section data-page="look">
       <label class="row"><span class="tx"><b>反鋸齒</b><i>邊緣比較平滑；iPad 太卡會自動降為標準</i></span><select id="optAA"><option value="high">高</option><option value="std">標準</option></select></label>
-      <label class="row"><span class="tx"><b>機體塗裝</b><i></i></span><select id="optPaint"><option value="steel" selected>鋼灰＋青綠</option><option value="night">夜戰深灰</option><option value="desert">沙漠＋橘</option><option value="white">原色白＋紅</option></select></label>
+      <label class="row"><span class="tx"><b>機體塗裝</b><i></i></span><select id="optPaint"><option value="steel" selected>鋼灰＋青綠</option><option value="night">夜戰深灰</option><option value="desert">沙漠＋橘</option><option value="white">原色白＋紅</option><!-- v4.4 新塗裝 --><option value="gold">金＋黑</option><option value="crimson">緋紅＋靛紫</option><option value="olive">橄欖綠＋淺綠</option></select></label>
     </section>
     </div>
   </div>
@@ -2692,14 +2692,25 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
   // v2.4 塗裝：裝甲顏色（乘在原本的貼圖上）＋點綴色（取代紅色零件，帶一點發光）
   // v2.5 整體調暗：塗裝色乘在「所有」裝甲／金屬材質上（不只部分零件），點綴色另外處理
   const PAINTS = { steel: { armor: 0x5c6774, metal: 0x6a727c, accent: 0x3de0c8, glow: 0.7 }, white: { armor: 0xffffff, metal: 0xffffff, accent: 0xd02020, glow: 0.15 },
-                   desert: { armor: 0x8c7a58, metal: 0x7a7266, accent: 0xff8a2a, glow: 0.45 }, night: { armor: 0x333a43, metal: 0x41474f, accent: 0x7ff5e0, glow: 1.0 } };
+                   desert: { armor: 0x8c7a58, metal: 0x7a7266, accent: 0xff8a2a, glow: 0.45 }, night: { armor: 0x333a43, metal: 0x41474f, accent: 0x7ff5e0, glow: 1.0 },
+                   // v4.4 草稿「幾種新 skin」：金＋黑／緋紅＋靛紫／橄欖綠＋淺綠（顏色取自草稿色塊，再依機庫畫面微調；貼圖會乘上顏色，所以深色要稍微提亮）
+                   //      arm（選填）＝格鬥臂主體色，用第二色塊做雙色塗裝；沒寫就跟裝甲色
+                   //      metalness／roughness（選填）＝裝甲材質的金屬感，沒寫就用模型原值（金色要高金屬感才不會像芥末黃）
+                   gold: { armor: 0xd4a537, metal: 0x1c1c1c, arm: 0x1c1c1c, accent: 0xffc24a, glow: 0.8, metalness: 0.8, roughness: 0.35 },
+                   crimson: { armor: 0xc8301e, metal: 0x5a0e08, arm: 0x6a1008, accent: 0x5a26e0, glow: 1.0 },
+                   olive: { armor: 0x4f5e1e, metal: 0x2e3812, arm: 0xc8e6b0, accent: 0xc8f0a8, glow: 0.8 } };
+  // v4.4 塗裝可選擇改金屬感：第一次套用時記下模型原值，換回其他塗裝時還原
+  const paintFinish = (m, P2) => { if (m.metalness === undefined) return; const u = m.userData;
+    if (u.met0 === undefined){ u.met0 = m.metalness; u.rough0 = m.roughness; }
+    m.metalness = P2.metalness ?? u.met0; m.roughness = P2.roughness ?? u.rough0; };
   M.applyPaint = name => { const P2 = PAINTS[name] || PAINTS.steel; if (!M.paintMats) return;
-    for (const m of M.paintMats.armor){ m.color.setHex(P2.armor); }
+    for (const m of M.paintMats.armor){ m.color.setHex(P2.armor); paintFinish(m, P2); }
     for (const m of (M.paintMats.metal || [])){ m.color.setHex(P2.metal); }
     for (const m of M.paintMats.accent){ m.color.setHex(P2.accent); if (m.emissive){ m.emissive.setHex(P2.accent); m.emissiveIntensity = P2.glow; } }
     // v4.2 格鬥臂（刀臂／槍臂）、機槍、鋼索發射器也跟著塗裝：主體＝裝甲色、關節＝裝甲色壓暗、刃口＝點綴色提亮
-    for (const m of (M.paintMats.armArmor || [])) m.color.setHex(P2.armor);
-    for (const m of (M.paintMats.armDark || [])) m.color.setHex(P2.armor).multiplyScalar(0.42);
+    const armC = P2.arm ?? P2.armor;   // v4.4 格鬥臂可用第二色（雙色塗裝）
+    for (const m of (M.paintMats.armArmor || [])){ m.color.setHex(armC); if (P2.arm === undefined) paintFinish(m, P2); else paintFinish(m, {}); }
+    for (const m of (M.paintMats.armDark || [])) m.color.setHex(armC).multiplyScalar(0.42);
     for (const m of (M.paintMats.edge || [])) m.color.setHex(P2.accent).lerp(new THREE.Color(0xffffff), 0.45); };
   M.loadModel = async () => {
     const [{ GLTFLoader }, { MeshoptDecoder }, { RoomEnvironment }] = await Promise.all([
@@ -2745,7 +2756,9 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
     // v3.7 材質：裝甲更像烤漆金屬（金屬感↑、粗糙度略降、凹凸貼圖加深），點綴色更亮
     { const seen = new Set(); gltf.scene.traverse(o => { if (!o.isMesh) return; const m = o.material; if (!m || seen.has(m) || !m.isMeshStandardMaterial) return; seen.add(m);
         if (M.paintMats.accent.includes(m)) { m.emissiveIntensity *= 1.6; return; }
-        m.metalness = Math.min(1, Math.max(m.metalness, 0.25) * 1.9); m.roughness = Math.min(m.roughness, 1) * 0.72; m.envMapIntensity = 1.25;
+        const u = m.userData, fin = u.met0 !== undefined;   // v4.4 已被塗裝改過金屬感的材質：從原值加強，再重新套塗裝
+        m.metalness = Math.min(1, Math.max(fin ? u.met0 : m.metalness, 0.25) * 1.9); m.roughness = Math.min(fin ? u.rough0 : m.roughness, 1) * 0.72; m.envMapIntensity = 1.25;
+        if (fin){ u.met0 = m.metalness; u.rough0 = m.roughness; paintFinish(m, PAINTS[cfg.paint || opts.paint] || PAINTS.steel); }
         if (m.normalMap) m.normalScale.multiplyScalar(1.6); m.needsUpdate = true; }); }
     // 隱藏基本幾何的過渡零件
     for (const ch of [...M.body.children]) if (ch !== mdl && ch !== M.dish) ch.visible = false;
