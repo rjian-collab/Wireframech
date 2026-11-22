@@ -368,6 +368,19 @@
   #bReload { --c:#9fe8ff; width:calc(var(--Hk)*0.6); height:calc(var(--Hk)*0.6); right:calc(var(--pad) + var(--sr) + var(--Fk)*1.18 + 3vmin + var(--Hk)*0.2); bottom:calc(var(--pad) + var(--sb) + var(--Fk)*0.45 + var(--Hk) + 2.5vmin); }
   #bReload svg.rld { width:62%; height:62%; overflow:visible; } #bReload .ar { fill:none; stroke:var(--c); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   #bReload .bl { fill:var(--c); } #bReload .cs { stroke:#06202a; stroke-width:1.2; }   /* v4.1 換彈圖示：子彈＋環形箭頭 */
+  /* v4.5 多語系：日文／韓文字型（依 <html lang> 切換），各語言的 CSS 文字標籤，首頁語言切換 */
+  html:lang(ja) body { font-family:-apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", Meiryo, "Noto Sans JP", "Noto Sans CJK JP", sans-serif; }
+  html:lang(ko) body { font-family:-apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Noto Sans CJK KR", sans-serif; }
+  html:lang(en) body { font-family:-apple-system, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", "Noto Sans CJK TC", sans-serif; }
+  html:lang(ja) { --f-disp:"Bahnschrift SemiCondensed","Bahnschrift","Avenir Next Condensed","DIN Condensed","Roboto Condensed","Arial Narrow",-apple-system,"Hiragino Sans","Yu Gothic UI","Noto Sans JP","Noto Sans CJK JP",sans-serif; }
+  html:lang(ko) { --f-disp:"Bahnschrift SemiCondensed","Bahnschrift","Avenir Next Condensed","DIN Condensed","Roboto Condensed","Arial Narrow",-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR",sans-serif; }
+  html:lang(ja) select, html:lang(ja) input, html:lang(ko) select, html:lang(ko) input { font-family:inherit; }
+  html:lang(ja) .vs-card::before { content:'自機'; } html:lang(ja) .vs-card.op::before { content:'相手'; } html:lang(ja) .pz-win::before { content:'PAUSE 一時停止'; }
+  html:lang(ko) .vs-card::before { content:'나'; } html:lang(ko) .vs-card.op::before { content:'상대'; } html:lang(ko) .pz-win::before { content:'PAUSE 일시정지'; }
+  html:lang(en) .vs-card::before { content:'YOU'; } html:lang(en) .vs-card.op::before { content:'RIVAL'; } html:lang(en) .pz-win::before { content:'PAUSE'; }
+  .m-foot select.m-lang { min-height:28px; padding:0 4px; font-size:12px; color:#8fb9cf; background:rgba(6,20,22,.8); border:1px solid rgba(var(--mint),.35); border-radius:0; font-family:inherit; }
+  html:not([data-lang="zh-TW"]) .m-title span { display:inline-block; max-width:min(300px, 38vw); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:top; }
+  html:lang(en) #settings .tx b, html:lang(ko) #settings .tx b { line-height:1.25; } #settings .tx i { overflow-wrap:anywhere; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -445,6 +458,7 @@
       <div id="gyroStatus"></div>
     </section>
     <section data-page="look">
+      <label class="row"><span class="tx"><b data-i18n>語言 Language</b><i></i></span><select id="optLang" data-i18n-skip><option value="zh-TW">繁體中文</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="en">English</option></select></label><!-- v4.5 語言 -->
       <label class="row"><span class="tx"><b>反鋸齒</b><i>邊緣比較平滑；iPad 太卡會自動降為標準</i></span><select id="optAA"><option value="high">高</option><option value="std">標準</option></select></label>
       <label class="row"><span class="tx"><b>機體塗裝</b><i></i></span><select id="optPaint"><option value="steel" selected>鋼灰＋青綠</option><option value="night">夜戰深灰</option><option value="desert">沙漠＋橘</option><option value="white">原色白＋紅</option><!-- v4.4 新塗裝 --><option value="gold">金＋黑</option><option value="crimson">緋紅＋靛紫</option><option value="olive">橄欖綠＋淺綠</option></select></label>
     </section>
@@ -506,16 +520,16 @@
     <button class="m-exit" data-back="BACKTO" id="mHangarBack">BACK <span>⇥</span></button>
   </div>
   <button class="m-hangar-btn" id="mHangar"><b>HANGAR</b><small>機庫</small></button>
-  <div class="m-foot"><span id="status">載入中…</span><button id="mHelp">操作說明・素材授權</button><a id="fullLink" href="https://wireframech.vercel.app" target="_blank" rel="noopener" style="display:none;margin-top:6px;padding:8px 14px;border-radius:10px;border:1px solid rgba(140,220,255,.5);color:#9fe8ff;text-decoration:none;font-size:14px">⛶ You can also play at wireframech.vercel.app（大畫面）</a></div>
+  <div class="m-foot"><span id="status">載入中…</span><button id="mHelp">操作說明・素材授權</button><select id="mLang" class="m-lang" aria-label="Language" data-i18n-skip><option value="zh-TW">繁中</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="en">EN</option></select><a id="fullLink" href="https://wireframech.vercel.app" target="_blank" rel="noopener" style="display:none;margin-top:6px;padding:8px 14px;border-radius:10px;border:1px solid rgba(140,220,255,.5);color:#9fe8ff;text-decoration:none;font-size:14px">⛶ You can also play at wireframech.vercel.app（大畫面）</a></div>
   <div id="mModal" class="m-modal"><div class="m-panel">
     <button class="m-x" id="mModalX" aria-label="關閉">✕</button>
     <div id="mHelpBody">
-      <h3>操作說明</h3><details open><summary style="cursor:pointer;color:#9fe4ff">電腦操作（鍵盤＋滑鼠）</summary><ul>
+      <h3>操作說明</h3><details open><summary style="cursor:pointer;color:#9fe4ff">電腦操作（鍵盤＋滑鼠）</summary><ul data-i18n-html="help.pc">
     <li>點一下畫面鎖定滑鼠，移動滑鼠＝轉視角；<b>Esc</b> 放開滑鼠（同時暫停）</li>
     <li><b>WASD</b> 移動　<b>空白鍵</b> 跳躍（按著方向鍵＝往那邊跳）　<b>Shift</b> 噴氣</li>
     <li><b>Q／E</b> 左／右鋼索　<b>左鍵</b> 射擊　<b>右鍵</b> 直接用 02 副武器（放開切回）　<b>中鍵</b> 換武器（也可以按 1／2／3）</li>
     <li><b>R</b> 換彈（手機按「換彈」鈕；每種武器身上帶 3 個備用彈匣，站上補給平台補回）　<b>P</b> 暫停（線上對戰不能暫停）　<b>V</b> 切換第一／第三人稱</li></ul></details><details open><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
-  <ul>
+  <ul data-i18n-html="help.full">
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
     <li><b style="color:#c99bff">線上對戰</b>（1v1，真人）：首頁按「MAIN LOBBY」進大廳。「QUICK MATCH」自動找人，20 秒沒找到就改打 AI；「ROOM」建立房間，把房間代碼告訴朋友，對方在「JOIN」輸入代碼加入，房主按「BATTLE」開打。房主從基地 A、加入者從基地 B 出發，規則和對戰 AI 相同</li>
     <li><b style="color:#ffb070">對戰 AI</b>：你從基地 A、AI 從基地 B 出發；先擊破 5 次或 5 分鐘內分數高的贏；掉下虛空算對方得分；橘色機體與橘色鋼索是 AI</li>
@@ -559,6 +573,441 @@
   </div></div>
 </div>
 
+<script>
+// =====================================================================
+// v4.5 多語系（i18n）：繁中 zh-TW（預設）／日 ja／韓 ko／英 en
+//  字典 key＝繁中原文（空白正規化），值＝[ja, ko, en]；繁中直接回傳原文，所以 zh-TW 不用填字典
+//  t(key, vars)：查字典＋代入 {name}；查不到時試「樣板比對」（例如 toast 已組好的「被 AI 擊破！回到基地」）
+//  applyI18n()：首頁／設定等靜態文字（第一次執行時記下繁中原文的文字節點與屬性）＋ data-i18n／data-i18n-ph／data-i18n-aria／data-i18n-html
+//  切換語言：setLang(l) → 存 localStorage（wfm.lang）→ applyI18n() → 發出 'wfm:lang' 事件讓遊戲程式更新動態文字
+// =====================================================================
+(function(){
+const LANGS = ['zh-TW', 'ja', 'ko', 'en'], HTML_LANG = { 'zh-TW': 'zh-Hant', ja: 'ja', ko: 'ko', en: 'en' };
+function detect(){
+  try { const s = localStorage.getItem('wfm.lang'); if (LANGS.includes(s)) return s; } catch (_){}
+  const L = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || '']);
+  for (const l of L){ const x = String(l || '').toLowerCase(); if (x.startsWith('zh')) return 'zh-TW'; if (x.startsWith('ja')) return 'ja'; if (x.startsWith('ko')) return 'ko'; if (x.startsWith('en')) return 'en'; }
+  return 'en';
+}
+const norm = s => String(s).replace(/\s+/g, ' ').trim();
+// ---- 字典：繁中 → [日, 韓, 英] ----
+const D = {
+  // 視窗標題、首頁
+  "WIREFRAMECH 鋼弦機兵": ["WIREFRAMECH 鋼弦機兵", "WIREFRAMECH", "WIREFRAMECH"],
+  "鋼弦機兵 v4.1（測試版：螳螂鐮＋連線＋電腦操作）": ["v4.1 テスト版：マンティス＋オンライン＋PC操作", "v4.1 (테스트 버전: 맨티스 블레이드 + 온라인 + PC 조작)", "v4.1 (Test build: Mantis Blade + Online + PC controls)"],
+  "個人資料": ["プロフィール", "프로필", "Profile"],
+  "對戰紀錄": ["戦績", "전적", "Record"],
+  "單機遊玩": ["ひとりで遊ぶ", "싱글 플레이", "Single player"],
+  "練習（打靶）": ["練習（射撃訓練）", "연습 (사격 훈련)", "Practice (targets)"],
+  "對戰 AI": ["AI対戦", "AI 대전", "vs AI"],
+  "新手教學": ["チュートリアル", "튜토리얼", "Tutorial"],
+  "設定教學": ["設定チュートリアル", "설정 튜토리얼", "Settings tutorial"],
+  "線上大廳": ["オンラインロビー", "온라인 로비", "Online lobby"],
+  "邀請隊友": ["仲間を招待", "팀원 초대", "Invite teammate"],
+  "＋": ["＋", "＋", "＋"],
+  "建立房間・找朋友": ["ルーム作成・フレンド対戦", "방 만들기·친구와 대전", "Create room · play friends"],
+  "快速配對（20 秒沒人改打 AI）": ["クイックマッチ（20秒いなければAI戦）", "빠른 매칭 (20초 내 없으면 AI전)", "Quick match (AI after 20 s)"],
+  "配對中，再按一次取消": ["マッチング中…もう一度押すとキャンセル", "매칭 중, 다시 누르면 취소", "Matching… tap again to cancel"],
+  "分享代碼": ["コードを共有", "코드 공유", "Share code"],
+  "等待對手": ["相手を待っています", "상대 대기 중", "Waiting for rival"],
+  "輸入房間代碼": ["ルームコードを入力", "방 코드 입력", "Enter room code"],
+  "輸入代碼": ["コード", "코드 입력", "Code"],
+  "加入": ["参加", "참가", "Join"],
+  "加入朋友的房間": ["フレンドのルームに参加", "친구 방에 참가", "Join a friend's room"],
+  "等待對手加入": ["相手の参加待ち", "상대 참가 대기", "Waiting for rival to join"],
+  "機庫 HANGAR": ["格納庫 HANGAR", "격납고 HANGAR", "HANGAR"],
+  "塗裝": ["カラー", "도장", "Paint"],
+  "武裝": ["武装", "무장", "Loadout"],
+  "主武 57mm 滑膛炮": ["メイン 57mm滑腔砲", "주무기 57mm 활강포", "Main 57mm Smoothbore"],
+  "副武": ["サブ", "보조", "Sub"],
+  "主武": ["メイン", "주무기", "Main"],
+  "腿部 釘槍": ["脚部 ネイルガン", "다리 네일건", "Leg Nail Gun"],
+  "雙鋼索（固定配備）": ["ツインワイヤー（固定装備）", "트윈 와이어 (고정 장비)", "Twin wires (fixed)"],
+  "02 副武選裝": ["02 サブ武器選択", "02 보조무기 선택", "02 Sub weapon"],
+  "螳螂鐮": ["マンティスブレード", "맨티스 블레이드", "Mantis Blade"],
+  "14.5mm 機槍": ["14.5mm機関銃", "14.5mm 기관총", "14.5mm MG"],
+  "釘槍": ["ネイルガン", "네일건", "Nail Gun"],
+  "在左邊空白處拖曳可以轉動機體": ["左側の空きエリアをドラッグで機体を回転", "왼쪽 빈 곳을 드래그하면 기체가 회전", "Drag the empty area on the left to rotate the mech"],
+  "近身一刀擊破（冷卻 3 秒）；拿著刀時正面 ±60° 的子彈、砲彈、刀都擋得掉": ["接近戦で一撃撃破（クールダウン3秒）。構えている間は正面±60°の弾・砲弾・刃を防げる", "근접 일격 격파 (쿨다운 3초). 들고 있으면 정면 ±60°의 총알·포탄·칼날을 막음", "One-hit KO up close (3 s cooldown); blocks bullets, shells and blades within ±60° in front"],
+  "每分鐘 600 發、射程 500m；不能格擋": ["毎分600発・射程500m。パリィ不可", "분당 600발, 사거리 500m. 막기 불가", "600 rounds/min, 500 m range; can't parry"],
+  "機庫": ["格納庫", "격납고", "Hangar"],
+  "載入中…": ["読み込み中…", "로딩 중…", "Loading…"],
+  "操作說明・素材授權": ["操作説明・ライセンス", "조작 설명·라이선스", "Controls & credits"],
+  "⛶ You can also play at wireframech.vercel.app（大畫面）": ["⛶ wireframech.vercel.app でも遊べます（大画面）", "⛶ wireframech.vercel.app 에서도 플레이 (큰 화면)", "⛶ You can also play at wireframech.vercel.app (big screen)"],
+  "語言 Language": ["言語 Language", "언어 Language", "Language"],
+  "尚未開放": ["近日公開", "준비 중", "Coming soon"],
+  "・尚未開放": ["・近日公開", "·준비 중", " · Coming soon"],
+  "這個功能還沒開放，敬請期待": ["この機能はまだ準備中です。お楽しみに", "아직 준비 중인 기능입니다. 기대해 주세요", "This feature isn't available yet — stay tuned"],
+  "個人資料・尚未開放": ["プロフィール・近日公開", "프로필·준비 중", "Profile · coming soon"],
+  "AI {aw}勝{al}敗・線上 {nw}勝{nl}敗": ["AI {aw}勝{al}敗・対人 {nw}勝{nl}敗", "AI {aw}승{al}패·온라인 {nw}승{nl}패", "AI {aw}W {al}L · Online {nw}W {nl}L"],
+  "組隊（3v3）之後開放": ["チーム戦（3v3）は今後追加予定", "팀전 (3v3)은 추후 공개", "Squads (3v3) coming later"],
+  "來 WIREFRAMECH 跟我對戰！房間代碼：{c}": ["WIREFRAMECH で対戦しよう！ルームコード：{c}", "WIREFRAMECH에서 나랑 대전하자! 방 코드: {c}", "Fight me in WIREFRAMECH! Room code: {c}"],
+  "已複製代碼": ["コードをコピーしました", "코드를 복사했어요", "Code copied"],
+  "✓ 準備好了": ["✓ 準備OK", "✓ 준비 완료", "✓ Ready"],
+  "準備中…": ["準備中…", "준비 중…", "Getting ready…"],
+  "連線中…": ["接続中…", "연결 중…", "Connecting…"],
+  "等待對手（點這裡分享代碼）": ["相手を待っています（タップでコード共有）", "상대 대기 중 (눌러서 코드 공유)", "Waiting for rival (tap to share code)"],
+  "開打！": ["開戦！", "전투 시작!", "Fight!"],
+  "等對手按 BATTLE（再按一次取消）": ["相手の BATTLE 待ち（もう一度でキャンセル）", "상대의 BATTLE 대기 (다시 누르면 취소)", "Waiting for rival's BATTLE (tap again to cancel)"],
+  "對手已準備，按下開打": ["相手は準備OK。押して開戦", "상대 준비 완료, 눌러서 시작", "Rival is ready — press to fight"],
+  "雙方都按下才開打": ["両者が押すと開戦", "둘 다 눌러야 시작", "Starts when both press"],
+  "把上方代碼告訴朋友，或按「分享代碼」": ["上のコードをフレンドに伝えるか「コードを共有」を押そう", "위 코드를 친구에게 알려 주거나 ‘코드 공유’를 누르세요", "Give your friend the code above, or tap “Share code”"],
+  // 個人資料
+  "勝:敗": ["勝:敗", "승:패", "W:L"],
+  "勝:敗・平{d}": ["勝:敗・分{d}", "승:패·무{d}", "W:L · D{d}"],
+  "勝": ["勝", "승", "Win"],
+  "敗": ["敗", "패", "Loss"],
+  "平手": ["引き分け", "무승부", "Draw"],
+  "線上對戰": ["オンライン対戦", "온라인 대전", "Online"],
+  "駕駛員名稱（USER ID）": ["パイロット名（USER ID）", "파일럿 이름 (USER ID)", "Pilot name (USER ID)"],
+  "名片中央徽章＝總戰績 勝:敗（AI＋線上）": ["カード中央のバッジ＝通算戦績 勝:敗（AI＋オンライン）", "카드 가운데 배지 = 총 전적 승:패 (AI + 온라인)", "Card center badge = total W:L (AI + online)"],
+  "總戰績 勝:敗": ["通算戦績 勝:敗", "총 전적 승:패", "Total W:L"],
+  "線上對戰時，對手會看到你的名稱。": ["オンライン対戦では相手にこの名前が表示されます。", "온라인 대전에서는 상대에게 이 이름이 보입니다.", "Opponents see this name in online matches."],
+  // 說明視窗（標題、鍵盤列、地圖、授權）
+  "操作說明": ["操作説明", "조작 설명", "Controls"],
+  "電腦操作（鍵盤＋滑鼠）": ["PC操作（キーボード＋マウス）", "PC 조작 (키보드 + 마우스)", "PC controls (keyboard + mouse)"],
+  "完整操作說明（第一次玩建議直接按「新手教學」）": ["詳しい操作説明（初めてなら「チュートリアル」がおすすめ）", "전체 조작 설명 (처음이라면 ‘튜토리얼’ 추천)", "Full guide (first time? just play the Tutorial)"],
+  "鍵盤：X 切換主副武 WASD F 智慧鋼索（勾住時 W/S 收放、A/D 擺盪） Q E 左右索 Space／Shift 推進 R 裝填 滑鼠瞄準、左鍵射擊": ["キーボード：X メイン／サブ切替　WASD　F スマートワイヤー（フック中 W/S 巻き取り／繰り出し、A/D スイング）　Q E 左右ワイヤー　Space／Shift ブースト　R リロード　マウスで照準・左クリックで射撃", "키보드: X 주/보조 전환 · WASD · F 스마트 와이어 (연결 중 W/S 감기·풀기, A/D 스윙) · Q E 좌우 와이어 · Space/Shift 부스트 · R 재장전 · 마우스 조준, 좌클릭 사격", "Keys: X main/sub · WASD · F smart wire (when hooked W/S reel, A/D swing) · Q E left/right wire · Space/Shift boost · R reload · mouse aim, left click fire"],
+  "使用陀螺儀瞄準": ["ジャイロ照準を使う", "자이로 조준 사용", "Use gyro aim"],
+  "地圖": ["マップ", "맵", "Map"],
+  "大島・樹林": ["大きな島・森", "큰 섬·숲", "Big Island · Forest"],
+  "環形空島戰場（之後更新）": ["リング空島（今後追加）", "링 공중섬 전장 (추후 업데이트)", "Ring Sky Islands (coming later)"],
+  "機體模型：": ["機体モデル：", "기체 모델: ", "Mech model: "],
+  "by Z7RO，": ["by Z7RO、", "by Z7RO, ", "by Z7RO, "],
+  "；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）": ["。改変あり（脚の関節と姿勢、プロポーションと塗装、左ブレード腕と紋章の削除、機関銃とワイヤー射出器の追加、圧縮）", "; 수정함 (다리 관절·자세, 비율·도장, 왼쪽 블레이드 팔·문장 제거, 기관총·와이어 발사기 추가, 압축)", "; modified (leg joints & stance, proportions & paint, removed left blade arm & insignia, added MG & wire launchers, compressed)"],
+  "松樹與地面材質：": ["松の木と地面テクスチャ：", "소나무·지면 텍스처: ", "Pine trees & ground textures: "],
+  "by fangzhangmnm，": ["by fangzhangmnm、", "by fangzhangmnm, ", "by fangzhangmnm, "],
+  "（已拆出單棵樹、縮小貼圖）": ["（1本ずつに分割、テクスチャ縮小）", " (나무 한 그루씩 분리, 텍스처 축소)", " (split into single trees, textures downscaled)"],
+  // 結果、對戰開場、暫停
+  "勝利": ["勝利", "승리", "VICTORY"],
+  "敗北": ["敗北", "패배", "DEFEAT"],
+  "再來一場": ["もう一戦", "한 판 더", "Rematch"],
+  "再找一場": ["次の相手を探す", "새 상대 찾기", "Find another"],
+  "回到首頁": ["ホームに戻る", "홈으로", "Home"],
+  "⌂ 回到首頁": ["⌂ ホーム", "⌂ 홈으로", "⌂ Home"],
+  "（{m}）": ["（{m}）", " ({m})", " ({m})"],
+  "你": ["自機", "나", "You"],
+  "對手": ["相手", "상대", "Rival"],
+  "開打倒數": ["開戦まで", "시작까지", "Starts in"],
+  "⚔ 線上對戰 1v1": ["⚔ オンライン対戦 1v1", "⚔ 온라인 대전 1v1", "⚔ Online 1v1"],
+  "⚔ 對戰 AI 1v1": ["⚔ AI対戦 1v1", "⚔ AI 대전 1v1", "⚔ vs AI 1v1"],
+  "已通知房主，等待開始…": ["ホストに通知しました。開始待ち…", "방장에게 알렸어요. 시작 대기 중…", "Host notified — waiting to start…"],
+  "按": ["", "", "Press"],
+  "或「繼續」回到戰鬥": ["キーか「再開」で戦闘に戻る", "키 또는 ‘계속’으로 전투 복귀", "or “Resume” to return to battle"],
+  "繼續": ["再開", "계속", "Resume"],
+  "設定": ["設定", "설정", "Settings"],
+  "點一下畫面鎖定滑鼠（Esc 放開＝暫停）": ["画面をクリックでマウスをロック（Esc で解除＝一時停止）", "화면을 클릭해 마우스 고정 (Esc로 해제 = 일시정지)", "Click to lock the mouse (Esc releases = pause)"],
+  "連線對戰中・不會暫停": ["オンライン対戦中・一時停止なし", "온라인 대전 중·일시정지 안 됨", "Online match · no pause"],
+  "‖ 已暫停": ["‖ 一時停止中", "‖ 일시정지", "‖ Paused"],
+  "線上對戰不能暫停": ["オンライン対戦は一時停止できません", "온라인 대전은 일시정지할 수 없어요", "Can't pause online matches"],
+  "請把手機轉成橫向遊玩": ["スマホを横向きにしてプレイしてください", "휴대폰을 가로로 돌려 플레이하세요", "Rotate your phone to landscape"],
+  "直式繼續": ["縦向きのまま続ける", "세로로 계속", "Continue in portrait"],
+  // 觸控按鈕、版面編輯
+  "跳": ["ジャンプ", "점프", "JUMP"],
+  "推": ["ブースト", "부스트", "BOOST"],
+  "換彈": ["リロード", "재장전", "Reload"],
+  "重生": ["リスポーン", "리스폰", "Respawn"],
+  "切換視角": ["視点切替", "시점 전환", "Toggle view"],
+  "回到全螢幕": ["全画面に戻る", "전체 화면으로", "Back to fullscreen"],
+  "跳過這步": ["このステップをスキップ", "이 단계 건너뛰기", "Skip this step"],
+  "結束教學": ["チュートリアル終了", "튜토리얼 종료", "End tutorial"],
+  "關閉": ["閉じる", "닫기", "Close"],
+  "取消": ["キャンセル", "취소", "Cancel"],
+  "離開": ["退出", "나가기", "Leave"],
+  "拖曳按鈕到想要的位置": ["ボタンを好きな位置へドラッグ", "버튼을 원하는 위치로 드래그", "Drag buttons where you want"],
+  "先點一顆按鈕": ["まずボタンをタップ", "먼저 버튼을 탭하세요", "Tap a button first"],
+  "顯示": ["表示", "표시", "Show"],
+  "大小": ["サイズ", "크기", "Size"],
+  "全部重設": ["すべてリセット", "모두 초기화", "Reset all"],
+  "完成": ["完了", "완료", "Done"],
+  "射擊鈕": ["射撃ボタン", "사격 버튼", "Fire button"],
+  "右鋼索": ["右ワイヤー", "오른쪽 와이어", "Right wire"],
+  "左鋼索": ["左ワイヤー", "왼쪽 와이어", "Left wire"],
+  "跳躍": ["ジャンプ", "점프", "Jump"],
+  "推進": ["ブースト", "부스트", "Boost"],
+  "01 主砲": ["01 主砲", "01 주포", "01 Main gun"],
+  "02 螳螂鐮": ["02 マンティスブレード", "02 맨티스 블레이드", "02 Mantis Blade"],
+  "03 釘槍": ["03 ネイルガン", "03 네일건", "03 Nail Gun"],
+  // 設定：分頁
+  "操作": ["操作", "조작", "Controls"],
+  "鏡頭": ["カメラ", "카메라", "Camera"],
+  "新手輔助": ["アシスト", "보조 기능", "Assist"],
+  "陀螺儀": ["ジャイロ", "자이로", "Gyro"],
+  "外觀": ["表示", "화면", "Visuals"],
+  // 設定：操作
+  "裝置": ["デバイス", "기기", "Device"],
+  "電腦＝鍵盤滑鼠；手機平板＝觸控按鈕": ["PC＝キーボード＋マウス／スマホ・タブレット＝タッチボタン", "PC = 키보드·마우스, 휴대폰·태블릿 = 터치 버튼", "PC = keyboard & mouse; phone/tablet = touch buttons"],
+  "自動判斷": ["自動", "자동", "Auto"],
+  "自動判斷（{d}）": ["自動（{d}）", "자동 ({d})", "Auto ({d})"],
+  "電腦": ["PC", "PC", "PC"],
+  "行動裝置": ["モバイル", "모바일", "Mobile"],
+  "速度區間": ["スピード", "속도", "Speed"],
+  "越快越刺激，也越容易掉下去": ["速いほどスリリング、でも落ちやすい", "빠를수록 짜릿하지만 떨어지기 쉬워요", "Faster is more thrilling — and easier to fall"],
+  "穩定 ×0.75": ["安定 ×0.75", "안정 ×0.75", "Steady ×0.75"],
+  "標準": ["標準", "표준", "Standard"],
+  "快 ×1.3": ["速い ×1.3", "빠름 ×1.3", "Fast ×1.3"],
+  "極速 ×1.7": ["最速 ×1.7", "초고속 ×1.7", "Extreme ×1.7"],
+  "微調倍率": ["微調整", "미세 조정", "Fine-tune"],
+  "0.5 ～ 2.0 自由調整": ["0.5～2.0 で自由に調整", "0.5 ~ 2.0 자유 조정", "Any value from 0.5 to 2.0"],
+  "跟手準星": ["指追従照準", "손가락 따라가는 조준점", "Follow-finger reticle"],
+  "按住按鈕拖曳時，準星跟著手指走": ["ボタンを押したままドラッグすると照準が指についてくる", "버튼을 누른 채 드래그하면 조준점이 손가락을 따라가요", "While dragging a held button, the reticle follows your finger"],
+  "關（畫面中央）": ["オフ（画面中央）", "끔 (화면 중앙)", "Off (center)"],
+  "武器": ["武器", "무기", "Weapon"],
+  "鋼索": ["ワイヤー", "와이어", "Wire"],
+  "自動開火": ["オート射撃", "자동 사격", "Auto fire"],
+  "準星對到敵人就射（57mm）": ["照準が敵に重なると自動で撃つ（57mm）", "조준점이 적에 닿으면 자동 발사 (57mm)", "Fires when the reticle is on an enemy (57mm)"],
+  "視角靈敏度": ["視点感度", "시점 감도", "Look sensitivity"],
+  "滑動畫面轉視角的速度": ["画面スワイプで視点が回る速さ", "화면을 밀어 시점을 돌리는 속도", "How fast swiping turns the view"],
+  "滑鼠移動轉視角的速度（電腦）": ["マウス移動で視点が回る速さ（PC）", "마우스로 시점을 돌리는 속도 (PC)", "How fast the mouse turns the view (PC)"],
+  "手指滑動轉視角的速度（行動裝置）": ["指のスワイプで視点が回る速さ（モバイル）", "손가락으로 시점을 돌리는 속도 (모바일)", "How fast swiping turns the view (mobile)"],
+  "一步步帶你調速度、按鈕大小和位置": ["スピード・ボタンのサイズと位置を順番に案内", "속도, 버튼 크기·위치를 단계별로 안내", "Step by step: speed, button size and position"],
+  "開始": ["開始", "시작", "Start"],
+  "自訂按鈕位置": ["ボタン配置", "버튼 배치", "Button layout"],
+  "拖曳射擊鈕、左右鋼索鈕到順手的地方，也能個別調大小": ["射撃・左右ワイヤーボタンを押しやすい位置へ。個別にサイズ変更も可", "사격·좌우 와이어 버튼을 편한 곳으로 옮기고 크기도 따로 조절", "Move the fire and wire buttons where you like; resize each one"],
+  "編輯": ["編集", "편집", "Edit"],
+  "按鈕大小": ["ボタンサイズ", "버튼 크기", "Button size"],
+  "手大或平板可以調大": ["手が大きい人やタブレットは大きめに", "손이 크거나 태블릿이면 크게", "Go bigger for large hands or tablets"],
+  // 設定：鏡頭
+  "第三人稱": ["三人称視点", "3인칭", "Third person"],
+  "看得到機體；左上 3P／1P 也能切換": ["機体が見える。左上の 3P／1P でも切替", "기체가 보여요. 왼쪽 위 3P/1P로도 전환", "See your mech; also toggle with 3P/1P at top left"],
+  "鏡頭鎖定地形": ["地形ロックカメラ", "지형 고정 카메라", "Terrain-lock camera"],
+  "擺盪時自動補正，準星穩定": ["スイング中に自動補正、照準が安定", "스윙 중 자동 보정, 조준 안정", "Auto-corrects while swinging for a steady reticle"],
+  "鏡頭側傾": ["カメラロール", "카메라 기울기", "Camera roll"],
+  "轉彎時畫面跟著傾斜": ["旋回時に画面が傾く", "회전할 때 화면이 기울어요", "Tilts the view when turning"],
+  "陰影": ["影", "그림자", "Shadows"],
+  "陽光投影；iPad 太卡可以關掉": ["太陽光の影。iPad が重いならオフに", "햇빛 그림자. iPad가 버벅이면 끄세요", "Sun shadows; turn off if your iPad lags"],
+  "鏡頭震動": ["カメラ振動", "카메라 흔들림", "Camera shake"],
+  "開砲、撞擊時畫面震動": ["発砲・衝突時に画面が揺れる", "발포·충돌 시 화면 흔들림", "Shakes when firing and on impacts"],
+  // 設定：新手輔助
+  "鎖定敵人": ["敵ロックオン", "적 고정", "Enemy lock"],
+  "放手時準星附近有敵人，擺盪中視角一直看著它": ["離した時に照準付近に敵がいれば、スイング中ずっと注視", "놓을 때 조준점 근처에 적이 있으면 스윙 중 계속 바라봐요", "If an enemy is near the reticle on release, keep facing it while swinging"],
+  "射控預判": ["偏差射撃ガイド", "사격 예측선", "Lead indicator"],
+  "主砲進入射程時，用虛線畫出敵人中彈當下的位置": ["主砲の射程内で、着弾時の敵の位置を点線で表示", "주포 사거리 안이면 명중 순간의 적 위치를 점선으로 표시", "In main-gun range, a dashed line shows where the enemy will be on impact"],
+  "按住等勾點": ["長押しでフック待機", "누르고 고정점 대기", "Hold to wait for anchor"],
+  "沒勾點時按住鋼索，勾點出現就自動勾上（最多 1 秒）": ["フック先がない時にワイヤーを押し続けると、現れた瞬間に自動フック（最大1秒）", "고정점이 없을 때 와이어를 누르고 있으면 나타나는 즉시 연결 (최대 1초)", "Hold a wire with no anchor; it hooks as soon as one appears (up to 1 s)"],
+  // 設定：陀螺儀
+  "陀螺儀瞄準": ["ジャイロ照準", "자이로 조준", "Gyro aim"],
+  "轉動手機來轉視角": ["スマホを傾けて視点を回す", "휴대폰을 돌려 시점 회전", "Turn your phone to look around"],
+  "靈敏度": ["感度", "감도", "Sensitivity"],
+  "轉一點手機、視角轉多少": ["スマホの動きに対する視点の回転量", "휴대폰을 조금 돌릴 때 시점이 도는 양", "How far the view turns per phone movement"],
+  "上下反轉": ["上下反転", "상하 반전", "Invert vertical"],
+  "左右反轉": ["左右反転", "좌우 반전", "Invert horizontal"],
+  "沒有取得動作感測器權限": ["モーションセンサーの許可がありません", "동작 센서 권한을 받지 못했어요", "Motion sensor permission not granted"],
+  "陀螺儀權限被拒絕：到 Safari 設定允許「動作與方向」後重新整理": ["ジャイロの許可が拒否されました：Safari の設定で「モーションと画面の向き」を許可して再読み込みしてください", "자이로 권한 거부됨: Safari 설정에서 ‘동작 및 방향’을 허용한 뒤 새로고침하세요", "Gyro permission denied: allow “Motion & Orientation” in Safari settings, then reload"],
+  "無法要求感測器權限": ["センサーの許可を要求できません", "센서 권한을 요청할 수 없어요", "Can't request sensor permission"],
+  "這個頁面無法使用陀螺儀（Claude 內嵌頁面會擋住感測器），請用獨立網址開啟": ["このページではジャイロを使えません（Claude の埋め込みページはセンサーをブロックします）。単独の URL で開いてください", "이 페이지에서는 자이로를 쓸 수 없어요 (Claude 임베드 페이지가 센서를 막음). 단독 주소로 열어 주세요", "Gyro isn't available on this page (Claude's embedded view blocks sensors) — open the standalone URL"],
+  "陀螺儀：等待訊號…": ["ジャイロ：信号待ち…", "자이로: 신호 대기 중…", "Gyro: waiting for signal…"],
+  "收不到陀螺儀訊號": ["ジャイロの信号がありません", "자이로 신호가 없어요", "No gyro signal"],
+  "收不到陀螺儀訊號：Claude 內嵌頁面會擋住感測器，請用獨立網址開啟（或裝置沒有陀螺儀）": ["ジャイロの信号がありません：Claude の埋め込みページはセンサーをブロックします。単独の URL で開いてください（または端末にジャイロがない）", "자이로 신호 없음: Claude 임베드 페이지가 센서를 막아요. 단독 주소로 열어 주세요 (또는 기기에 자이로 없음)", "No gyro signal: Claude's embedded view blocks sensors — open the standalone URL (or the device has no gyro)"],
+  "陀螺儀：運作中（平放 1 秒會自動校正）": ["ジャイロ：動作中（1秒平置きで自動補正）", "자이로: 작동 중 (1초 평평히 두면 자동 보정)", "Gyro: active (lay flat 1 s to auto-calibrate)"],
+  "陀螺儀已設定好，請再按一次": ["ジャイロの設定完了。もう一度押してください", "자이로 설정 완료. 한 번 더 눌러 주세요", "Gyro is set — tap again"],
+  // 設定：外觀
+  "反鋸齒": ["アンチエイリアス", "안티에일리어싱", "Anti-aliasing"],
+  "邊緣比較平滑；iPad 太卡會自動降為標準": ["輪郭がなめらかに。iPad が重いと自動で標準に", "가장자리가 부드러워요. iPad가 느리면 자동으로 표준", "Smoother edges; drops to Standard if your iPad lags"],
+  "高": ["高", "높음", "High"],
+  "機體塗裝": ["機体カラー", "기체 도장", "Mech paint"],
+  "鋼灰＋青綠": ["スチールグレー＋ティール", "스틸 그레이 + 청록", "Steel Gray + Teal"],
+  "夜戰深灰": ["夜戦ダークグレー", "야간전 다크 그레이", "Night Ops Gray"],
+  "沙漠＋橘": ["デザート＋オレンジ", "사막 + 주황", "Desert + Orange"],
+  "原色白＋紅": ["ホワイト＋レッド", "화이트 + 레드", "White + Red"],
+  "金＋黑": ["ゴールド＋ブラック", "골드 + 블랙", "Gold + Black"],
+  "緋紅＋靛紫": ["クリムゾン＋インディゴ", "크림슨 + 인디고", "Crimson + Indigo"],
+  "橄欖綠＋淺綠": ["オリーブ＋ライトグリーン", "올리브 + 연두", "Olive + Lime"],
+  "畫面有點卡，已自動把反鋸齒降為「標準」（設定 → 外觀可以調回來）": ["動作が重いため、アンチエイリアスを「標準」に下げました（設定 → 表示 で戻せます）", "화면이 버벅여서 안티에일리어싱을 ‘표준’으로 낮췄어요 (설정 → 화면에서 되돌릴 수 있음)", "Things got choppy, so anti-aliasing dropped to Standard (Settings → Visuals to change back)"],
+  "錯誤：": ["エラー：", "오류: ", "Error: "],
+  // 連線（配對、房間、診斷）
+  "連線到配對大廳…": ["マッチングロビーに接続中…", "매칭 로비에 연결 중…", "Connecting to matchmaking lobby…"],
+  "無法連線到配對服務，請檢查網路": ["マッチングサービスに接続できません。ネットワークを確認してください", "매칭 서비스에 연결할 수 없어요. 네트워크를 확인하세요", "Can't reach matchmaking — check your network"],
+  "尋找對手… {s} 秒": ["相手を探しています… {s}秒", "상대 찾는 중… {s}초", "Finding a rival… {s}s"],
+  "尋找對手… {s} 秒（大廳 {n} 人）": ["相手を探しています… {s}秒（ロビー {n}人）", "상대 찾는 중… {s}초 (로비 {n}명)", "Finding a rival… {s}s ({n} in lobby)"],
+  "有找到對手，但網路擋住了直連，先和 AI 對戰": ["相手は見つかりましたが、ネットワークが直接接続をブロック。まずはAIと対戦", "상대를 찾았지만 네트워크가 직접 연결을 막았어요. 우선 AI와 대전", "Found a rival, but the network blocked a direct link — playing AI for now"],
+  "沒有找到對手，先和 AI 對戰": ["相手が見つかりません。まずはAIと対戦", "상대를 찾지 못했어요. 우선 AI와 대전", "No rival found — playing AI for now"],
+  "請輸入 4–6 碼的房間代碼": ["4〜6桁のルームコードを入力してください", "4~6자리 방 코드를 입력하세요", "Enter a 4–6 character room code"],
+  "房間代碼：{c} 請對方在「代碼約戰」輸入": ["ルームコード：{c}　相手に入力してもらおう", "방 코드: {c}  상대에게 입력하게 하세요", "Room code: {c} — have your friend enter it"],
+  "加入房間 {c}…": ["ルーム {c} に参加中…", "방 {c} 참가 중…", "Joining room {c}…"],
+  "找到對手，連線中…": ["相手が見つかりました。接続中…", "상대를 찾았어요. 연결 중…", "Rival found, connecting…"],
+  "連線失敗": ["接続に失敗しました", "연결 실패", "Connection failed"],
+  "對手離開了": ["相手が退出しました", "상대가 나갔어요", "Rival left"],
+  "對方版本不同（{v}），請兩邊都重新整理": ["相手のバージョンが違います（{v}）。両方で再読み込みしてください", "상대 버전이 달라요 ({v}). 양쪽 모두 새로고침하세요", "Version mismatch ({v}) — both players please reload"],
+  "這個代碼已有人建房但是設定衝突，請重新建房": ["このコードのルームは設定が競合しています。ルームを作り直してください", "이 코드의 방은 설정이 충돌해요. 방을 다시 만드세요", "That code's room has a conflict — please create a new room"],
+  "對手已連線！你從基地 A 出發": ["相手と接続！あなたは基地Aから出撃", "상대 연결됨! 당신은 기지 A에서 출격", "Rival connected! You start at Base A"],
+  "對手已連線！你從基地 B 出發": ["相手と接続！あなたは基地Bから出撃", "상대 연결됨! 당신은 기지 B에서 출격", "Rival connected! You start at Base B"],
+  "對手離開了房間": ["相手がルームから退出しました", "상대가 방을 나갔어요", "Rival left the room"],
+  "房主離開了房間": ["ホストがルームから退出しました", "방장이 방을 나갔어요", "The host left the room"],
+  "找不到這個房間（或對方網路連不上）": ["ルームが見つかりません（または相手に接続できません）", "방을 찾을 수 없어요 (또는 상대와 연결 불가)", "Room not found (or the host can't be reached)"],
+  "對手斷線了": ["相手の接続が切れました", "상대 연결이 끊겼어요", "Rival disconnected"],
+  "連線不穩，等待對手…": ["接続が不安定です。相手を待っています…", "연결 불안정, 상대 대기 중…", "Unstable connection, waiting for rival…"],
+  "找到對手，但兩台裝置無法直接連線（網路擋住了，需要轉傳伺服器 TURN）": ["相手は見つかりましたが、端末同士で直接接続できません（ネットワークがブロック。TURN 中継サーバーが必要）", "상대를 찾았지만 두 기기가 직접 연결되지 않아요 (네트워크 차단, TURN 중계 서버 필요)", "Found a rival, but the devices can't connect directly (network blocked; needs a TURN relay)"],
+  "連不到配對服務（Nostr 中繼），可能是網路擋住了": ["マッチングサービス（Nostr リレー）に接続できません。ネットワークがブロックしている可能性があります", "매칭 서비스 (Nostr 릴레이)에 연결할 수 없어요. 네트워크가 막았을 수 있어요", "Can't reach matchmaking (Nostr relay) — the network may be blocking it"],
+  "找到對手，但交換連線資料失敗": ["相手は見つかりましたが、接続情報の交換に失敗しました", "상대를 찾았지만 연결 정보 교환에 실패했어요", "Found a rival, but the connection handshake failed"],
+  "連線資料解不開（兩邊版本可能不同）": ["接続データを復号できません（バージョン違いの可能性）", "연결 데이터를 풀 수 없어요 (버전이 다를 수 있음)", "Couldn't decrypt connection data (versions may differ)"],
+  "瀏覽器無法建立連線身分（無痕模式？）": ["ブラウザが接続 ID を作成できません（シークレットモード？）", "브라우저가 연결 ID를 만들 수 없어요 (시크릿 모드?)", "The browser couldn't create a connection identity (private mode?)"],
+  "和對手的連線發生錯誤": ["相手との接続でエラーが発生しました", "상대와의 연결에서 오류가 발생했어요", "Error in the connection to your rival"],
+  "（{n} 次）": ["（{n}回）", " ({n}회)", " (×{n})"],
+  // 戰鬥中（toast、HUD、擊破訊息）
+  "{a} 擊破 {b}": ["{a} が {b} を撃破", "{a} ▸ {b} 격파", "{a} destroyed {b}"],
+  "{a} 墜落": ["{a} 落下", "{a} 추락", "{a} fell"],
+  "{a} 墜落（{b} +1）": ["{a} 落下（{b} +1）", "{a} 추락 ({b} +1)", "{a} fell ({b} +1)"],
+  "格擋！刀被彈開": ["パリィ！刃を弾いた", "패링! 칼날을 튕겨냈다", "Parry! Blade deflected"],
+  "擋下！": ["ガード！", "막았다!", "Blocked!"],
+  "被格擋！": ["パリィされた！", "패링당했다!", "Parried!"],
+  "被 {n} 擊破！回到基地": ["{n} に撃破された！基地へ帰還", "{n}에게 격파당함! 기지로 귀환", "Destroyed by {n}! Back to base"],
+  "墜落！對方 +1": ["落下！相手 +1", "추락! 상대 +1", "Fell! Rival +1"],
+  "{n} 墜落！你 +1": ["{n} 落下！自機 +1", "{n} 추락! 나 +1", "{n} fell! You +1"],
+  "擊破 {n}！": ["{n} を撃破！", "{n} 격파!", "{n} destroyed!"],
+  "擊破 AI！": ["AIを撃破！", "AI 격파!", "AI destroyed!"],
+  "01 主武：57mm 滑膛炮": ["01 メイン：57mm滑腔砲", "01 주무기: 57mm 활강포", "01 Main: 57mm Smoothbore"],
+  "02 副武：螳螂鐮（近身按射擊）": ["02 サブ：マンティスブレード（接近して射撃ボタン）", "02 보조: 맨티스 블레이드 (근접해서 사격)", "02 Sub: Mantis Blade (fire up close)"],
+  "02 副武：14.5mm 機槍": ["02 サブ：14.5mm機関銃", "02 보조: 14.5mm 기관총", "02 Sub: 14.5mm MG"],
+  "03 腿部：釘槍（靠牆開槍＝釘住；也能當武器）": ["03 脚部：ネイルガン（壁際で撃つと固定。武器にもなる）", "03 다리: 네일건 (벽 옆에서 쏘면 고정, 무기로도 사용)", "03 Leg: Nail Gun (fire by a wall to pin; also a weapon)"],
+  "釘子用完了！": ["ネイル切れ！", "네일 소진!", "Out of nails!"],
+  "墜入虛空！已傳送回基地 A": ["虚空に落下！基地Aへ転送", "허공으로 추락! 기지 A로 전송", "Fell into the void! Sent back to Base A"],
+  "墜入虛空！已傳送回基地 B": ["虚空に落下！基地Bへ転送", "허공으로 추락! 기지 B로 전송", "Fell into the void! Sent back to Base B"],
+  "命中": ["命中", "명중", "Hit"],
+  "墜落": ["落下", "추락", "Falls"],
+  "鉤": ["フック", "훅", "HOOK"],
+  "後": ["後方", "뒤", "behind"],
+  "放開＝射出右索": ["離す＝右ワイヤー発射", "놓으면 오른쪽 와이어 발사", "Release = fire right wire"],
+  "出生保護區：不會受傷，也不能開火": ["スポーン保護エリア：ダメージなし・射撃不可", "스폰 보호 구역: 피해 없음, 사격 불가", "Spawn zone: no damage, no firing"],
+  "釘在牆上：勾索、推進或撲擊就會脫離": ["壁に固定中：ワイヤー・ブースト・飛びかかりで解除", "벽에 고정됨: 와이어·부스트·도약으로 해제", "Pinned to wall: wire, boost or pounce to detach"],
+  // 教學步驟標題
+  "移動": ["移動", "이동", "Move"],
+  "轉視角": ["視点を回す", "시점 회전", "Look around"],
+  "原地跳": ["その場ジャンプ", "제자리 점프", "Jump"],
+  "方向跳": ["方向ジャンプ", "방향 점프", "Directional jump"],
+  "射鋼索": ["ワイヤー発射", "와이어 발사", "Fire a wire"],
+  "收索、甩出去": ["巻き取って飛び出す", "감고 날아가기", "Reel in & fling"],
+  "推進器": ["ブースター", "부스터", "Thrusters"],
+  "射擊": ["射撃", "사격", "Shoot"],
+  "換武器": ["武器切替", "무기 교체", "Switch weapons"],
+  "腿部釘槍": ["脚部ネイルガン", "다리 네일건", "Leg Nail Gun"],
+  "點齒輪打開設定": ["歯車をタップして設定を開く", "톱니바퀴를 눌러 설정 열기", "Tap the gear to open Settings"],
+  "速度區間：太快就調慢": ["スピード：速すぎたら下げよう", "속도: 너무 빠르면 낮추세요", "Speed: slow it down if it's too fast"],
+  "按鈕大小：整體放大縮小": ["ボタンサイズ：全体を拡大縮小", "버튼 크기: 전체 확대·축소", "Button size: scale all buttons"],
+  "自訂按鈕位置：點「編輯」": ["ボタン配置：「編集」をタップ", "버튼 배치: ‘편집’을 탭", "Button layout: tap “Edit”"],
+  "把按鈕拖到順手的位置": ["ボタンを押しやすい位置へドラッグ", "버튼을 편한 위치로 드래그", "Drag buttons to comfy spots"],
+  "點一顆按鈕，拉「大小」": ["ボタンをタップして「サイズ」を調整", "버튼을 탭하고 ‘크기’ 조절", "Tap a button, then drag “Size”"],
+  "三指以上：點淡色按鈕，勾「顯示」": ["3本指以上：薄いボタンをタップして「表示」にチェック", "세 손가락 이상: 흐린 버튼을 탭하고 ‘표시’ 체크", "3+ fingers: tap a faded button, check “Show”"],
+  "按「完成」存檔": ["「完了」で保存", "‘완료’를 눌러 저장", "Tap “Done” to save"],
+  "還有新手輔助、鏡頭、陀螺儀可以調": ["アシスト・カメラ・ジャイロも調整できます", "보조 기능, 카메라, 자이로도 조절할 수 있어요", "Assist, Camera and Gyro can be tuned too"],
+};
+// ---- 長篇說明（#mHelpBody 的兩個清單）：data-i18n-html 的 key → [ja, ko, en]（繁中＝HTML 原文） ----
+const H = {
+  'help.pc': [
+`<li>画面をクリックでマウスをロック、マウス移動＝視点操作。<b>Esc</b> でマウス解除（同時に一時停止）</li>
+<li><b>WASD</b> 移動　<b>スペース</b> ジャンプ（方向キーを押しながら＝その方向へ）　<b>Shift</b> ブースト</li>
+<li><b>Q／E</b> 左／右ワイヤー　<b>左クリック</b> 射撃　<b>右クリック</b> 02 サブ武器を直接使用（離すと戻る）　<b>中クリック</b> 武器切替（1／2／3 キーでも可）</li>
+<li><b>R</b> リロード（スマホは「リロード」ボタン。各武器に予備マガジン3個、補給台に乗ると補充）　<b>P</b> 一時停止（オンライン対戦中は不可）　<b>V</b> 一人称／三人称切替</li>`,
+`<li>화면을 클릭하면 마우스 고정, 마우스 이동 = 시점 회전. <b>Esc</b>로 마우스 해제 (동시에 일시정지)</li>
+<li><b>WASD</b> 이동　<b>스페이스</b> 점프 (방향키를 누른 채 = 그 방향으로)　<b>Shift</b> 부스트</li>
+<li><b>Q/E</b> 왼쪽/오른쪽 와이어　<b>좌클릭</b> 사격　<b>우클릭</b> 02 보조무기 바로 사용 (떼면 복귀)　<b>휠 클릭</b> 무기 교체 (1/2/3 키도 가능)</li>
+<li><b>R</b> 재장전 (모바일은 ‘재장전’ 버튼. 무기마다 예비 탄창 3개, 보급대에 서면 보충)　<b>P</b> 일시정지 (온라인 대전 중 불가)　<b>V</b> 1인칭/3인칭 전환</li>`,
+`<li>Click the screen to lock the mouse; move the mouse to look. <b>Esc</b> releases the mouse (and pauses)</li>
+<li><b>WASD</b> Move　<b>Space</b> Jump (hold a direction to jump that way)　<b>Shift</b> Boost</li>
+<li><b>Q / E</b> Left / right wire　<b>Left click</b> Fire　<b>Right click</b> Use 02 sub weapon (release to switch back)　<b>Middle click</b> Switch weapon (or 1 / 2 / 3)</li>
+<li><b>R</b> Reload (on mobile, the Reload button; each weapon carries 3 spare mags, refilled on supply pads)　<b>P</b> Pause (not in online matches)　<b>V</b> Toggle 1st / 3rd person</li>`],
+  'help.full': [
+`<li>リング状の空島戦場：両チームの基地は両端。<b>外周</b>は内側へ傾き段々に高くなる空島（機動力は高いが狙いにくい）。<b>中央プラットフォーム</b>は最も低く落下の危険はないが、上から撃たれる。最下層は虚空。光る台で燃料と弾薬を補給</li>
+<li><b style="color:#c99bff">オンライン対戦</b>（1v1・対人）：ホームの「MAIN LOBBY」でロビーへ。「QUICK MATCH」は自動マッチング、20秒で見つからなければAI戦に。「ROOM」でルームを作り、コードをフレンドに伝え、相手が「JOIN」で入力して参加、ホストが「BATTLE」で開戦。ホストは基地A、参加者は基地Bから出撃。ルールはAI対戦と同じ</li>
+<li><b style="color:#ffb070">AI対戦</b>：あなたは基地A、AIは基地Bから出撃。先に5回撃破するか、5分経過時にスコアが高い方の勝ち。虚空に落ちると相手に得点。オレンジの機体とワイヤーがAI</li>
+<li>標準は<b>三人称視点</b>（自分のスパイダーメカが見える）。左上の 3P／1P で切替。虚空落下やリスポーンでは基地Aに戻る</li>
+<li><b>青いスティック</b>：移動。<b>軽くタップ＝その場ジャンプ、任意の方向へ素早く弾いて離す＝その方向へジャンプ</b>。倒すほど速く走る（地面・斜面・壁際・壁に固定中でもジャンプ可）。脚は70°までの斜面に立て、高速でも地面に張り付く</li>
+<li><b style="color:#63e6ff">左／右ワイヤー</b>（どちらも小さなスティック）：押す＝ワイヤー発射。円内ドラッグ＝上で巻き取り・下で繰り出し・左右でスイング。<b style="color:#ffb040">外周まで引き出す＝ブースト</b>（フック先がなくても使える）</li>
+<li><b style="color:#ff7a5c">射撃</b>：押し続けて連射、押したままドラッグ＝撃ちながら照準。射撃ボタンを<b style="color:#ffc94a">長押しすると横に武器アイコンが3つ出る。アイコンの方向へ弾くと切替：上＝01 メイン 57mm、右＝02 マンティスブレード（接近して射撃で斬撃、一撃撃破、クールダウン3秒）、左＝03 脚部ネイルガン</b></li>
+<li>照準：中央の小円が黄＝ワイヤーが届く、青＝フック中。大きな弧の赤いひし形＝敵の方向（中抜き＝背後）。下＝残弾・スロット（01 メイン／02 サブ／03 脚部）・弾種。左右の数値＝高度／速度。両側の目盛り：左＝ブースト燃料、右＝残弾</li>
+<li><b>脚部ネイルガン</b>（腕を使わない、全24本）：壁に固定中はスティックで壁を這える（2.5mごとに1本消費、尽きると落下）。6m以内に壁があるときに撃つ＝最寄りの壁に固定、どの角度でもOK（ワイヤーは自動回収。ブースト・フック・飛びかかりで解除）。敵への武器にもなる</li>
+<li><b>57mm滑腔砲</b>：0.8秒に1発・1マガジン6発。砲弾には飛翔時間と落下があり、着弾点4m以内に爆発ダメージ。空中で撃つと反動で後ろへ押される</li>
+<li>両基地には<b style="color:#40ffb0">スポーン保護エリア</b>：ダメージを受けず、射撃もできない。設定で「指追従照準」を選べる</li>
+<li>スイング中のカメラは<b>照準下の地形にロック</b>されブレない。離した時に照準付近に敵がいれば<b>その敵をずっと注視</b>。視点を動かすと解除</li>
+<li>アシスト：フック先がない時は<b>先にワイヤーを押し続ける</b>と、現れた瞬間に自動でフック（中央の小円が点滅＝待機中）。<b>空いた所をダブルタップ＝180°ターン</b></li>
+<li>スイングの最下点（予測線が<b style="color:#7f7">緑</b>）で離すと速度 ×1.15。離した後の最高点で短くホバー</li>`,
+`<li>링 모양 공중섬 전장: 양 팀 기지는 양 끝. <b>외곽</b>은 안쪽으로 기울어 계단식으로 올라가는 공중섬 (기동성 높음, 조준 어려움). <b>중앙 플랫폼</b>은 가장 낮아 추락 위험은 없지만 위에서 공격당함. 맨 아래는 허공. 빛나는 발판에서 연료와 탄약 보충</li>
+<li><b style="color:#c99bff">온라인 대전</b> (1v1, 실제 플레이어): 홈에서 ‘MAIN LOBBY’로 로비 입장. ‘QUICK MATCH’는 자동 매칭, 20초 안에 못 찾으면 AI전. ‘ROOM’으로 방을 만들고 코드를 친구에게 알려 주면 상대가 ‘JOIN’에 입력해 참가, 방장이 ‘BATTLE’로 시작. 방장은 기지 A, 참가자는 기지 B에서 출발. 규칙은 AI 대전과 같음</li>
+<li><b style="color:#ffb070">AI 대전</b>: 당신은 기지 A, AI는 기지 B에서 출발. 먼저 5번 격파하거나 5분 후 점수가 높은 쪽이 승리. 허공에 떨어지면 상대 득점. 주황색 기체와 와이어가 AI</li>
+<li>기본은 <b>3인칭</b> (내 거미 메카가 보임). 왼쪽 위 3P/1P로 전환. 허공 추락이나 리스폰 시 기지 A로 복귀</li>
+<li><b>파란 스틱</b>: 이동. <b>가볍게 탭 = 제자리 점프, 원하는 방향으로 빠르게 튕기고 놓기 = 그 방향으로 점프</b>. 많이 밀수록 빨리 달림 (지면·경사·벽 옆·벽 고정 중에도 점프 가능). 다리는 70° 이내 경사에 설 수 있고 고속에서도 지면에 붙음</li>
+<li><b style="color:#63e6ff">왼쪽/오른쪽 와이어</b> (둘 다 작은 스틱): 누르기 = 와이어 발사. 원 안에서 드래그 = 위로 감기, 아래로 풀기, 좌우 스윙. <b style="color:#ffb040">바깥 원까지 끌기 = 부스트</b> (고정점이 없어도 가능)</li>
+<li><b style="color:#ff7a5c">사격</b>: 누르고 있으면 연사, 누른 채 드래그 = 쏘면서 조준. 사격 버튼을 <b style="color:#ffc94a">길게 누르면 옆에 무기 아이콘 3개가 나옴. 아이콘 방향으로 튕기면 교체: 위 = 01 주무기 57mm, 오른쪽 = 02 맨티스 블레이드 (근접해서 사격으로 베기, 일격 격파, 쿨다운 3초), 왼쪽 = 03 다리 네일건</b></li>
+<li>조준점: 중앙 작은 원이 노랑 = 와이어가 닿음, 청록 = 연결됨. 큰 호 위의 빨간 마름모 = 적 방향 (속이 빈 것 = 뒤쪽). 아래 = 탄약·슬롯 (01 주무기/02 보조/03 다리)·탄종. 좌우 수치 = 고도/속도. 양옆 눈금: 왼쪽 = 부스트 연료, 오른쪽 = 탄약</li>
+<li><b>다리 네일건</b> (팔을 쓰지 않음, 총 24발): 벽에 고정된 동안 스틱으로 벽을 타고 이동 (2.5m마다 1발 소모, 다 쓰면 떨어짐). 6m 안에 벽이 있을 때 쏘면 = 가장 가까운 벽에 고정, 어떤 각도든 가능 (와이어 자동 회수. 부스트·와이어·도약으로 해제). 적을 공격하는 무기로도 사용</li>
+<li><b>57mm 활강포</b>: 0.8초에 1발, 탄창당 6발. 포탄은 비행 시간과 낙하가 있고 착탄점 4m 안에 폭발 피해. 공중에서 쏘면 반동으로 뒤로 밀림</li>
+<li>양쪽 기지에는 <b style="color:#40ffb0">스폰 보호 구역</b>: 피해를 받지 않고 사격도 불가. 설정에서 ‘손가락 따라가는 조준점’ 선택 가능</li>
+<li>스윙 중 카메라는 <b>조준점 아래 지형에 고정</b>되어 흔들리지 않음. 놓을 때 조준점 근처에 적이 있으면 <b>그 적을 계속 바라봄</b>. 시점을 돌리면 해제</li>
+<li>보조 기능: 고정점이 없을 때 <b>와이어를 먼저 누르고 있으면</b> 나타나는 즉시 자동 연결 (중앙 작은 원 깜빡임 = 대기 중). <b>빈 곳 더블 탭 = 180° 회전</b></li>
+<li>스윙 최저점 (예측선이 <b style="color:#7f7">초록</b>)에서 놓으면 속도 ×1.15. 놓은 뒤 최고점에서 잠깐 호버</li>`,
+`<li>Ring of sky islands: each team's base sits at one end. The <b>outer ring</b> is islands tilted inward and stepping upward (high mobility, hard to aim). The <b>central platform</b> is lowest — no fall risk, but you get shot from above. Below everything is the void; glowing pads refill fuel and ammo</li>
+<li><b style="color:#c99bff">Online</b> (1v1, real players): tap “MAIN LOBBY” on the home screen. “QUICK MATCH” finds someone automatically and falls back to AI after 20 s. “ROOM” creates a room — give your friend the code, they enter it under “JOIN”, and the host presses “BATTLE”. The host starts at Base A, the guest at Base B; rules are the same as vs AI</li>
+<li><b style="color:#ffb070">vs AI</b>: you start at Base A, the AI at Base B. First to 5 kills, or the higher score after 5 minutes, wins. Falling into the void scores for the other side. The orange mech and orange wires are the AI</li>
+<li><b>Third person</b> by default (you can see your spider mech); toggle with 3P / 1P at top left. Falling into the void or respawning returns you to Base A</li>
+<li><b>Blue stick</b>: move. <b>Tap = jump in place; flick quickly in any direction and release = jump that way</b>. Push further to run faster (you can jump on the ground, slopes, against walls or while pinned). The spider legs stand on slopes up to 70° and stick to the ground at speed</li>
+<li><b style="color:#63e6ff">Left / right wire</b> (both are mini sticks): hold = fire a wire; drag inside the circle = up reels in, down lets out, left/right swings; <b style="color:#ffb040">drag past the outer ring = boost</b> (works with no anchor too)</li>
+<li><b style="color:#ff7a5c">Fire</b>: hold to shoot, drag while holding = aim while firing. <b style="color:#ffc94a">Hold the fire button and three weapon icons pop out; flick toward one to switch: up = 01 Main 57mm, right = 02 Mantis Blade (fire up close to slash — one-hit KO, 3 s cooldown), left = 03 Leg Nail Gun</b></li>
+<li>Reticle: small center circle yellow = a wire will hook, cyan = hooked. Red diamonds on the big arc = enemy direction (hollow = behind you). Below = ammo, slot (01 Main / 02 Sub / 03 Leg), ammo type. Left/right readouts = altitude / speed. Side gauges: left = boost fuel, right = ammo</li>
+<li><b>Leg Nail Gun</b> (doesn't use your arms, 24 nails): while pinned, use the stick to crawl along the wall — one nail per 2.5 m, you drop when they run out. Fire with a wall within 6 m = pin to the nearest wall at any angle (wires retract; boost, hook or pounce to detach). Also works as a weapon</li>
+<li><b>57mm Smoothbore</b>: one shot per 0.8 s, 6 per mag. Shells have travel time and drop, with blast damage within 4 m of impact. Firing in mid-air pushes you back with recoil</li>
+<li>Both bases have a <b style="color:#40ffb0">spawn zone</b>: you can't be hurt and can't fire. “Follow-finger reticle” is in Settings</li>
+<li>While swinging, the camera <b>locks onto the terrain under the reticle</b> so it doesn't wobble. If an enemy is near the reticle when you release, it <b>keeps facing that enemy</b>; turning the view cancels it</li>
+<li>Assist: with no anchor, <b>hold the wire first</b> and it hooks as soon as one appears (small center circle blinks = waiting). <b>Double-tap empty space = 180° turn</b></li>
+<li>Release at the bottom of the swing (prediction line turns <b style="color:#7f7">green</b>) for ×1.15 speed; you hover briefly at the top after releasing</li>`],
+};
+// ---- 樣板比對（含 {x} 的 key）：給 toast／連線訊息這種「已經組好的字串」用 ----
+const ESC = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+let PATS = null; const memo = new Map();
+function pats(){ if (PATS) return PATS; PATS = [];
+  for (const k of Object.keys(D)) if (/\{\w+\}/.test(k)){ const names = []; const re = k.split(/\{(\w+)\}/).map((p, i) => i % 2 ? (names.push(p), '(.+?)') : ESC(p)).join('');
+    PATS.push({ k, re: new RegExp('^' + re + '$'), names, lit: k.replace(/\{\w+\}/g, '').length }); }
+  PATS.sort((a, b) => b.lit - a.lit); return PATS; }
+const I = { lang: detect() };
+const IX = () => ({ ja: 0, ko: 1, en: 2 })[I.lang];
+function look(k){ const e = D[k]; return e && e[IX()] != null ? e[IX()] : null; }
+function sub(s, vars){ return vars ? s.replace(/\{(\w+)\}/g, (m, n) => vars[n] != null ? vars[n] : m) : s; }
+function t(key, vars){
+  if (key == null) return ''; key = String(key);
+  if (I.lang === 'zh-TW' || !/[^\x00-\x7f]/.test(key)) return sub(key, vars);   // 純英數（57mm、AI…）不用查
+  const k = norm(key), hit = look(k); if (hit != null) return sub(hit, vars);
+  if (vars) return sub(key, vars);
+  if (memo.has(k)) return memo.get(k);
+  let out = key;
+  for (const P of pats()){ const m = P.re.exec(k); if (!m) continue; const v = {}; P.names.forEach((n, i) => { const c = m[i + 1], h = look(norm(c)); v[n] = h != null ? h : c; }); out = sub(look(P.k), v); break; }
+  if (memo.size > 400) memo.clear(); memo.set(k, out); return out;
+}
+// 名字：只翻預設的「你」「對手」，玩家自己取的名字不動
+const tn = n => (n === '你' || n === '對手') ? t(n) : n;
+// ---- 套用到頁面 ----
+const CJK = /[　-ヿ㐀-鿿＀-￯]/, ATTRS = ['placeholder', 'aria-label', 'title', 'alt', 'data-tag'];
+let texts = null, attrs = null;
+function collect(){ texts = []; attrs = [];
+  const skip = el => el.closest('script,style,[data-i18n-skip],[data-i18n-html],[data-i18n]');
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+  while ((n = w.nextNode())){ const v = n.nodeValue; if (!CJK.test(v) || skip(n.parentElement)) continue;
+    const lead = v.match(/^\s*/)[0], trail = v.match(/\s*$/)[0]; texts.push({ n, orig: norm(v), lead, trail, last: v }); }
+  for (const el of document.body.querySelectorAll('*')){ if (el.closest('[data-i18n-skip]')) continue;
+    for (const a of ATTRS){ const v = el.getAttribute(a); if (v && CJK.test(v)) attrs.push({ el, a, orig: v }); } }
+  for (const el of document.querySelectorAll('[data-i18n]')) if (el.dataset.i18nSrc == null) el.dataset.i18nSrc = el.dataset.i18n || norm(el.textContent);
+  for (const el of document.querySelectorAll('[data-i18n-html]')) if (el._i18nSrc == null) el._i18nSrc = el.innerHTML;
+}
+function applyI18n(){
+  if (!texts) collect();
+  const de = document.documentElement; de.lang = HTML_LANG[I.lang]; de.dataset.lang = I.lang; window.LANG = I.lang;
+  document.title = t('WIREFRAMECH 鋼弦機兵');
+  for (const x of texts){ if (x.n.nodeValue !== x.last) continue;   // 已被遊戲程式改寫過的就不碰
+    const tr = t(x.orig); x.last = x.n.nodeValue = (tr ? x.lead : '') + tr + (tr ? x.trail : (x.lead || x.trail ? ' ' : '')); }
+  for (const x of attrs) x.el.setAttribute(x.a, t(x.orig));
+  for (const el of document.querySelectorAll('[data-i18n]')){ if (el.dataset.i18nSrc == null) el.dataset.i18nSrc = el.dataset.i18n || norm(el.textContent); el.textContent = t(el.dataset.i18nSrc); }
+  for (const el of document.querySelectorAll('[data-i18n-ph]')) el.placeholder = t(el.dataset.i18nPh);
+  for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', t(el.dataset.i18nAria));
+  for (const el of document.querySelectorAll('[data-i18n-html]')){ if (el._i18nSrc == null) el._i18nSrc = el.innerHTML; const e = H[el.dataset.i18nHtml];
+    el.innerHTML = I.lang !== 'zh-TW' && e && e[IX()] != null ? e[IX()] : el._i18nSrc; }
+  for (const id of ['optLang', 'mLang']){ const s = document.getElementById(id); if (s) s.value = I.lang; }
+  memo.clear();
+}
+function setLang(l){ if (!LANGS.includes(l)) return; I.lang = l; try { localStorage.setItem('wfm.lang', l); } catch (_){}
+  applyI18n(); try { window.dispatchEvent(new CustomEvent('wfm:lang', { detail: l })); } catch (_){} }
+Object.assign(window, { t, tn, applyI18n, setLang, I18N: { D, H, LANGS, get lang(){ return I.lang; } } }); window.LANG = I.lang;
+for (const id of ['optLang', 'mLang']){ const s = document.getElementById(id); if (s) s.addEventListener('change', () => setLang(s.value)); }
+applyI18n();
+})();
+</script>
 <script type="module">
 import * as THREE from 'three';
 import RAPIER from 'rapier';
@@ -625,8 +1074,9 @@ const V = (x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function dirFromYawPitch(yaw, pitch, out=V()){ const cp=Math.cos(pitch); return out.set(-Math.sin(yaw)*cp, Math.sin(pitch), -Math.cos(yaw)*cp); }
 
+const _T = window.t || (s => s), _TN = window.tn || (s => s);   // v4.5 多語系（字典在上面的 <script>）
 const statusEl = document.getElementById('status');
-window.addEventListener('error', e => { statusEl.textContent = '錯誤：' + e.message; });
+window.addEventListener('error', e => { statusEl.textContent = _T('錯誤：') + e.message; });
 
 // =====================================================================
 // RENDER 初始化
@@ -1592,6 +2042,7 @@ addEventListener('pagehide', () => { if (NET.tr) NET.tr.leave(); });   // 關掉
 const netUI = { el: null, txt: null, btn: null };
 function netShow(msg, btnText = '取消', onBtn = netCancel){
   if (!running){ menuNetMsg(msg); if (netUI.el) netUI.el.style.display = 'none'; return; }   // v3.9 選單中：訊息顯示在大廳／房間畫面
+  if (msg) msg = _T(msg); if (btnText) btnText = _T(btnText);   // v4.5 多語系（選單中的訊息由 menuNetMsg 自己翻）
   if (!netUI.el){ netUI.el = document.getElementById('netBar'); netUI.txt = document.getElementById('netTxt'); netUI.btn = document.getElementById('netBtn');
     netUI.el.addEventListener('pointerdown', e => e.stopPropagation()); netUI.el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true }); }
   netUI.el.style.display = msg ? 'flex' : 'none'; netDiagShow(); netUI.txt.textContent = msg || ''; netUI.btn.textContent = btnText; netUI.btn.style.display = btnText ? '' : 'none'; netUI.btn.onclick = e => { e.stopPropagation(); onBtn(); };
@@ -1607,7 +2058,7 @@ function netDiag(code, peer){
   netDiagShow();
 }
 function netDiagShow(){ const el = document.getElementById('netDiag'); if (!el) return; const c = NET.lastDiag; menuNetMsg();
-  el.textContent = c ? `⚠ ${NET_DIAG_TXT[c] || c}（${NET.diag[c]} 次）` : ''; el.style.display = c ? 'block' : 'none'; }
+  el.textContent = c ? `⚠ ${_T(NET_DIAG_TXT[c] || c)}${_T('（{n} 次）', { n: NET.diag[c] })}` : ''; el.style.display = c ? 'block' : 'none'; }
 function netLeave(){ if (NET.tr){ NET.tr.leave(); NET.tr = null; } NET.peer = null; }
 function netReset(){ netLeave(); Object.assign(NET, { ready: { me: false, op: false }, diag: {}, lastDiag: null, state: 'idle', host: false, code: null, via: null, inviteTo: null, buf: [], off: null, fx: [], lostShown: false, gotHi: false, sentGo: false }); NET.lobby.clear(); }
 function netCancel(){ const wasMatch = match.mode === 'net'; netReset(); netShow(null); if (wasMatch) match.start('practice'); }
@@ -3193,7 +3644,7 @@ function onMotion(e){
 addEventListener('devicemotion', onMotion);
 let aimSlow = 1; // 準星靠近敵人時的減速（只減速、不拉扯）
 const toastEl = document.getElementById('toast'); let toastTimer = 0;
-function toast(msg, ms=4000){ toastEl.textContent = msg; toastEl.style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(()=> toastEl.style.display = 'none', ms); }
+function toast(msg, ms=4000){ toastEl.textContent = _T(msg); toastEl.style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(()=> toastEl.style.display = 'none', ms); }
 let motionGranted = false; // iOS：同一次載入只要求一次權限（每次要求都會跳對話框並打斷全螢幕）
 const needsMotionPerm = () => typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function';
 async function enableGyro(on){
@@ -3204,14 +3655,14 @@ async function enableGyro(on){
     if (needsMotionPerm() && !motionGranted){
       const r = await DeviceMotionEvent.requestPermission(); // iOS：必須在點擊裡呼叫
       if (r === 'granted') motionGranted = true;
-      if (r !== 'granted'){ st.textContent = '沒有取得動作感測器權限'; toast('陀螺儀權限被拒絕：到 Safari 設定允許「動作與方向」後重新整理'); return; }
+      if (r !== 'granted'){ st.textContent = _T('沒有取得動作感測器權限'); toast('陀螺儀權限被拒絕：到 Safari 設定允許「動作與方向」後重新整理'); return; }
     }
-  } catch(err){ st.textContent = '無法要求感測器權限'; toast('這個頁面無法使用陀螺儀（Claude 內嵌頁面會擋住感測器），請用獨立網址開啟'); return; }
-  gyro.on = true; document.getElementById('optGyro').checked = true; st.textContent = '陀螺儀：等待訊號…';
+  } catch(err){ st.textContent = _T('無法要求感測器權限'); toast('這個頁面無法使用陀螺儀（Claude 內嵌頁面會擋住感測器），請用獨立網址開啟'); return; }
+  gyro.on = true; document.getElementById('optGyro').checked = true; st.textContent = _T('陀螺儀：等待訊號…');
   gyro.got = false;
-  setTimeout(()=>{ if (!gyro.got){ gyro.on = false; document.getElementById('optGyro').checked = false; st.textContent = '收不到陀螺儀訊號';
+  setTimeout(()=>{ if (!gyro.got){ gyro.on = false; document.getElementById('optGyro').checked = false; st.textContent = _T('收不到陀螺儀訊號');
     toast('收不到陀螺儀訊號：Claude 內嵌頁面會擋住感測器，請用獨立網址開啟（或裝置沒有陀螺儀）', 6000); }
-    else st.textContent = '陀螺儀：運作中（平放 1 秒會自動校正）'; }, 1200);
+    else st.textContent = _T('陀螺儀：運作中（平放 1 秒會自動校正）'); }, 1200);
 }
 
 // 拖曳轉視角：慢拖精準(×0.7)、快甩大角度(×1.6)
@@ -3455,7 +3906,7 @@ document.getElementById('setClose').addEventListener('click', ()=> setEl.classLi
 // 回到首頁：只在練習、對戰 AI 時可用（線上對戰中隱藏，避免對手那邊卡住）
 const homeBtn = document.getElementById('setHome');
 function updateHomeBtn(){ homeBtn.style.display = running && match.mode !== 'net' ? '' : 'none'; setEl.classList.toggle('inMenu', !running);
-  const pz = document.getElementById('setPause'), net = running && match.mode === 'net'; pz.textContent = !running ? '' : net ? '連線對戰中・不會暫停' : '‖ 已暫停'; pz.classList.toggle('net', net); }   // v4.1 暫停提示
+  const pz = document.getElementById('setPause'), net = running && match.mode === 'net'; pz.textContent = !running ? '' : _T(net ? '連線對戰中・不會暫停' : '‖ 已暫停'); pz.classList.toggle('net', net); }   // v4.1 暫停提示
 document.getElementById('bSet').addEventListener('click', updateHomeBtn);
 homeBtn.addEventListener('click', e => { e.stopPropagation(); goHome(); });
 function togglePause(want){ if (!running) return; want = want ?? !paused;   // v4.1 暫停：P 鍵、Esc 放開滑鼠；線上對戰為了公平不能暫停
@@ -3507,9 +3958,9 @@ document.getElementById('optFcs').addEventListener('change', e => { opts.fcs = e
 document.getElementById('optRoll').addEventListener('change', e => opts.roll = e.target.checked);
 // v4.1 靈敏度依裝置分開記：電腦預設 0.12、手機 0.32
 function syncDeviceUI(){ const sl = document.getElementById('optSens'); sl.value = opts.sens; document.getElementById('optSensV').textContent = opts.sens.toFixed(2);
-  document.getElementById('optSensTx').textContent = DEVICE === 'pc' ? '滑鼠移動轉視角的速度（電腦）' : '手指滑動轉視角的速度（行動裝置）';
+  document.getElementById('optSensTx').textContent = _T(DEVICE === 'pc' ? '滑鼠移動轉視角的速度（電腦）' : '手指滑動轉視角的速度（行動裝置）');
   const sel = document.getElementById('optDevice'); sel.value = ['pc', 'mobile'].includes(lsGet('wfm.device')) ? lsGet('wfm.device') : 'auto';
-  sel.options[0].textContent = '自動判斷（' + (DEVICE_AUTO === 'pc' ? '電腦' : '行動裝置') + '）'; }
+  sel.options[0].textContent = _T('自動判斷（{d}）', { d: _T(DEVICE_AUTO === 'pc' ? '電腦' : '行動裝置') }); }
 document.getElementById('optSens').addEventListener('input', e => { opts.sens = parseFloat(e.target.value); lsSet('wfm.sens.' + DEVICE, opts.sens); document.getElementById('optSensV').textContent = opts.sens.toFixed(2); });
 document.getElementById('optDevice').addEventListener('change', e => { const v = e.target.value; lsSet('wfm.device', v); DEVICE = v === 'auto' ? DEVICE_AUTO : v;
   mouseMode = DEVICE === 'pc'; opts.sens = sensFor(DEVICE); showTouchUI(running && !mouseMode); try { applyLayout(); idleStick(); } catch(_){} syncDeviceUI(); });
@@ -3546,7 +3997,7 @@ function layoutEdit(on){
   if (on){ layEd.wasRunning = running; running = false; showTouchUI(true); setEl.classList.remove('open'); layoutSelect(null); applyLayout(); }
   else { running = layEd.wasRunning; last = performance.now(); layoutSelect(null); saveLayout(); applyLayout(); } }
 function layoutSelect(id){ layEd.sel = id; for (const k of LAYOUT_IDS) document.getElementById(k).classList.toggle('lay-on', k === id);
-  document.getElementById('laySel').textContent = id ? LAYOUT_NAME[id] : '先點一顆按鈕'; document.getElementById('laySize').value = id && LAYOUT[id] ? (LAYOUT[id].s || 1) : 1;
+  document.getElementById('laySel').textContent = _T(id ? LAYOUT_NAME[id] : '先點一顆按鈕'); document.getElementById('laySize').value = id && LAYOUT[id] ? (LAYOUT[id].s || 1) : 1;
   const xb = id && document.getElementById(id).classList.contains('xb'); document.getElementById('layShowL').style.display = xb ? '' : 'none';
   if (xb) document.getElementById('layShow').checked = !!(LAYOUT[id] && LAYOUT[id].on); }
 document.getElementById('layShow').addEventListener('change', e => { const id = layEd.sel; if (!id) return; const L = LAYOUT[id] || (LAYOUT[id] = { x: XB_DEF[id][0], y: XB_DEF[id][1], s: 1 }); L.on = e.target.checked; applyLayout(); });
@@ -3629,18 +4080,18 @@ function drawHUD(dt){
     c.strokeStyle = r.hooked ? '#40e0ff' : ok ? '#6ff' : 'rgba(200,200,200,.55)'; c.lineWidth = 2;
     c.beginPath(); c.arc(pos[0], pos[1], ok ? 11 : 7, 0, Math.PI*2); c.stroke();
     c.fillStyle = c.strokeStyle; c.font = `${Math.round(12*clamp(h/700,0.8,1))}px sans-serif`; c.textAlign = 'center';
-    c.fillText((smartUI ? '鉤' : side) + (hp && !r.hooked ? ' ' + hp.toi.toFixed(0) + 'm' : ''), pos[0], pos[1] - 15);
+    c.fillText((smartUI ? _T('鉤') : side) + (hp && !r.hooked ? ' ' + hp.toi.toFixed(0) + 'm' : ''), pos[0], pos[1] - 15);
   });
   // 跟手準星：武器（紅）／鋼索瞄準中（青）
   const drawReticle = (ox, oy, col, label) => { const x = cx + ox, y = cy + oy;
     c.strokeStyle = col; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 14, 0, Math.PI*2); c.stroke();
     c.beginPath(); c.moveTo(x-22, y); c.lineTo(x-8, y); c.moveTo(x+8, y); c.lineTo(x+22, y); c.moveTo(x, y-22); c.lineTo(x, y-8); c.moveTo(x, y+8); c.lineTo(x, y+22); c.stroke();
-    c.fillStyle = col; c.font = '600 11px sans-serif'; c.textAlign = 'center'; c.fillText(label, x, y + 36); };
+    c.fillStyle = col; c.font = '600 11px sans-serif'; c.textAlign = 'center'; c.fillText(_T(label), x, y + 36); };
   if (opts.follow === 'weapon' && !mouseMode && (aimOff.x || aimOff.y)) drawReticle(aimOff.x, aimOff.y, '#ff6a50', state.weapon.active === 'main' ? '57mm' : state.weapon.active === 'mg' ? (bladeOn(state.weapon) ? '螳螂鐮' : '14.5mm') : '釘槍');
   if (ropeAiming) drawReticle(ropeOff.x, ropeOff.y, '#3de0ff', '放開＝射出右索');
   // 狀態橫幅：無敵區／釘在牆上
   { const msgs = []; if (P.safe) msgs.push(['出生保護區：不會受傷，也不能開火', '#40ffb0']); if (P.pinned) msgs.push(['釘在牆上：勾索、推進或撲擊就會脫離', '#ffc94a']);
-    msgs.forEach(([m, col], i) => { c.font = '700 14px sans-serif'; c.textAlign = 'center'; const tw2 = c.measureText(m).width;
+    msgs.forEach(([m0, col], i) => { const m = _T(m0); c.font = '700 14px sans-serif'; c.textAlign = 'center'; const tw2 = c.measureText(m).width;
       c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(cx - tw2/2 - 10, cy - 96 - i*26, tw2 + 20, 22); c.fillStyle = col; c.fillText(m, cx, cy - 80 - i*26); }); }
   // ===== v1.3 準星介面（參考 86 機甲 HUD）=====
   //  上半圓大弧＋兩個菱形＝左／右索狀態；內圈括弧＝射擊散布；中央虛線十字＋小圓；
@@ -3697,7 +4148,7 @@ function drawHUD(dt){
         c.restore();
         if (k === 0 && !onScreen){ c.shadowBlur = 0; c.font = `700 ${Math.round(9*sc)}px ui-monospace, monospace`; c.fillStyle = col;
           const right = Math.cos(ang) >= 0; c.textAlign = right ? 'left' : 'right';
-          txt(Math.round(d) + 'm' + (behind ? ' 後' : ''), ex + (right ? 13 : -13) * sc, ey - 8 * sc); c.shadowBlur = 6; }
+          txt(Math.round(d) + 'm' + (behind ? ' ' + _T('後') : ''), ex + (right ? 13 : -13) * sc, ey - 8 * sc); c.shadowBlur = 6; }
       });
     }
     // 內圈括弧＝射擊散布（散得越開括弧越開），各帶兩條刻度
@@ -3761,15 +4212,15 @@ function drawHUD(dt){
   const acc = wst.fired ? Math.round(wst.hits / wst.fired * 100) : 0;
   c.textAlign = 'center'; c.font = `600 ${Math.round(15*fs)}px sans-serif`;
   if (match.mode === 'ai' || match.mode === 'net'){   // v3.0 對戰：比分、時間、雙方血條、擊破訊息
-    const tl = Math.ceil(match.timeLeft), line = `你 ${match.score[local.team]}  :  ${match.score[1 - local.team]} ${bot ? bot.name : 'AI'}      ${Math.floor(tl / 60)}:${String(tl % 60).padStart(2, '0')}`;
+    const tl = Math.ceil(match.timeLeft), line = `${_T('你')} ${match.score[local.team]}  :  ${match.score[1 - local.team]} ${bot ? _TN(bot.name) : 'AI'}      ${Math.floor(tl / 60)}:${String(tl % 60).padStart(2, '0')}`;
     const tw = c.measureText(line).width, bw = Math.max(tw + 40, 260 * fs), by = 8 + 24 * fs + 8;
     c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(cx - bw/2, 6, bw, 24*fs + 22);
     c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs);
     const hb = (x, k, col, right) => { const w = bw/2 - 14; c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(x, by, w, 6); c.fillStyle = col; c.fillRect(right ? x + w * (1 - k) : x, by, w * k, 6); };
     hb(cx - bw/2 + 8, local.hp / CONFIG.pvp.hp, '#5fe0ff', false); if (bot) hb(cx + 6, bot.hp / CONFIG.pvp.hp, '#ffa040', true);
-    c.font = `600 ${Math.round(13*fs)}px sans-serif`; match.feed.forEach((f2, i) => { c.fillStyle = `rgba(255,220,180,${Math.min(1, f2.t)})`; c.fillText(f2.msg, cx, by + 24*fs + i * 18*fs); });
+    c.font = `600 ${Math.round(13*fs)}px sans-serif`; match.feed.forEach((f2, i) => { c.fillStyle = `rgba(255,220,180,${Math.min(1, f2.t)})`; c.fillText(_T(f2.msg), cx, by + 24*fs + i * 18*fs); });
   } else if (!tutorial.on) {   // 教學進行中：上方讓給教學進度列
-  c.fillStyle = 'rgba(0,0,0,.35)'; const line = `${sp.toFixed(0)} m/s   命中 ${acc}%   墜落 ${P.falls || 0}`;
+  c.fillStyle = 'rgba(0,0,0,.35)'; const line = `${sp.toFixed(0)} m/s   ${_T('命中')} ${acc}%   ${_T('墜落')} ${P.falls || 0}`;
   const tw = c.measureText(line).width; c.fillRect(cx - tw/2 - 10, 8, tw + 20, 24*fs + 4);
   c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs); }
 }
@@ -4036,7 +4487,7 @@ const UNLOCK_ALL = new URLSearchParams(location.search).get('unlock') === '1';
 const LOCKS = { mToLobby: !BUILD_ONLINE, mHangar: false, mProfile: false };   // v4.4 個人資料開放（直立名片）   // v3.9 有了螳螂鐮選裝 → 機庫開放   // 線上只看版本開關：正式版不能用網址參數打開
 function menuLocks(){
   for (const [id, on] of Object.entries(LOCKS)){ const el = $(id); el.classList.toggle('locked', on);
-    const sm = el.querySelector('small'); if (sm){ if (!sm.dataset.orig) sm.dataset.orig = sm.textContent; sm.textContent = on ? (id === 'mProfile' ? '尚未開放' : sm.dataset.orig + '・尚未開放') : sm.dataset.orig; } }
+    const sm = el.querySelector('small'); if (sm && (on || sm.dataset.orig)){ if (!sm.dataset.orig) sm.dataset.orig = sm.textContent; sm.textContent = on ? (id === 'mProfile' ? _T('尚未開放') : sm.dataset.orig + _T('・尚未開放')) : sm.dataset.orig; } }
 }
 startEl.addEventListener('click', e => { const el = e.target.closest && e.target.closest('.locked'); if (!el) return; e.stopPropagation(); e.preventDefault(); toast('這個功能還沒開放，敬請期待', 1800); buzz(15); }, true);   // 捕獲階段：比按鈕本身的動作先攔下
 function menuReady(){ menuLocks(); startEl.classList.remove('loading'); $('status').textContent = ''; menuProfile(); menuPaints(); menuGo('home'); }
@@ -4060,8 +4511,8 @@ function profName(){ try { return nameClamp((localStorage.getItem('wfm.name') ||
 function profRec(){ try { return JSON.parse(localStorage.getItem('wfm.rec')) || {}; } catch (_){ return {}; } }
 function recordResult(mode, r){ if (mode !== 'ai' && mode !== 'net') return; const R = profRec(); const k = R[mode] = R[mode] || { w: 0, l: 0, d: 0 }; k[r]++; try { localStorage.setItem('wfm.rec', JSON.stringify(R)); } catch (_){} }
 function menuProfile(){ const R = profRec(), a = R.ai || { w: 0, l: 0, d: 0 }, n = R.net || { w: 0, l: 0, d: 0 };
-  $('mName').textContent = profName(); $('mRec').textContent = LOCKS.mProfile ? '個人資料・尚未開放' : `AI ${a.w}勝${a.l}敗・線上 ${n.w}勝${n.l}敗`;
-  $('mRecs').innerHTML = `<span></span><b>勝</b><b>敗</b><b>平手</b><span>對戰 AI</span><span>${a.w}</span><span>${a.l}</span><span>${a.d}</span><span>線上對戰</span><span>${n.w}</span><span>${n.l}</span><span>${n.d}</span>`;
+  $('mName').textContent = profName(); $('mRec').textContent = LOCKS.mProfile ? _T('個人資料・尚未開放') : _T('AI {aw}勝{al}敗・線上 {nw}勝{nl}敗', { aw: a.w, al: a.l, nw: n.w, nl: n.l });
+  $('mRecs').innerHTML = `<span></span><b>${_T('勝')}</b><b>${_T('敗')}</b><b>${_T('平手')}</b><span>${_T('對戰 AI')}</span><span>${a.w}</span><span>${a.l}</span><span>${a.d}</span><span>${_T('線上對戰')}</span><span>${n.w}</span><span>${n.l}</span><span>${n.d}</span>`;
   // v4.4 直立名片：中央徽章＝AI＋線上合計 勝:敗，只放數字（位數多就縮字）
   const wl = `${a.w + n.w}:${a.l + n.l}`; $('pfWL').textContent = wl; $('pfRank').dataset.n = wl.length; $('pfName').textContent = profName(); fitNames(); profThumb(); }
 // v4.5 名片壓扁成橫向 3:2 → 鏡頭改「外框算距離＋拉近」，機身放在畫面中上；大廳縮圖是正方形的 3/4 正面特寫
@@ -4114,28 +4565,28 @@ $('mJoinGo').addEventListener('click', () => { const c = $('mCodeIn').value; if 
 $('mCodeIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('mJoinGo').click(); });
 $('mBattle').addEventListener('click', () => netRoomBattle());
 $('mRoomExit').addEventListener('click', () => { netReset(); menuGo('lobby'); });
-$('mCopy').addEventListener('click', async () => { if (!NET.code) return; const t = `來 WIREFRAMECH 跟我對戰！房間代碼：${NET.code}`;
+$('mCopy').addEventListener('click', async () => { if (!NET.code) return; const t = _T('來 WIREFRAMECH 跟我對戰！房間代碼：{c}', { c: NET.code });
   try { if (navigator.share) await navigator.share({ text: t }); else { await navigator.clipboard.writeText(NET.code); toast('已複製代碼', 1500); } } catch (_){} });
 $('mOpp').addEventListener('click', () => { if (!NET.peer) $('mCopy').click(); });
 // 大廳／房間的連線狀態（配對進度、房間代碼、對手、診斷）
 let menuMsgText = '';
 function menuNetMsg(msg){
   if (msg !== undefined) menuMsgText = msg || '';
-  const diag = NET.lastDiag ? `⚠ ${NET_DIAG_TXT[NET.lastDiag] || NET.lastDiag}` : '';
+  const diag = NET.lastDiag ? `⚠ ${_T(NET_DIAG_TXT[NET.lastDiag] || NET.lastDiag)}` : '';
   const searching = NET.state === 'lobby' || NET.state === 'inviting' || NET.state === 'joining' || (NET.via === 'quick' && NET.state === 'connecting');
-  $('mQuick').classList.toggle('busy', searching); $('mQuickT').textContent = searching ? 'SEARCHING…' : 'QUICK MATCH'; $('mQuickS').textContent = searching ? '配對中，再按一次取消' : '快速配對（20 秒沒人改打 AI）';
-  $('mLobbyMsg').textContent = [searching ? menuMsgText : '', diag].filter(Boolean).join('\n');
+  $('mQuick').classList.toggle('busy', searching); $('mQuickT').textContent = searching ? 'SEARCHING…' : 'QUICK MATCH'; $('mQuickS').textContent = _T(searching ? '配對中，再按一次取消' : '快速配對（20 秒沒人改打 AI）');
+  $('mLobbyMsg').textContent = [searching ? _T(menuMsgText) : '', diag].filter(Boolean).join('\n');
   // 房間
   const inRoom = NET.via === 'code' && NET.state !== 'idle', host = NET.host, peer = !!NET.peer && (NET.state === 'room' || NET.state === 'match');
   $('mCode').textContent = inRoom && NET.code ? NET.code : '·····';
   $('mOpp').classList.toggle('full', peer); $('mOppIcon').textContent = peer ? '◆' : '＋';
   const rd = NET.ready || {}, opReady = peer && rd.op, meReady = peer && rd.me;
-  $('mOppTxt').textContent = peer ? (NET.peerName || '對手') + (opReady ? '　✓ 準備好了' : '　準備中…') : (inRoom && !host ? '連線中…' : '等待對手（點這裡分享代碼）');
+  $('mOppTxt').textContent = peer ? _TN(NET.peerName || '對手') + '　' + _T(opReady ? '✓ 準備好了' : '準備中…') : _T(inRoom && !host ? '連線中…' : '等待對手（點這裡分享代碼）');
   $('mOpp').classList.toggle('ready', !!opReady);
   $('mBattle').disabled = !peer; $('mBattle').classList.toggle('on', !!meReady);
   $('mBattleT').textContent = meReady ? 'READY ✓' : 'BATTLE';
-  $('mBattleS').textContent = !peer ? '等待對手加入' : meReady ? (opReady ? '開打！' : '等對手按 BATTLE（再按一次取消）') : (opReady ? '對手已準備，按下開打' : '雙方都按下才開打');
-  $('mRoomMsg').textContent = [!inRoom ? '' : host ? (peer ? '' : '把上方代碼告訴朋友，或按「分享代碼」') : (peer ? '' : menuMsgText), diag].filter(Boolean).join('\n');
+  $('mBattleS').textContent = _T(!peer ? '等待對手加入' : meReady ? (opReady ? '開打！' : '等對手按 BATTLE（再按一次取消）') : (opReady ? '對手已準備，按下開打' : '雙方都按下才開打'));
+  $('mRoomMsg').textContent = [!inRoom ? '' : host ? (peer ? '' : _T('把上方代碼告訴朋友，或按「分享代碼」')) : (peer ? '' : _T(menuMsgText)), diag].filter(Boolean).join('\n');
 }
 // ---- 機庫：塗裝（和設定的「外觀」同步）----
 function menuPaints(){ const sel = $('optPaint'), box = $('mPaints'); box.innerHTML = '';
@@ -4146,7 +4597,7 @@ $('optPaint').addEventListener('change', () => profThumb());   // v4.5 換塗裝
 $('mHangar').addEventListener('click', () => menuGo('hangar'));
 // v3.9 機庫選裝：02 欄＝螳螂鐮／14.5mm 機槍（存在本機，下一場開始生效；練習中換也立刻生效）
 const S2_INFO = { blade: ['螳螂鐮', '近身一刀擊破（冷卻 3 秒）；拿著刀時正面 ±60° 的子彈、砲彈、刀都擋得掉'], mg: ['14.5mm 機槍', '每分鐘 600 發、射程 500m；不能格擋'] };
-function menuS2(){ $('mS2').textContent = S2_INFO[LOADOUT.s2][0]; $('mS2Note').textContent = S2_INFO[LOADOUT.s2][1];
+function menuS2(){ $('mS2').textContent = _T(S2_INFO[LOADOUT.s2][0]); $('mS2Note').textContent = _T(S2_INFO[LOADOUT.s2][1]);
   for (const im of document.querySelectorAll('img.m-thumb[data-part]')) if (PART_IMG[im.dataset.part]) im.src = PART_IMG[im.dataset.part];
   if (PART_IMG[LOADOUT.s2]) $('mS2Img').src = PART_IMG[LOADOUT.s2];   // 選裝的零件圖
   for (const b of $('mS2Pick').children) b.classList.toggle('on', b.dataset.s2 === LOADOUT.s2); }
@@ -4181,7 +4632,7 @@ requestAnimationFrame(frame);
 
 // 開始畫面
 const goBtn = document.getElementById('goBtn');
-goBtn.disabled = false; goBtn.textContent = '練習（打靶）';
+goBtn.disabled = false; goBtn.textContent = _T('練習（打靶）');
 menuReady();
 const goAI = document.getElementById('goAI'); goAI.disabled = false;
 try { if (window.top !== window.self) document.getElementById('fullLink').style.display = 'inline-block'; } catch(_){ document.getElementById('fullLink').style.display = 'inline-block'; }   // 嵌在 itch.io 等網站的小框裡時，顯示大畫面版連結
@@ -4263,8 +4714,8 @@ function vsLoad(el, s2){ el.textContent = '';   // 名字底下：三個武裝�
     d[i] = d[i+1] = d[i+2] = 230 + v * 25; d[i+3] = Math.min(255, v * v * 200 * streak); } }
   g.putImageData(im, 0, 0); document.documentElement.style.setProperty('--wo-noise', `url(${c.toDataURL()})`); } catch (_){} })();
 function showVersus(mode, onDone){ const vs = document.getElementById('vs'), $v = id => document.getElementById(id); clearTimeout(vsTimer); clearInterval(vsTick);
-  $v('vsMode').textContent = mode === 'net' ? '⚔ 線上對戰 1v1' : '⚔ 對戰 AI 1v1';
-  $v('vsMeName').textContent = profName(); vsLoad($v('vsMeLoad'), LOADOUT.s2); $v('vsOpName').textContent = mode === 'net' ? (nameClamp(NET.peerName).trim() || '對手') : 'AI';
+  $v('vsMode').textContent = _T(mode === 'net' ? '⚔ 線上對戰 1v1' : '⚔ 對戰 AI 1v1');
+  $v('vsMeName').textContent = profName(); vsLoad($v('vsMeLoad'), LOADOUT.s2); $v('vsOpName').textContent = mode === 'net' ? _TN(nameClamp(NET.peerName).trim() || '對手') : 'AI';
   $v('vsMeImg').removeAttribute('src'); $v('vsOpImg').removeAttribute('src');
   let gotMe = false, gotOp = false, lastS2 = null;
   const fill = () => { try {
@@ -4279,10 +4730,10 @@ function showVersus(mode, onDone){ const vs = document.getElementById('vs'), $v 
 const VS_MS = 3000;
 function showResult(msg){ const me = match.score[local.team], op = match.score[1 - local.team], win = me > op, draw = me === op;
   if (!msg) recordResult(match.mode, win ? 'w' : draw ? 'd' : 'l');
-  document.getElementById('resTitle').textContent = draw ? '平手' : win ? '勝利' : '敗北';
+  document.getElementById('resTitle').textContent = _T(draw ? '平手' : win ? '勝利' : '敗北');
   document.getElementById('resTitle').style.color = draw ? '#e8f6ff' : win ? '#63e6ff' : '#ff8a6a';
-  document.getElementById('resScore').textContent = `你 ${me} ： ${op} ${bot ? bot.name : 'AI'}` + (msg ? `（${msg}）` : '');
-  document.getElementById('resAgain').textContent = match.mode === 'net' ? (NET.state === 'match' ? '再來一場' : '再找一場') : '再來一場';
+  document.getElementById('resScore').textContent = `${_T('你')} ${me} ： ${op} ${bot ? _TN(bot.name) : 'AI'}` + (msg ? _T('（{m}）', { m: _T(msg) }) : '');
+  document.getElementById('resAgain').textContent = _T(match.mode === 'net' ? (NET.state === 'match' ? '再來一場' : '再找一場') : '再來一場');
   document.getElementById('result').style.display = 'flex'; }
 function hudMatch(){ if (match.state !== 'over') document.getElementById('result').style.display = 'none'; }
 document.getElementById('resAgain').addEventListener('click', e => { e.stopPropagation();
@@ -4383,8 +4834,8 @@ const tutorial = (() => {
     } else trail.style.display = 'none';
   }
   function show(){
-    const S2 = STEPS[i]; $('tutDots').innerHTML = STEPS.map((_, k) => `<i class="${k < i ? 'd' : k === i ? 'c' : ''}"></i>`).join(''); $('tutTitle').textContent = kind === 'settings' ? S2.title : '';
-    $('tut').setAttribute('aria-label', S2.title); t = 0; S2.init(); playHand();
+    const S2 = STEPS[i]; $('tutDots').innerHTML = STEPS.map((_, k) => `<i class="${k < i ? 'd' : k === i ? 'c' : ''}"></i>`).join(''); $('tutTitle').textContent = kind === 'settings' ? _T(S2.title) : '';
+    $('tut').setAttribute('aria-label', _T(S2.title)); t = 0; S2.init(); playHand();
   }
   function place(){
     const S2 = STEPS[i]; const target = S2 && S2.hl ? hlEl(S2.hl) : null;
@@ -4416,6 +4867,15 @@ const tutorial = (() => {
   addEventListener('resize', () => setTimeout(() => { if (api.on){ playHand(); place(); } }, 120));   // 轉向／縮放後立刻改用新的按鈕位置
   return api;
 })();
+
+// v4.5 切換語言時，更新遊戲程式寫進畫面的動態文字（靜態文字由 applyI18n 處理）
+addEventListener('wfm:lang', () => { try {
+  syncDeviceUI(); updateHomeBtn(); menuNetMsg(); menuProfile(); menuPaints(); menuS2(); netDiagShow();
+  document.getElementById('laySel').textContent = _T(layEd.sel ? LAYOUT_NAME[layEd.sel] : '先點一顆按鈕');
+  if (!goBtn.disabled) goBtn.textContent = _T('練習（打靶）');
+  if (match.state === 'over' && document.getElementById('result').style.display === 'flex'){ const me = match.score[local.team], op = match.score[1 - local.team];
+    document.getElementById('resTitle').textContent = _T(me === op ? '平手' : me > op ? '勝利' : '敗北'); }
+} catch (err){ console.warn('[i18n]', err); } });
 
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
