@@ -2517,6 +2517,7 @@ const fcsGhost = (() => {
   // 落差補正後的瞄準記號：小圓圈（畫面上大小固定），把準星放在這裡＝打中虛線敵人
   const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); x.strokeStyle = '#ffc050'; x.lineWidth = 7; x.beginPath(); x.arc(32, 32, 24, 0, Math.PI * 2); x.stroke(); x.fillStyle = '#ffc050'; x.fillRect(28, 28, 8, 8);
   const mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, opacity: 0.8, depthTest: false, depthWrite: false, toneMapped: false })); mark.visible = false; mark.renderOrder = 6; scene.add(mark);
+  if (PROMO){ m.scale.setScalar(2.3); m.material.color.setRGB(3.2, 1.7, 0.45); link.material.color.setRGB(2.6, 1.4, 0.4); }   // v4.5 宣傳片：遠距離特寫時虛線機影放大、加亮，畫面上看得出來
   return { m, link, mark };
 })();
 const _fz = { o: V(), d: V(), m: V(), e: V(), c: V(), p: V() };
@@ -3037,13 +3038,13 @@ function drawShells(dt){
 }
 function spawnSparks(p, n){ for (let i=0;i<6;i++){ const s = sparks[sparkIdx++ % sparks.length]; s.m.position.copy(p); s.v.set((Math.random()-.5)*8, Math.random()*6, (Math.random()-.5)*8); if (n) s.v.addScaledVector(n, 4); s.life = 0.3; s.m.visible = true; } }
 // v4.5 宣傳片（?promo=1）專用：螳螂鐮斷腳特效 —— 只是畫面（小腿複製一份飛出去＋發光斷面＋火花），不影響判定與一般遊玩
-const promoFx = { debris: [], sparks: [], tick: null };
+const promoFx = { debris: [], sparks: [], cuts: [], tick: null };
 if (PROMO){
   const hot = new THREE.MeshBasicMaterial({ color: new THREE.Color(5, 2.2, 0.6), toneMapped: false }), hot2 = new THREE.MeshBasicMaterial({ color: new THREE.Color(3.2, 1.0, 0.25), toneMapped: false });
   const capGeo = new THREE.SphereGeometry(0.26, 12, 8).scale(1, 0.55, 1), sg = new THREE.BoxGeometry(0.05, 0.05, 0.55), _pq = new THREE.Quaternion(), _pe = new THREE.Euler(), _pv = V();
   for (let i = 0; i < 160; i++){ const m = new THREE.Mesh(sg, i % 3 ? hot : hot2); m.visible = false; m.frustumCulled = false; scene.add(m); promoFx.sparks.push({ m, v: V(), life: 0 }); }
   let si = 0;
-  const burst = (p, n, k, up = 0) => { for (let i = 0; i < n; i++){ const s = promoFx.sparks[si++ % promoFx.sparks.length]; s.m.position.copy(p); s.v.set((Math.random() - .5) * k, Math.random() * k * 0.7 + up, (Math.random() - .5) * k); s.life = 0.3 + Math.random() * 0.45; s.m.visible = true; } };
+  const burst = (p, n, k, up = 0) => { for (let i = 0; i < n; i++){ const s = promoFx.sparks[si++ % promoFx.sparks.length]; s.m.position.copy(p); s.v.set((Math.random() - .5) * k, Math.random() * k * 0.7 + up, (Math.random() - .5) * k); s.life = 0.3 + Math.random() * 0.45; s.m.scale.setScalar(window.__promoSparkS ?? 1); s.m.visible = true; } };
   window.__promoBurst = burst;
   window.__promoSever = (who, idx, dx, dz) => { const M = who === 'bot' ? bot.mech : mech, L = M && M.legs[idx]; if (!L || !L.kneeG || !L.kneeG.visible) return false;
     M.root.updateMatrixWorld(true);
@@ -3053,11 +3054,24 @@ if (PROMO){
     L.kneeG.visible = false; const d = Math.hypot(dx, dz) || 1;
     promoFx.debris.push({ o: c, L, capS, v: V(dx / d * 8, 10, dz / d * 8), w: V(Math.random() * 6 - 3, Math.random() * 4 - 2, 10), t: 0 });
     burst(cut, 60, 16, 3); for (let k = 0; k < 4; k++) spawnSparks(cut, null); return true; };
-  window.__promoSeverReset = () => { for (const d of promoFx.debris){ scene.remove(d.o); d.L.kneeG.visible = true; if (d.capS.parent) d.capS.parent.remove(d.capS); } promoFx.debris.length = 0; for (const s of promoFx.sparks){ s.life = 0; s.m.visible = false; } };
+  // v4.5 宣傳片：刀切進機殼的發光割痕（從攻擊方往機殼打射線，把點貼在機殼表面，再沿線慢慢「割開」）
+  window.__promoCutLine = (who, a, b, from, dur = 0.1) => { const M = who === 'bot' ? bot.mech : mech; if (!M) return false; M.root.updateMatrixWorld(true);
+    const rc = new THREE.Raycaster(), pts = [], vis = o => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
+    for (let i = 0; i <= 28; i++){ const p = V().lerpVectors(a, b, i / 28), d = p.clone().sub(from).normalize(); rc.set(from, d);
+      const h = rc.intersectObject(M.root, true).find(x => x.object.isMesh && vis(x.object) && x.object.material && x.object.material.blending !== THREE.AdditiveBlending);
+      if (h) pts.push(M.root.worldToLocal(h.point.clone().addScaledVector(d, -0.04))); }
+    if (pts.length < 3) return false;
+    const curve = new THREE.CatmullRomCurve3(pts), geo = new THREE.TubeGeometry(curve, 72, 0.05, 6, false), mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(4.2, 0.55, 0.12), toneMapped: false });
+    const mesh = new THREE.Mesh(geo, mat); mesh.frustumCulled = false; geo.setDrawRange(0, 0); M.root.add(mesh);
+    promoFx.cuts.push({ mesh, geo, mat, curve, M, t: 0, dur, n: geo.index.count }); return true; };
+  window.__promoSeverReset = () => { for (const d of promoFx.debris){ scene.remove(d.o); d.L.kneeG.visible = true; if (d.capS.parent) d.capS.parent.remove(d.capS); } promoFx.debris.length = 0; for (const c of promoFx.cuts){ c.M.root.remove(c.mesh); c.geo.dispose(); } promoFx.cuts.length = 0; for (const s of promoFx.sparks){ s.life = 0; s.m.visible = false; } };
   promoFx.tick = dt => {
     for (const d of promoFx.debris){ d.t += dt; d.v.y -= 22 * dt; d.o.position.addScaledVector(d.v, dt);
       _pq.setFromEuler(_pe.set(d.w.x * dt, d.w.y * dt, d.w.z * dt)); d.o.quaternion.premultiply(_pq);
       if (d.t < 0.7 && dt > 0) burst(d.o.position, 2, 4); if (d.t < 1.5 && dt > 0 && Math.random() < 0.6) burst(d.capS.getWorldPosition(_pv), 1, 5, 1); }
+    for (const c of promoFx.cuts){ c.t += dt; const u = Math.min(1, c.t / c.dur), seg = Math.ceil(u * 72);
+      c.geo.setDrawRange(0, seg * 6 * 6); if (u < 1 && dt > 0 && Math.random() < (window.__promoCutSparks ?? 1)){ c.M.root.localToWorld(_pv.copy(c.curve.getPoint(u))); burst(_pv, 1, 6, 1); }
+      const k = Math.min(1, Math.max(0, (c.t - c.dur) / 2.5)); c.mat.color.setRGB(4.2 - 1.6 * k, 0.55 - 0.3 * k, 0.12 - 0.08 * k); }
     for (const s of promoFx.sparks) if (s.life > 0){ s.life -= dt; s.v.y -= 16 * dt; s.m.position.addScaledVector(s.v, dt); s.m.lookAt(_pv.copy(s.m.position).add(s.v)); if (s.life <= 0) s.m.visible = false; } };
 }
 
