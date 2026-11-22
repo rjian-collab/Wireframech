@@ -476,3 +476,31 @@
 - 配色：單機＝青、線上＝紫、機庫＝綠；主按鈕高 52–68px、寬 220–320px（依螢幕），iPad 與手機橫向都檢查過不重疊
 - 測試（真的觸控事件）：練習、對戰 AI、回首頁後再進練習，搖桿都能移動 36m；三個上鎖按鈕都只跳提示、不切換畫面；`?unlock=1` 打不開線上
 - 連線版本的細節（P2P、房間、雙方準備）見 `pvp-test` 分支的 SPEC
+
+## v4.5 — 線上對戰加上 TURN 轉傳伺服器（修正「找到對手，但兩台裝置無法直接連線」）
+- **原因**：原本只有 STUN（Trystero 預設的 Google／Cloudflare STUN）。手機網路（電信 CGNAT）、學校／公司網路常是對稱型 NAT，STUN 打洞一定失敗 → Trystero 回報 `peer-connect-failed`。大廳的「找人」訊息也是走 WebRTC，所以連大廳都看不到對方
+- **TURN 帳密**：新增 Vercel 函式 `api/turn.js`（網址 `/api/turn`），在伺服器讀環境變數、向 TURN 服務換 4 小時就過期的帳密；密鑰不會出現在網頁或 git 裡
+  - Metered Open Relay（主要，不用信用卡）：`METERED_DOMAIN`、`METERED_API_KEY`（每月 20 GB 免費）
+  - ExpressTURN（加碼，固定長期帳密）：`EXPRESSTURN_USERNAME`、`EXPRESSTURN_PASSWORD`，選填 `EXPRESSTURN_URLS`（預設 `turn:relay1.expressturn.com:3478` udp／tcp＋`turns:relay1.expressturn.com:443`；免費方案每月 1000 GB）
+  - Cloudflare Realtime TURN（選用，要綁信用卡）：`CF_TURN_KEY_ID`、`CF_TURN_API_TOKEN`（每月前 1000 GB 免費，之後 $0.05/GB）
+  - 設了好幾家 → 同時問、全部一起回傳（順序 Metered → ExpressTURN → Cloudflare），瀏覽器自己挑能通的；某一家壞掉照樣回其他家；網頁最多收 3 組 TURN＋1 組 STUN
+  - TURN 帳密本來就要交給瀏覽器才能連，所以 ExpressTURN 的固定帳密玩家看得到（可能被別人拿去用額度；被濫用就到後台換一組）；Metered／Cloudflare 的 API 金鑰只留在伺服器
+  - 選填 `TURN_ALLOWED_ORIGINS`：允許呼叫的網站；預設允許 wireframech.vercel.app、*.vercel.app、itch.io（*.itch.io／*.itch.zone／*.hwcdn.net）、localhost
+  - 沒設定 → 回 503，遊戲自動改回只用 STUN（跟以前一樣）
+- **網頁端**：進 MAIN LOBBY 時先拿帳密（最多等 3.5 秒，失敗一分鐘內不重試；快過期會重拿）；有 TURN → `iceServers`＝2 個 STUN＋TURN、`iceTransportPolicy:'all'`（能直連就直連，不行瀏覽器自己改走轉傳）
+  - 私人房間 **8 秒還沒連上** → 換到轉傳房間 `m-<代碼>~r`，這次 `iceTransportPolicy:'relay'`（只走轉傳），再等 15 秒。換房間而不是重進同一間：Trystero 會記住剛連失敗的人、約 23 秒內不接受，重進會卡住
+  - 快速配對雙方同時換；代碼約戰房主一開始就同時待兩間，加入者直連不通才換過去；自己沒拿到 TURN 也照樣換（只要一邊走轉傳就通）
+  - 快速配對進私人房間的等待時間 9 秒 → 12 秒（沒有 TURN 時）
+  - 狀態提示：「直連中…（不行會自動改用轉傳伺服器）」→「直連不通，改用轉傳伺服器…」；房間畫面顯示「連線：直連／經轉傳伺服器」；開局提示加「（經轉傳伺服器）」
+  - 診斷文字分成「轉傳伺服器沒有啟用」和「直連和轉傳伺服器都連不上」兩種
+  - 測試用網址參數：`?turn=off`（只用 STUN）、`?turn=<網址>`（換端點）、`?relay=1`（一開始就只走轉傳，用來確認 TURN 設定好了）、`?nostr=ws://…`（換 Nostr 中繼）
+- **流量估計**：每秒 30 個快照約 12–15 KB/s，一場 5 分鐘每人約 4–5 MB；Metered 20 GB ≈ 兩千場，ExpressTURN／Cloudflare 1000 GB ≈ 十萬場以上
+- **沒做的**：WebSocket 轉傳（Vercel 函式不支援長連線，要另外架伺服器，延遲也比 TURN 高）；ICE restart（Trystero 0.27 斷線 5 秒就關掉連線，不支援重新協商；比賽中 10 秒沒資料照舊判斷線）
+- **自動測試**（本機 Nostr 中繼＋本機 coturn＋兩個 Chrome 分頁）
+  - 只用 STUN：代碼約戰 0.4–0.9 秒、快速配對 0.6–1.2 秒（沒有退步）；`?net=local` 快速配對 0.8 秒
+  - 有 TURN：直連 0.3–0.6 秒（照樣優先直連）；`?relay=1` 走轉傳 0.4–3 秒
+  - 模擬直連壞掉：代碼約戰 8.5 秒、快速配對 9.4 秒改走轉傳連上，快照正常傳
+  - 一邊有 TURN、一邊沒有：代碼約戰 12.5 秒、快速配對 9.1 秒連上
+  - 端點 503／回應沒有 TURN／逾時 → 7 ms／0.3 秒／3.5 秒內改回只用 STUN，照樣連上
+  - `api/turn.js`：模擬 Metered／ExpressTURN／Cloudflare 單獨與組合（順序、一家壞掉、全部壞掉）、去掉 53 埠、CORS、擋其他網站、上游錯誤
+- **沒辦法在這裡測**：真的對稱型 NAT、手機 4G/5G、學校網路（要用兩台實機測）
