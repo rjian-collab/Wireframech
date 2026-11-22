@@ -58,13 +58,13 @@
     65% { opacity:.6; background-color:rgba(var(--c),.08); } 100% { opacity:0; background-color:rgba(var(--c),0); } }
   @keyframes woJit { 0% { background-position:0 0, 0 0; } 14% { background-position:-41px 23px, 0 1px; } 28% { background-position:17px -61px, 0 2px; }
     42% { background-position:-73px -9px, 0 0; } 57% { background-position:31px 47px, 0 1px; } 71% { background-position:-11px 88px, 0 2px; } 85%, 100% { background-position:57px -33px, 0 0; } }
-  #vs.on .vs-card, #settings.open .panel, .m-modal.on .m-panel, .m-sub.on, .m-scr.on .m-hangar, #pause.on .pz-win { will-change:transform, opacity;
+  #vs.on .vs-card, .m-modal.on .pf-card, .m-modal.on .pf-side, #settings.open .panel, .m-modal.on .m-panel, .m-sub.on, .m-scr.on .m-hangar, #pause.on .pz-win { will-change:transform, opacity;
     animation:woOpen var(--wo-t, .55s) var(--wo-dl, 0s) both, woFlk calc(var(--wo-t, .55s) * 1.5) var(--wo-dl, 0s) steps(1, end) both; }
-  .wo-n::after, #vs.on .vs-card::after, #settings.open .panel::after, .m-modal.on .m-panel::after, .m-sub.on::after, .m-scr.on .m-hangar::after, #pause.on .pz-win::after { content:''; position:absolute; inset:0; z-index:5; pointer-events:none;
+  .wo-n::after, #vs.on .vs-card::after, .m-modal.on .pf-card::after, .m-modal.on .pf-side::after, #settings.open .panel::after, .m-modal.on .m-panel::after, .m-sub.on::after, .m-scr.on .m-hangar::after, #pause.on .pz-win::after { content:''; position:absolute; inset:0; z-index:5; pointer-events:none;
     background-image:var(--wo-noise, none), repeating-linear-gradient(0deg, rgba(0,0,0,.4) 0 1px, transparent 1px 3px); background-size:256px 256px, 100% 3px;
     animation:woNoise calc(var(--wo-t, .55s) * 1.6) var(--wo-dl, 0s) ease-out both, woJit calc(var(--wo-t, .55s) * 1.6) var(--wo-dl, 0s) steps(1, end) both; }
-  @media (prefers-reduced-motion: reduce) { #vs.on .vs-card, #settings.open .panel, .m-modal.on .m-panel, .m-sub.on, .m-scr.on .m-hangar, #pause.on .pz-win { animation:none; }
-    #vs.on .vs-card::after, #settings.open .panel::after, .m-modal.on .m-panel::after, .m-sub.on::after, .m-scr.on .m-hangar::after, #pause.on .pz-win::after { display:none; } }
+  @media (prefers-reduced-motion: reduce) { #vs.on .vs-card, .m-modal.on .pf-card, .m-modal.on .pf-side, #settings.open .panel, .m-modal.on .m-panel, .m-sub.on, .m-scr.on .m-hangar, #pause.on .pz-win { animation:none; }
+    #vs.on .vs-card::after, .m-modal.on .pf-card::after, .m-modal.on .pf-side::after, #settings.open .panel::after, .m-modal.on .m-panel::after, .m-sub.on::after, .m-scr.on .m-hangar::after, #pause.on .pz-win::after { display:none; } }
   /* 開場對戰畫面：背景是繞圈運鏡的戰場，雙方名片直接浮在戰場上（沒有底下的深色帶子） */
   #vs { position:fixed; inset:0; z-index:9; display:none; pointer-events:none; overflow:hidden; font-family:var(--f-disp); }
   #vs.on { display:block; } #vs.out { opacity:0; transition:opacity .35s; }
@@ -258,6 +258,22 @@
   #mHelpBody ul { list-style:none; padding:0; margin:4px 0; font-size:13.5px; color:#a9cbe2; line-height:1.7; } #mHelpBody ul b { color:#e6f1ff; } #mHelpBody summary { cursor:pointer; color:#9fe4ff; }
   #mHelpBody .kb { font-size:12px; color:#7e9bb0; } #mHelpBody label { display:block; margin:8px 0; font-size:14px; } .m-legacy { display:none; }
   .m-field { display:flex; gap:10px; align-items:center; font-size:14px; } .m-field input { flex:1; min-height:44px; border-radius:10px; border:1px solid rgba(140,220,255,.5); background:#0b1a26; color:#fff; font-size:17px; padding:0 12px; -webkit-user-select:text; user-select:text; }
+  /* v4.4 個人資料（PROFILE）：直立名片，跟開場對戰名片同一套細線風格與開啟特效；左上綠色實心標籤＝勝:敗 */
+  .m-modal[data-v="prof"] .m-panel { width:auto; max-width:96vw; padding:22px 18px 14px 26px; animation:woFade .2s ease-out both; } .m-modal[data-v="prof"] .m-panel::after { display:none; }
+  @keyframes woFade { from { opacity:0; } to { opacity:1; } }
+  .pf-wrap { display:flex; gap:clamp(14px, 3vw, 28px); align-items:flex-start; }
+  .pf-card { --c:var(--mint); --wo-dl:.06s; position:relative; flex:none; border:1px solid rgba(var(--c),.75); background:rgba(6,20,22,.22); box-shadow:0 0 5px rgba(var(--c),.22); font-family:var(--f-disp); }
+  .pf-art { aspect-ratio:3/4; height:clamp(170px, calc(100vh - 160px - var(--st, 0px)), 460px); }
+  .pf-art .vs-mech { width:100%; height:100%; object-fit:contain; }
+  .pf-load { position:absolute; left:8px; bottom:8px; z-index:3; } .pf-load img { width:clamp(34px, 6.5vmin, 50px); }
+  .pf-bar { display:block; min-height:0; padding:5px 10px 7px; cursor:text; }
+  .pf-bar small { display:block; font-size:10px; letter-spacing:.22em; color:rgba(var(--c),.8); } .pf-bar b { display:block; font-size:clamp(17px, 4.2vmin, 26px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pf-tag { position:absolute; left:-14px; top:-14px; z-index:6; min-width:58px; padding:3px 10px 4px; box-sizing:border-box; background:rgb(92,214,120); color:var(--ink); text-align:center; line-height:1;
+    box-shadow:0 0 6px rgba(92,214,120,.45); }
+  .pf-tag b { display:block; font-size:clamp(20px, 5vmin, 28px); font-weight:700; letter-spacing:.04em; } .pf-tag small { display:block; margin-top:2px; font-size:10px; font-weight:700; letter-spacing:.16em; }
+  .pf-side { --wo-dl:.18s; position:relative; min-width:min(240px, 40vw); max-width:300px; padding-top:4px; }
+  .pf-side .m-field { flex-direction:column; align-items:stretch; gap:4px; font-size:12.5px; color:#8fb9cf; } .pf-side .m-field input { width:100%; box-sizing:border-box; border-radius:0; border-color:rgba(var(--mint),.55); }
+  .pf-side .m-recs { gap:4px 12px; font-size:13px; }
   .m-recs { display:grid; grid-template-columns:auto 1fr 1fr 1fr; gap:6px 16px; margin-top:14px; font-size:14px; } .m-recs b { color:#9fe8ff; font-weight:600; }
   @media (max-height:430px){ .m-title span { display:none; } .m-left { gap:7px; } .m-msg { font-size:12px; } .m-opp { min-height:60px; padding:4px 8px; } .m-opp small { font-size:11px; } .m-roomno { top:calc(48px + var(--st)); } }
   #start h1 { margin:0 0 6px; font-size:clamp(18px, 5.5vmin, 26px); letter-spacing:1px; }
@@ -503,11 +519,16 @@
       <div class="m-legacy"><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="go" id="goBtn" disabled>載入中…</button><button class="go go2" id="goAI" disabled>對戰 AI</button><button class="go" id="goTut" style="background:linear-gradient(180deg,#7fe3a0,#2fa866)">新手教學</button></div></div>
       <div style="opacity:.7;font-size:11px;max-width:min(640px,92vw);text-align:center;margin-top:6px;line-height:1.5">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）<br>松樹與地面材質：<a href="https://sketchfab.com/3d-models/pine-forest-ece69535f7584e099488f65f2072264e" target="_blank" style="color:#9fe8ff">“Pine Forest”</a> by fangzhangmnm，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>（已拆出單棵樹、縮小貼圖）</div>
     </div>
-    <div id="mProfBody">
-      <h3>個人資料</h3>
-      <label class="m-field">駕駛員名稱 <input id="mNameIn" maxlength="12" autocomplete="off" spellcheck="false"></label>
-      <div class="m-recs" id="mRecs"></div>
-      <div class="m-note">線上對戰時，對手會看到你的名稱。</div>
+    <div id="mProfBody"><div class="pf-wrap">
+      <div class="pf-card" id="pfCard"><div class="pf-tag" title="勝:敗"><b id="pfWL">0:0</b><small id="pfWLs">勝:敗</small></div>
+        <div class="vs-art pf-art"><img class="vs-mech" id="pfImg" alt=""><div class="vs-load pf-load" id="pfLoad"></div></div>
+        <div class="vs-bar pf-bar" id="pfBar"><small>USER ID</small><b id="pfName">PILOT</b></div></div>
+      <div class="pf-side">
+        <h3>個人資料</h3>
+        <label class="m-field">駕駛員名稱（USER ID） <input id="mNameIn" maxlength="12" autocomplete="off" spellcheck="false" placeholder="PILOT"></label>
+        <div class="m-recs" id="mRecs"></div>
+        <div class="m-note">綠色標籤＝總戰績 勝:敗（AI＋線上）<br>線上對戰時，對手會看到你的名稱。</div>
+      </div></div>
     </div>
   </div></div>
 </div>
@@ -3954,10 +3975,10 @@ function menuGo(scr){
   $('mOffSub').classList.remove('on'); $('mJoinRow').classList.remove('on');
   menuNetMsg(); menuProfile();
 }
-// v3.9d 還沒開放的功能先上鎖：正式版鎖線上大廳；機庫、個人資料兩版都先鎖（網址加 ?unlock=1 可打開機庫、個人資料，測試用）
+// v3.9d 還沒開放的功能先上鎖：正式版鎖線上大廳（v4.4 個人資料已開放；UNLOCK_ALL 先留著給之後的新功能測試用）
 const BUILD_ONLINE = true;   // 正式版（main）＝false
 const UNLOCK_ALL = new URLSearchParams(location.search).get('unlock') === '1';
-const LOCKS = { mToLobby: !BUILD_ONLINE, mHangar: false, mProfile: !UNLOCK_ALL };   // v3.9 有了螳螂鐮選裝 → 機庫開放   // 線上只看版本開關：正式版不能用網址參數打開
+const LOCKS = { mToLobby: !BUILD_ONLINE, mHangar: false, mProfile: false };   // v4.4 個人資料開放（直立名片）   // v3.9 有了螳螂鐮選裝 → 機庫開放   // 線上只看版本開關：正式版不能用網址參數打開
 function menuLocks(){
   for (const [id, on] of Object.entries(LOCKS)){ const el = $(id); el.classList.toggle('locked', on);
     const sm = el.querySelector('small'); if (sm){ if (!sm.dataset.orig) sm.dataset.orig = sm.textContent; sm.textContent = on ? (id === 'mProfile' ? '尚未開放' : sm.dataset.orig + '・尚未開放') : sm.dataset.orig; } }
@@ -3970,8 +3991,15 @@ function profRec(){ try { return JSON.parse(localStorage.getItem('wfm.rec')) || 
 function recordResult(mode, r){ if (mode !== 'ai' && mode !== 'net') return; const R = profRec(); const k = R[mode] = R[mode] || { w: 0, l: 0, d: 0 }; k[r]++; try { localStorage.setItem('wfm.rec', JSON.stringify(R)); } catch (_){} }
 function menuProfile(){ const R = profRec(), a = R.ai || { w: 0, l: 0, d: 0 }, n = R.net || { w: 0, l: 0, d: 0 };
   $('mName').textContent = profName(); $('mRec').textContent = LOCKS.mProfile ? '個人資料・尚未開放' : `AI ${a.w}勝${a.l}敗・線上 ${n.w}勝${n.l}敗`;
-  $('mRecs').innerHTML = `<span></span><b>勝</b><b>敗</b><b>平手</b><span>對戰 AI</span><span>${a.w}</span><span>${a.l}</span><span>${a.d}</span><span>線上對戰</span><span>${n.w}</span><span>${n.l}</span><span>${n.d}</span>`; }
-function menuModal(v){ const m = $('mModal'); m.dataset.v = v; m.classList.add('on'); if (v === 'prof') $('mNameIn').value = profName() === 'PILOT' ? '' : profName(); }
+  $('mRecs').innerHTML = `<span></span><b>勝</b><b>敗</b><b>平手</b><span>對戰 AI</span><span>${a.w}</span><span>${a.l}</span><span>${a.d}</span><span>線上對戰</span><span>${n.w}</span><span>${n.l}</span><span>${n.d}</span>`;
+  // v4.4 直立名片：綠色標籤＝AI＋線上合計 勝:敗（有平手才在下面小字加「平 N」）
+  const w = a.w + n.w, l = a.l + n.l, d = a.d + n.d; $('pfWL').textContent = `${w}:${l}`; $('pfWLs').textContent = d ? `勝:敗・平${d}` : '勝:敗'; $('pfName').textContent = profName(); }
+let pfTry = 0;
+function profCard(){ clearTimeout(pfTry); const img = $('pfImg'); vsLoad($('pfLoad'), LOADOUT.s2);   // v4.4 目前塗裝＋02 選裝的機體直立圖（每次打開重畫，機庫換過塗裝也會跟上）
+  let u = null; try { u = mechPortrait(mech, { s2: LOADOUT.s2, active: 'main' }, true, 255, 340); } catch (err){ console.warn('個人資料機體圖', err); }
+  if (u) img.src = u; else { img.removeAttribute('src'); pfTry = setTimeout(() => { if ($('mModal').classList.contains('on') && $('mModal').dataset.v === 'prof') profCard(); }, 500); } }
+function menuModal(v){ const m = $('mModal'); m.dataset.v = v; m.classList.add('on'); if (v === 'prof'){ $('mNameIn').value = profName() === 'PILOT' ? '' : profName(); menuProfile(); profCard(); } }
+$('pfBar').addEventListener('click', () => { const i = $('mNameIn'); i.focus(); i.select(); });   // v4.4 點名片上的名字＝改名
 $('mProfile').addEventListener('click', () => menuModal('prof'));
 $('mHelp').addEventListener('click', () => menuModal('help'));
 $('mModalX').addEventListener('click', () => $('mModal').classList.remove('on'));
@@ -4108,8 +4136,8 @@ document.getElementById('goTut').addEventListener('click', async () => { await s
 document.getElementById('optTutSet').addEventListener('click', e => { e.preventDefault(); if (tutorial.on) tutorial.finish(false); tutorial.start('settings'); });
 // v3.9 開場對戰畫面（荒野亂鬥風）：雙方機體全身圖（照各自塗裝與選裝）＋名稱＋三個武裝欄；顯示 2.6 秒，期間比賽還沒開始（不計時、不受傷、AI 不動）
 let vsTimer = 0, vsTick = 0, vsT0 = 0;
-function mechPortrait(M, w, faceRight){   // 黑底、白底各渲染一次，相減算出透明度 → 去背的機體圖
-  if (!M || !M.loaded) return null; const W = 520, H = 340, pr = renderer.getPixelRatio(), size = renderer.getSize(new THREE.Vector2());
+function mechPortrait(M, w, faceRight, W = 520, H = 340){   // 黑底、白底各渲染一次，相減算出透明度 → 去背的機體圖（v4.4 可指定尺寸：個人資料直立名片用）
+  if (!M || !M.loaded) return null; const pr = renderer.getPixelRatio(), size = renderer.getSize(new THREE.Vector2());
   const oc = renderer.getClearColor(new THREE.Color()), oa = renderer.getClearAlpha();
   const ts = new THREE.Scene(); ts.environment = scene.environment; ts.add(new THREE.HemisphereLight(0xd8ecff, 0x40382c, 0.9));
   const dl = new THREE.DirectionalLight(0xfff0d8, 3.0); dl.position.set(-4, 7, 5); ts.add(dl); const rl = new THREE.DirectionalLight(0xa8ccff, 1.6); rl.position.set(5, 3, -6); ts.add(rl);
@@ -4118,8 +4146,13 @@ function mechPortrait(M, w, faceRight){   // 黑底、白底各渲染一次，�
   c.traverse(o => { if (o.material && o.material.blending === THREE.AdditiveBlending) o.visible = false; });
   const box = new THREE.Box3().setFromObject(c), ctr = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
   const q = M.body.getWorldQuaternion(new THREE.Quaternion()), cam = new THREE.PerspectiveCamera(24, W / H, 0.1, 400);
-  const dir = new THREE.Vector3(faceRight ? 1.05 : -1.05, 0.42, -1).normalize().applyQuaternion(q), md = Math.max(sz.x, sz.z, sz.y * 1.6), dist = md / (2 * Math.tan(12 * DEG)) * 0.62;
+  const dir = (W < H ? new THREE.Vector3(faceRight ? 0.32 : -0.32, 0.24, -1) : new THREE.Vector3(faceRight ? 1.05 : -1.05, 0.42, -1)).normalize().applyQuaternion(q), md = Math.max(sz.x, sz.z, sz.y * 1.6), dist = md / (2 * Math.tan(12 * DEG)) * 0.62;
   cam.position.copy(ctr).addScaledVector(dir, dist); cam.lookAt(ctr); cam.updateProjectionMatrix();
+  if (W < H){   // v4.4 直立畫面（鏡頭偏正面，四腳張開比較不寬）：用外框 8 個角實際算出放得下整台的距離（橫向的開場名片維持原本算法）
+    const rt = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1), tV = Math.tan(12 * DEG) * 0.97, tH = tV * W / H;
+    let need = 0; for (let i = 0; i < 8; i++){ const o = new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).sub(ctr), z = o.dot(dir);
+      need = Math.max(need, Math.abs(o.dot(rt)) / tH + z, Math.abs(o.dot(up)) / tV + z); }
+    cam.position.copy(ctr).addScaledVector(dir, need); cam.lookAt(ctr); cam.updateProjectionMatrix(); }
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d'), shots = [];
   renderer.setScissorTest(true); renderer.setViewport(0, 0, W, H); renderer.setScissor(0, 0, W, H);
   for (const bg of [0x000000, 0xffffff]){ renderer.setClearColor(bg, 1); renderer.clear(); renderer.render(ts, cam);
