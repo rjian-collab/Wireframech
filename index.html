@@ -81,6 +81,7 @@
   .vs-art::before { top:6px; left:6px; border-width:1px 0 0 1px; } .vs-art::after { bottom:6px; right:6px; border-width:0 1px 1px 0; }
   .vs-mech { position:relative; z-index:1; width:100%; height:auto; filter:drop-shadow(0 0 6px rgba(var(--c),.3)); } .vs-mech:not([src]) { visibility:hidden; }
   .vs-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 10px; min-height:42px; background:rgba(6,20,22,.68); border-top:1px solid rgba(var(--c),.45); }
+  #vsMeName, #vsOpName { min-width:0; flex:1 1 auto; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; line-height:1.15; }   /* v4.5 長名字縮字＋最多兩行 */
   .vs-bar b { font-size:clamp(15px, 3.6vmin, 22px); font-weight:700; letter-spacing:.08em; color:#fff; text-shadow:0 0 6px rgba(var(--c),.5); }
   .vs-load { display:flex; gap:5px; } .vs-load img { width:clamp(40px, 8vmin, 58px); aspect-ratio:84/52; background:rgba(6,20,22,.7); border:1px solid rgba(var(--c),.55); object-fit:cover; }
   .vs-x { font-size:clamp(26px, 7vmin, 50px); font-weight:700; letter-spacing:.06em; color:#fff; padding:.05em .35em; border:1px solid rgba(255,255,255,.8); background:rgba(6,20,22,.55);
@@ -203,7 +204,9 @@
     background:linear-gradient(180deg, rgba(10,30,46,.92), rgba(6,18,30,.88)); clip-path:polygon(0 0, 100% 0, 100% 62%, calc(100% - 26px) 100%, 0 100%);
     border-bottom:2px solid rgba(99,230,255,.6); cursor:pointer; }
   .m-av { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; background:rgba(99,230,255,.15); border:1px solid rgba(99,230,255,.6); color:#63e6ff; font-size:18px; }
-  .m-pt b { display:block; font-size:16px; letter-spacing:.06em; } .m-pt small { color:#8fb9cf; font-size:11.5px; }
+  .m-av.has { width:44px; height:44px; font-size:0; border-radius:0; border-color:rgba(var(--mint),.75); box-shadow:0 0 5px rgba(var(--mint),.25);   /* v4.5 大廳個人資料：機體縮圖（目前塗裝＋02 選裝），網格底跟名片同風格 */
+    background:var(--av) center / cover no-repeat, linear-gradient(rgba(var(--mint),.14) 1px, transparent 1px) 0 0 / 8px 8px, linear-gradient(90deg, rgba(var(--mint),.14) 1px, transparent 1px) 0 0 / 8px 8px, rgba(6,14,18,.75); }
+  .m-pt { min-width:0; } .m-pt b { display:block; font-size:16px; letter-spacing:.06em; max-width:min(200px, 24vw); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }   /* v4.5 長名字：縮字後仍太長就省略號，不蓋到中間標題 */ .m-pt small { color:#8fb9cf; font-size:11.5px; }
   .m-title { position:absolute; left:50%; top:calc(12px + var(--st)); transform:translateX(-50%); text-align:center; pointer-events:none; }
   .m-title b { display:block; font-size:clamp(16px, 3.4vh, 22px); letter-spacing:.32em; text-shadow:0 0 14px rgba(99,230,255,.6); } .m-title span { font-size:11.5px; color:#7fd8ff; }
   .m-icon { position:absolute; right:var(--redge); top:calc(10px + var(--st)); width:48px; height:48px; border-radius:12px; border:1px solid rgba(140,220,255,.45); background:rgba(8,22,34,.75); color:#dff; font-size:22px; }
@@ -265,12 +268,13 @@
   @keyframes woFade { from { opacity:0; } to { opacity:1; } }
   .pf-wrap { display:flex; gap:clamp(14px, 3vw, 28px); align-items:flex-start; }
   .pf-card { --c:var(--mint); --wo-dl:.06s; position:relative; flex:none; border:1px solid rgba(var(--c),.75); background:rgba(6,20,22,.22); box-shadow:0 0 5px rgba(var(--c),.22); font-family:var(--f-disp); }
-  .pf-card { --rk:clamp(104px, 27vmin, 150px); }   /* v4.4 --rk＝中央戰績徽章寬度（高度＝寬×92/148） */
-  .pf-art { aspect-ratio:3/4; height:clamp(170px, calc(100vh - 162px - var(--rk) * .22 - var(--st, 0px)), 460px); }
+  .pf-card { --rk:clamp(90px, 23vmin, 132px); }   /* v4.4 --rk＝中央戰績徽章寬度（高度＝寬×92/148）；v4.5 名片壓扁後徽章跟著縮一點 */
+  .pf-art { aspect-ratio:3/2; height:clamp(104px, calc((100vh - 162px - var(--st, 0px)) * .52), 300px); }   /* v4.5 網格框太大 → 整個視窗壓扁約 1/3：機體區改橫向 3:2、高度約為原本 0.57 倍 */
   .pf-art .vs-mech { width:100%; height:100%; object-fit:cover; }   /* v4.4 機體圖照名片尺寸×裝置像素比算好，直接鋪滿（腳尖被裁掉沒關係） */
   .pf-load { position:absolute; left:8px; bottom:8px; z-index:3; flex-direction:column; } .pf-load img { width:clamp(34px, 6.5vmin, 50px); }   /* v4.4 零件圖改直排，讓出底部中央給徽章 */
   .pf-bar { position:relative; display:block; min-height:0; padding:calc(var(--rk) * .22 + 3px) 10px 7px; text-align:center; cursor:text; }
   .pf-bar small { display:block; font-size:10px; letter-spacing:.22em; color:rgba(var(--c),.8); } .pf-bar b { display:block; font-size:clamp(17px, 4.2vmin, 26px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #pfName { width:0; min-width:100%; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; white-space:normal; overflow-wrap:anywhere; line-height:1.15; }   /* v4.5 名稱最多 32 寬：縮字＋最多兩行 */
   /* v4.4 戰績徽章（排位名牌中央牌位圖標的感覺，用自己的細線科幻風）：六角斜面＋兩側小翼，跨在機體圖與 USER ID 列的交界，只放「勝:敗」數字 */
   .pf-rank { position:absolute; left:50%; top:0; z-index:4; width:var(--rk); aspect-ratio:148/92; transform:translate(-50%, -64%); pointer-events:none;
     filter:drop-shadow(0 0 6px rgba(var(--c),.45)) drop-shadow(0 3px 4px rgba(0,0,0,.55)); }
@@ -284,6 +288,7 @@
   .pf-side { --wo-dl:.18s; position:relative; min-width:min(240px, 40vw); max-width:300px; padding-top:4px; }
   .pf-side .m-field { flex-direction:column; align-items:stretch; gap:4px; font-size:12.5px; color:#8fb9cf; } .pf-side .m-field input { width:100%; box-sizing:border-box; border-radius:0; border-color:rgba(var(--mint),.55); }
   .pf-side .m-recs { gap:4px 12px; font-size:13px; }
+  .pf-side h3 { margin-bottom:8px; } .pf-side .m-field input { min-height:38px; } .pf-side .m-recs { margin-top:10px; gap:3px 12px; } .pf-side .m-note { margin-top:6px; }   /* v4.5 右欄縮行距，配合變矮的名片 */
   .m-recs { display:grid; grid-template-columns:auto 1fr 1fr 1fr; gap:6px 16px; margin-top:14px; font-size:14px; } .m-recs b { color:#9fe8ff; font-weight:600; }
   @media (max-height:430px){ .m-title span { display:none; } .m-left { gap:7px; } .m-msg { font-size:12px; } .m-opp { min-height:60px; padding:4px 8px; } .m-opp small { font-size:11px; } .m-roomno { top:calc(48px + var(--st)); } }
   #start h1 { margin:0 0 6px; font-size:clamp(18px, 5.5vmin, 26px); letter-spacing:1px; }
@@ -546,7 +551,7 @@
           <small>USER ID</small><b id="pfName">PILOT</b></div></div>
       <div class="pf-side">
         <h3>個人資料</h3>
-        <label class="m-field">駕駛員名稱（USER ID） <input id="mNameIn" maxlength="12" autocomplete="off" spellcheck="false" placeholder="PILOT"></label>
+        <label class="m-field">駕駛員名稱（USER ID） <input id="mNameIn" maxlength="32" autocomplete="off" spellcheck="false" placeholder="PILOT"></label>
         <div class="m-recs" id="mRecs"></div>
         <div class="m-note">名片中央徽章＝總戰績 勝:敗（AI＋線上）<br>線上對戰時，對手會看到你的名稱。</div>
       </div></div>
@@ -1661,7 +1666,7 @@ async function netEnterRoom(code, host, peerHint){
     if (t === 'hi'){
       if (d.ver !== NETCFG.ver){ netShow(`對方版本不同（${d.ver}），請兩邊都重新整理`, '關閉', netCancel); return; }
       if (d.host === host){ if (host) return; netShow('這個代碼已有人建房但是設定衝突，請重新建房', '關閉', netCancel); return; }
-      NET.peer = from; NET.peerName = (d.name || '對手').slice(0, 12); NET.lastRecv = performance.now();
+      NET.peer = from; NET.peerName = nameClamp(d.name).trim() || '對手';   /* v4.5 名稱上限改寬度 32 */ NET.lastRecv = performance.now();
       if (!NET.gotHi){ NET.gotHi = true; hi(from); }
       if (NET.via === 'code'){ if (NET.state !== 'match'){ NET.state = 'room'; NET.ready = { me: false, op: false }; NET.sentGo = false; } menuNetMsg(); return; }   // v3.9 房間：等房主按 BATTLE
       if (host && !NET.sentGo){ NET.sentGo = true; tr.send('go', {}, from); netBegin(); }
@@ -4036,20 +4041,43 @@ function menuLocks(){
 startEl.addEventListener('click', e => { const el = e.target.closest && e.target.closest('.locked'); if (!el) return; e.stopPropagation(); e.preventDefault(); toast('這個功能還沒開放，敬請期待', 1800); buzz(15); }, true);   // 捕獲階段：比按鈕本身的動作先攔下
 function menuReady(){ menuLocks(); startEl.classList.remove('loading'); $('status').textContent = ''; menuProfile(); menuPaints(); menuGo('home'); }
 // ---- 個人資料：名稱＋戰績（存在這台裝置）----
-function profName(){ try { return (localStorage.getItem('wfm.name') || '').trim() || 'PILOT'; } catch (_){ return 'PILOT'; } }
+// v4.5 駕駛員名稱放寬：按「寬度」算，全形字（中日韓、假名、諺文、全形符號、寬 emoji）算 2、其他（英數、空白、半形）算 1，總共最多 32（中文最多 16 字、英文最多 32 字）
+const NAME_MAX = 32;
+function nameW(ch){ const c = ch.codePointAt(0);
+  return (c >= 0x1100 && c <= 0x115F) || (c >= 0x2E80 && c <= 0x303E) || (c >= 0x3041 && c <= 0x33FF) || (c >= 0x3400 && c <= 0x4DBF) || (c >= 0x4E00 && c <= 0x9FFF) || (c >= 0xA000 && c <= 0xA4CF)
+    || (c >= 0xA960 && c <= 0xA97F) || (c >= 0xAC00 && c <= 0xD7A3) || (c >= 0xF900 && c <= 0xFAFF) || (c >= 0xFE10 && c <= 0xFE19) || (c >= 0xFE30 && c <= 0xFE6F) || (c >= 0xFF00 && c <= 0xFF60)
+    || (c >= 0xFFE0 && c <= 0xFFE6) || (c >= 0x1F300 && c <= 0x1F64F) || (c >= 0x1F900 && c <= 0x1F9FF) || (c >= 0x20000 && c <= 0x3FFFD) ? 2 : 1; }
+function nameClamp(v){ const a = Array.from(String(v == null ? '' : v).replace(/[<>\u0000-\u001F\u007F]/g, '')); let w = 0; for (const ch of a) w += nameW(ch);   // 照字碼點（不是 UTF-16 單位）從尾巴砍到寬度 ≤ 32
+  while (w > NAME_MAX && a.length) w -= nameW(a.pop()); return a.join(''); }
+// v4.5 長名字自動縮字：先縮字級（最小 min 倍），lines>1 允許折行，還放不下就交給 CSS 的省略號／行數截斷（只在名字或版面改變時量一次）
+function fitName(el, min = .6, lines = 1){ if (!el) return; el.style.fontSize = ''; if (!el.clientWidth) return;
+  const f0 = parseFloat(getComputedStyle(el).fontSize); let f = f0;
+  const over = () => el.scrollWidth > el.clientWidth + 1 || (lines > 1 && el.scrollHeight > f * 1.2 * lines + 2);
+  while (over() && f > f0 * min){ f = Math.max(f0 * min, f - 1); el.style.fontSize = f + 'px'; } }
+function fitNames(){ fitName($('mName'), .7); if ($('mModal').classList.contains('on')) fitName($('pfName'), .62, 2); }
+addEventListener('resize', () => { if (menuOn()) fitNames(); });
+function profName(){ try { return nameClamp((localStorage.getItem('wfm.name') || '').trim()).trim() || 'PILOT'; } catch (_){ return 'PILOT'; } }
 function profRec(){ try { return JSON.parse(localStorage.getItem('wfm.rec')) || {}; } catch (_){ return {}; } }
 function recordResult(mode, r){ if (mode !== 'ai' && mode !== 'net') return; const R = profRec(); const k = R[mode] = R[mode] || { w: 0, l: 0, d: 0 }; k[r]++; try { localStorage.setItem('wfm.rec', JSON.stringify(R)); } catch (_){} }
 function menuProfile(){ const R = profRec(), a = R.ai || { w: 0, l: 0, d: 0 }, n = R.net || { w: 0, l: 0, d: 0 };
   $('mName').textContent = profName(); $('mRec').textContent = LOCKS.mProfile ? '個人資料・尚未開放' : `AI ${a.w}勝${a.l}敗・線上 ${n.w}勝${n.l}敗`;
   $('mRecs').innerHTML = `<span></span><b>勝</b><b>敗</b><b>平手</b><span>對戰 AI</span><span>${a.w}</span><span>${a.l}</span><span>${a.d}</span><span>線上對戰</span><span>${n.w}</span><span>${n.l}</span><span>${n.d}</span>`;
   // v4.4 直立名片：中央徽章＝AI＋線上合計 勝:敗，只放數字（位數多就縮字）
-  const wl = `${a.w + n.w}:${a.l + n.l}`; $('pfWL').textContent = wl; $('pfRank').dataset.n = wl.length; $('pfName').textContent = profName(); }
-let pfTry = 0, PF_ZOOM = 2.05, PF_AIMY = 0.3;
+  const wl = `${a.w + n.w}:${a.l + n.l}`; $('pfWL').textContent = wl; $('pfRank').dataset.n = wl.length; $('pfName').textContent = profName(); fitNames(); profThumb(); }
+// v4.5 名片壓扁成橫向 3:2 → 鏡頭改「外框算距離＋拉近」，機身放在畫面中上；大廳縮圖是正方形的 3/4 正面特寫
+const PF_SHOT = { fit: true, zoom: 1.6, aimX: -0.08, aimY: 0.22, hi: true }, AV_SHOT = { fit: true, dir: [0.22, 0.18, -1], zoom: 2.7, aimX: 0, aimY: 0.15, hi: true };
+let pfTry = 0, avTry = 0, avKey = '';
+function profThumb(force){ clearTimeout(avTry); const av = document.querySelector('#mProfile .m-av'); if (!av) return;   // v4.5 大廳左上個人資料：機體縮圖（換塗裝／選裝／改名時才重畫一次，不是每格畫；模型還沒載完就每 0.6 秒再試）
+  if (!menuOn()) return;   // 對戰中在設定換塗裝：先不畫（mechPortrait 會切前臂套件），回選單時 menuProfile 會再叫一次
+  const key = (opts.paint || '') + '|' + LOADOUT.s2; if (!force && key === avKey) return;
+  const pr = renderer.getPixelRatio(), px = Math.round(Math.max(44, av.clientWidth || 44) * 2);   // 輸出＝顯示大小 2 倍
+  let u = null; try { u = mechPortrait(mech, { s2: LOADOUT.s2, active: 'main' }, true, Math.max(24, Math.round(px / pr)), Math.max(24, Math.round(px / pr)), AV_SHOT); } catch (err){ console.warn('大廳機體縮圖', err); }
+  if (u){ avKey = key; av.style.setProperty('--av', `url(${u})`); av.classList.add('has'); } else avTry = setTimeout(() => profThumb(), 600); }
 function profCard(){ clearTimeout(pfTry); const img = $('pfImg'); vsLoad($('pfLoad'), LOADOUT.s2);   // v4.4 目前塗裝＋02 選裝的機體直立圖（每次打開重畫，機庫換過塗裝也會跟上）
   // v4.4 依名片機體區實際大小×裝置像素比（最多 2 倍、高最多 900px，且不超過主畫布）算渲染尺寸，鏡頭拉近讓機體撐滿名片
-  const art = img.parentElement, dw = art.clientWidth || 255, dh = art.clientHeight || 340, pr = renderer.getPixelRatio(), cvs = renderer.domElement;
+  const art = img.parentElement, dw = art.clientWidth || 225, dh = art.clientHeight || 150, pr = renderer.getPixelRatio(), cvs = renderer.domElement;
   const k = Math.min(Math.min(devicePixelRatio || 1, 2) / pr, 900 / (dh * pr), cvs.width / (dw * pr), cvs.height / (dh * pr));
-  let u = null; try { u = mechPortrait(mech, { s2: LOADOUT.s2, active: 'main' }, true, Math.max(60, Math.floor(dw * k)), Math.max(80, Math.floor(dh * k)), { zoom: PF_ZOOM, aimX: -0.1, aimY: PF_AIMY, hi: true }); } catch (err){ console.warn('個人資料機體圖', err); }
+  let u = null; try { u = mechPortrait(mech, { s2: LOADOUT.s2, active: 'main' }, true, Math.max(60, Math.floor(dw * k)), Math.max(40, Math.floor(dh * k)), PF_SHOT); } catch (err){ console.warn('個人資料機體圖', err); }
   if (u) img.src = u; else { img.removeAttribute('src'); pfTry = setTimeout(() => { if ($('mModal').classList.contains('on') && $('mModal').dataset.v === 'prof') profCard(); }, 500); } }
 function menuModal(v){ const m = $('mModal'); m.dataset.v = v; m.classList.add('on'); if (v === 'prof'){ $('mNameIn').value = profName() === 'PILOT' ? '' : profName(); menuProfile(); profCard(); } }
 $('pfBar').addEventListener('click', () => { const i = $('mNameIn'); i.focus(); i.select(); });   // v4.4 點名片上的名字＝改名
@@ -4057,7 +4085,12 @@ $('mProfile').addEventListener('click', () => menuModal('prof'));
 $('mHelp').addEventListener('click', () => menuModal('help'));
 $('mModalX').addEventListener('click', () => $('mModal').classList.remove('on'));
 $('mModal').addEventListener('click', e => { if (e.target === $('mModal')) $('mModal').classList.remove('on'); });
-$('mNameIn').addEventListener('input', e => { const v = e.target.value.replace(/[<>]/g, '').slice(0, 12); try { localStorage.setItem('wfm.name', v); } catch (_){} menuProfile(); });
+// v4.5 名稱輸入：iPad／手機輸入法組字中 maxlength 不生效 → 組字中不動欄位（只存截好的值），組字結束（compositionend）與一般輸入時把欄位本身截到 32 寬
+function nameIn(e, done){ const el = $('mNameIn'), v = nameClamp(el.value); if ((done || !(e && e.isComposing)) && v !== el.value) el.value = v;
+  try { localStorage.setItem('wfm.name', v); } catch (_){} menuProfile(); }
+$('mNameIn').addEventListener('input', e => nameIn(e, false));
+$('mNameIn').addEventListener('compositionend', e => nameIn(e, true));
+$('mNameIn').addEventListener('change', e => nameIn(e, true));
 $('mSet').addEventListener('click', () => { updateHomeBtn(); setEl.classList.add('open'); });
 // ---- 首頁 ----
 $('mOffline').addEventListener('click', () => $('mOffSub').classList.toggle('on'));
@@ -4109,6 +4142,7 @@ function menuPaints(){ const sel = $('optPaint'), box = $('mPaints'); box.innerH
   for (const o of sel.options){ const b = document.createElement('button'); b.textContent = o.textContent; b.classList.toggle('on', o.value === sel.value);
     b.addEventListener('click', () => { sel.value = o.value; sel.dispatchEvent(new Event('change')); menuPaints(); }); box.appendChild(b); } }
 $('optPaint').addEventListener('change', () => menuPaints());
+$('optPaint').addEventListener('change', () => profThumb());   // v4.5 換塗裝 → 大廳機體縮圖跟著換
 $('mHangar').addEventListener('click', () => menuGo('hangar'));
 // v3.9 機庫選裝：02 欄＝螳螂鐮／14.5mm 機槍（存在本機，下一場開始生效；練習中換也立刻生效）
 const S2_INFO = { blade: ['螳螂鐮', '近身一刀擊破（冷卻 3 秒）；拿著刀時正面 ±60° 的子彈、砲彈、刀都擋得掉'], mg: ['14.5mm 機槍', '每分鐘 600 發、射程 500m；不能格擋'] };
@@ -4117,7 +4151,7 @@ function menuS2(){ $('mS2').textContent = S2_INFO[LOADOUT.s2][0]; $('mS2Note').t
   if (PART_IMG[LOADOUT.s2]) $('mS2Img').src = PART_IMG[LOADOUT.s2];   // 選裝的零件圖
   for (const b of $('mS2Pick').children) b.classList.toggle('on', b.dataset.s2 === LOADOUT.s2); }
 for (const b of $('mS2Pick').children) b.addEventListener('click', () => { LOADOUT.s2 = b.dataset.s2; try { localStorage.setItem('wfm.s2', LOADOUT.s2); } catch(_){}
-  if (match.state !== 'live') local.weapon.s2 = LOADOUT.s2; refreshWIcons(); menuS2(); });
+  if (match.state !== 'live') local.weapon.s2 = LOADOUT.s2; refreshWIcons(); menuS2(); profThumb(); });   // v4.5 換 02 選裝 → 大廳縮圖跟著換
 menuS2();
 // ---- 選單背景：自己的機體正視、炮口朝左上（機庫時機體移到左邊，讓出右邊面板）----
 const _mf = V(), _mr = V(), _mc = V(), _ml = V(), _md = V(), _mUp = V(0, 1, 0);
@@ -4199,9 +4233,10 @@ function mechPortrait(M, w, faceRight, W = 520, H = 340, opt = {}){   // 黑底�
   c.traverse(o => { if (o.material && o.material.blending === THREE.AdditiveBlending) o.visible = false; });
   const box = new THREE.Box3().setFromObject(c), ctr = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
   const q = M.body.getWorldQuaternion(new THREE.Quaternion()), cam = new THREE.PerspectiveCamera(24, W / H, 0.1, 400);
-  const dir = (W < H ? new THREE.Vector3(faceRight ? 0.32 : -0.32, 0.24, -1) : new THREE.Vector3(faceRight ? 1.05 : -1.05, 0.42, -1)).normalize().applyQuaternion(q), md = Math.max(sz.x, sz.z, sz.y * 1.6), dist = md / (2 * Math.tan(12 * DEG)) * 0.62;
+  const fit = W < H || opt.fit, dx = opt.dir ? opt.dir[0] : fit ? 0.32 : 1.05;   // v4.5 opt.fit：橫向／正方形也走「外框算距離＋拉近」（壓扁的名片、大廳縮圖）；opt.dir＝[側向, 仰角, -1] 自訂鏡頭方向
+  const dir = new THREE.Vector3(faceRight ? dx : -dx, opt.dir ? opt.dir[1] : fit ? 0.24 : 0.42, -1).normalize().applyQuaternion(q), md = Math.max(sz.x, sz.z, sz.y * 1.6), dist = md / (2 * Math.tan(12 * DEG)) * 0.62;
   cam.position.copy(ctr).addScaledVector(dir, dist); cam.lookAt(ctr); cam.updateProjectionMatrix();
-  if (W < H){   // v4.4 直立畫面（鏡頭偏正面，四腳張開比較不寬）：用外框 8 個角實際算出放得下整台的距離（橫向的開場名片維持原本算法）
+  if (fit){   // v4.4 直立畫面（鏡頭偏正面，四腳張開比較不寬）：用外框 8 個角實際算出放得下整台的距離（橫向的開場名片維持原本算法）
     const rt = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1), tV = Math.tan(12 * DEG) * 0.97, tH = tV * W / H;
     let need = 0; for (let i = 0; i < 8; i++){ const o = new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).sub(ctr), z = o.dot(dir);
       need = Math.max(need, Math.abs(o.dot(rt)) / tH + z, Math.abs(o.dot(up)) / tV + z); }
@@ -4229,7 +4264,7 @@ function vsLoad(el, s2){ el.textContent = '';   // 名字底下：三個武裝�
   g.putImageData(im, 0, 0); document.documentElement.style.setProperty('--wo-noise', `url(${c.toDataURL()})`); } catch (_){} })();
 function showVersus(mode, onDone){ const vs = document.getElementById('vs'), $v = id => document.getElementById(id); clearTimeout(vsTimer); clearInterval(vsTick);
   $v('vsMode').textContent = mode === 'net' ? '⚔ 線上對戰 1v1' : '⚔ 對戰 AI 1v1';
-  $v('vsMeName').textContent = profName(); vsLoad($v('vsMeLoad'), LOADOUT.s2); $v('vsOpName').textContent = mode === 'net' ? (NET.peerName || '對手') : 'AI';
+  $v('vsMeName').textContent = profName(); vsLoad($v('vsMeLoad'), LOADOUT.s2); $v('vsOpName').textContent = mode === 'net' ? (nameClamp(NET.peerName).trim() || '對手') : 'AI';
   $v('vsMeImg').removeAttribute('src'); $v('vsOpImg').removeAttribute('src');
   let gotMe = false, gotOp = false, lastS2 = null;
   const fill = () => { try {
@@ -4238,7 +4273,8 @@ function showVersus(mode, onDone){ const vs = document.getElementById('vs'), $v 
     if (!gotOp && bot && bot.mech){ const u = mechPortrait(bot.mech, bot.weapon, false); if (u){ $v('vsOpImg').src = u; gotOp = true; } }
     $v('vsCount').textContent = Math.max(1, Math.ceil((VS_MS - (performance.now() - vsT0)) / 1000)); } catch (err){ console.warn('對戰畫面', err); } };
   vsT0 = performance.now(); document.body.classList.add('vsOn'); fill();
-  vs.classList.remove('on', 'out'); void vs.offsetWidth; vs.classList.add('on'); vsTick = setInterval(fill, 200);   // 重新觸發開啟動畫（橫線→上下展開→雜訊）；對手模型／選裝晚到就持續補上
+  vs.classList.remove('on', 'out'); void vs.offsetWidth; vs.classList.add('on'); vsTick = setInterval(fill, 200);
+  fitName($v('vsMeName'), .6, 2); fitName($v('vsOpName'), .6, 2);   // v4.5 長名字（最多 32 寬）縮字＋最多兩行   // 重新觸發開啟動畫（橫線→上下展開→雜訊）；對手模型／選裝晚到就持續補上
   vsTimer = setTimeout(() => { clearInterval(vsTick); vs.classList.add('out'); document.body.classList.remove('vsOn'); if (onDone) onDone(); vsTimer = setTimeout(() => vs.classList.remove('on', 'out'), 400); }, VS_MS); }
 const VS_MS = 3000;
 function showResult(msg){ const me = match.score[local.team], op = match.score[1 - local.team], win = me > op, draw = me === op;
