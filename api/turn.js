@@ -3,16 +3,22 @@
 //   必須透過 TURN 轉傳伺服器。TURN 要帳密，而帳密要用「密鑰」去換；密鑰絕對不能放進網頁（任何人都看得到），
 //   所以由這支函式在伺服器端讀環境變數、向 TURN 服務換一組幾小時就過期的帳密，再回給遊戲。
 //
-// 要在 Vercel 專案 → Settings → Environment Variables 設定（擇一，兩組都設時先用 Cloudflare）：
-//   Cloudflare Realtime TURN（建議，每月 1000 GB 免費）：
-//     CF_TURN_KEY_ID     ＝ TURN 金鑰的 Turn Token ID
-//     CF_TURN_API_TOKEN  ＝ 同一把金鑰的 API Token
-//   Metered（備案，每月 20 GB 免費）：
-//     METERED_DOMAIN     ＝ 你的 Metered 網域，例如 wireframech.metered.live
-//     METERED_API_KEY    ＝ Metered 的 TURN API Key
+// 要在 Vercel 專案 → Settings → Environment Variables 設定（至少一組；設了好幾組 → 全部一起回傳，瀏覽器自己挑能通的）：
+//   1. Metered Open Relay（主要，不用信用卡，每月 20 GB 免費）：
+//        METERED_DOMAIN   ＝ 你的 Metered 網域，例如 wireframech.metered.live
+//        METERED_API_KEY  ＝ Metered 的 TURN API Key
+//   2. ExpressTURN（加碼，免費方案每月 1000 GB，帳密是固定的長期帳密）：
+//        EXPRESSTURN_USERNAME ＝ 後台的 turn_username
+//        EXPRESSTURN_PASSWORD ＝ 後台的 turn_password
+//        EXPRESSTURN_URLS     ＝（選填，逗號分隔）預設 turn:relay1.expressturn.com:3478 的 udp／tcp ＋ turns:relay1.expressturn.com:443
+//   3. Cloudflare Realtime TURN（選用，要綁信用卡，每月 1000 GB 免費）：
+//        CF_TURN_KEY_ID     ＝ TURN 金鑰的 Turn Token ID
+//        CF_TURN_API_TOKEN  ＝ 同一把金鑰的 API Token
 //   選填：TURN_ALLOWED_ORIGINS ＝ 允許呼叫的網站（逗號分隔，可用 * 萬用字元），預設見下方 DEFAULT_ORIGINS
+//   注意：TURN 帳密本來就會交給瀏覽器（不然連不上），ExpressTURN 的固定帳密因此看得到；真正藏起來的是 Metered／Cloudflare 的 API 金鑰
 //
-// 回傳：{ iceServers: [...], ttl: 秒, provider: 'cloudflare'|'metered' }；沒設定 → 503 { error: 'not-configured' }（遊戲會自動改回只用 STUN）
+// 回傳：{ iceServers: [...], ttl: 秒, provider: 'metered+expressturn' 之類 }；一組都沒設 → 503 { error: 'not-configured' }（遊戲會自動改回只用 STUN）
+//   某一家失敗、其他家成功 → 照樣回成功的那幾家；全部失敗 → 502
 
 const TTL = 4 * 3600;   // 帳密有效 4 小時（一場 5 分鐘，夠用；網頁會在快過期時重拿）
 const DEFAULT_ORIGINS = [
@@ -67,6 +73,18 @@ async function fromMetered(domain, key) {
   return { iceServers: clean(Array.isArray(j) ? j : j.iceServers), ttl: 3600, provider: 'metered' };   // Metered 的帳密預設長效，保守當 1 小時
 }
 
+const EXPRESSTURN_DEFAULT_URLS = [
+  'turn:relay1.expressturn.com:3478?transport=udp',
+  'turn:relay1.expressturn.com:3478?transport=tcp',
+  'turns:relay1.expressturn.com:443?transport=tcp',
+];
+function fromExpressTurn(user, pass, urlsEnv) {   // 固定帳密：不用打 API
+  const urls = urlsEnv ? String(urlsEnv).split(',').map(s => s.trim()).filter(Boolean) : EXPRESSTURN_DEFAULT_URLS;
+  return { iceServers: clean([{ urls, username: user, credential: pass }]), ttl: TTL, provider: 'expressturn' };
+}
+
+const hasTurn = out => out.iceServers.some(s => s.urls.some(u => /^turns?:/i.test(u)));
+
 module.exports = async (req, res) => {
   const origin = req.headers.origin || '';
   res.setHeader('Vary', 'Origin');
@@ -80,18 +98,24 @@ module.exports = async (req, res) => {
   if (!originAllowed(origin)) { res.statusCode = 403; return res.json({ error: 'origin-not-allowed' }); }
   if (req.method !== 'GET') { res.statusCode = 405; return res.json({ error: 'method-not-allowed' }); }
 
-  const env = process.env;
-  try {
-    let out = null;
-    if (env.CF_TURN_KEY_ID && env.CF_TURN_API_TOKEN) out = await fromCloudflare(env.CF_TURN_KEY_ID, env.CF_TURN_API_TOKEN);
-    else if (env.METERED_DOMAIN && env.METERED_API_KEY) out = await fromMetered(env.METERED_DOMAIN, env.METERED_API_KEY);
-    if (!out) { res.statusCode = 503; return res.json({ error: 'not-configured' }); }
-    if (!out.iceServers.some(s => s.urls.some(u => /^turns?:/i.test(u)))) throw new Error('回應裡沒有 TURN 伺服器');
-    res.statusCode = 200; return res.json(out);
-  } catch (err) {
-    console.error('[turn]', err && err.message);   // 只記錯誤訊息，不記密鑰
-    res.statusCode = 502; return res.json({ error: 'upstream-failed' });
+  const env = process.env, jobs = [];   // 順序＝回傳順序：Metered → ExpressTURN → Cloudflare
+  if (env.METERED_DOMAIN && env.METERED_API_KEY) jobs.push(fromMetered(env.METERED_DOMAIN, env.METERED_API_KEY));
+  if (env.EXPRESSTURN_USERNAME && env.EXPRESSTURN_PASSWORD) jobs.push(Promise.resolve().then(() => fromExpressTurn(env.EXPRESSTURN_USERNAME, env.EXPRESSTURN_PASSWORD, env.EXPRESSTURN_URLS)));
+  if (env.CF_TURN_KEY_ID && env.CF_TURN_API_TOKEN) jobs.push(fromCloudflare(env.CF_TURN_KEY_ID, env.CF_TURN_API_TOKEN));
+  if (!jobs.length) { res.statusCode = 503; return res.json({ error: 'not-configured' }); }
+
+  const got = [];
+  for (const r of await Promise.allSettled(jobs)) {   // 同時問，一家壞掉不影響其他家
+    if (r.status === 'fulfilled' && hasTurn(r.value)) got.push(r.value);
+    else console.error('[turn]', r.status === 'rejected' ? (r.reason && r.reason.message) : `${r.value.provider} 回應裡沒有 TURN 伺服器`);   // 只記錯誤訊息，不記密鑰
   }
+  if (!got.length) { res.statusCode = 502; return res.json({ error: 'upstream-failed' }); }
+  res.statusCode = 200;
+  return res.json({
+    iceServers: got.flatMap(o => o.iceServers.filter(s => s.urls.some(u => /^turns?:/i.test(u)))),   // 只回 TURN（STUN 遊戲自己有）
+    ttl: Math.min(...got.map(o => o.ttl)),
+    provider: got.map(o => o.provider).join('+'),
+  });
 };
 
 module.exports.originAllowed = originAllowed;   // 給自動測試用

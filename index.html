@@ -1530,7 +1530,7 @@ let trysteroMod = null;
 // ---- v4.5 ICE 伺服器（STUN＋TURN）----
 //  症狀：一直出現「找到對手，但兩台裝置無法直接連線」＝Trystero 的 peer-connect-failed。原因：只設了 STUN（Trystero 預設），
 //  手機網路（電信 CGNAT）、學校／公司網路常是對稱型 NAT，STUN 打洞一定失敗 → 必須有 TURN 轉傳伺服器。
-//  TURN 的帳密是短效的（Cloudflare／Metered 都要用密鑰換），密鑰不能放在網頁裡 → 由 Vercel 函式 api/turn.js 讀環境變數代換，網頁只拿到幾小時就過期的帳密。
+//  TURN 帳密由 Vercel 函式 api/turn.js 讀環境變數發給網頁（Metered 為主、ExpressTURN 加碼、Cloudflare 選用；設了幾家就全部一起給，瀏覽器自己挑能通的），API 金鑰只留在伺服器。
 //  取不到（沒設定、離線、逾時）→ 回 null，照舊只用 STUN，不會卡住配對。
 const NET_ICE = { servers: null, exp: 0, failT: -1e9, p: null, src: 'none' };
 function netTurnUrl(){
@@ -1552,7 +1552,7 @@ function netIceSanitize(j){
     if (same){ for (const u of turn) if (!same.urls.includes(u)) same.urls.push(u); }
     else out.push({ urls: turn, username: s.username, credential: s.credential });
   }
-  return out.length ? out.slice(0, 2) : null;   // 伺服器太多會拖慢收集（Firefox 超過 4 組會警告）
+  return out.length ? out.slice(0, 3) : null;   // v4.5 最多 3 組（Metered／ExpressTURN／Cloudflare 各一組）＋1 組 STUN；太多會拖慢收集（Firefox 5 組以上會警告）
 }
 async function netIce(){
   const now = Date.now();
