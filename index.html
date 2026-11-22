@@ -1134,7 +1134,8 @@ async function setupAA(){
   } catch (err){ console.warn('反鋸齒（高）無法啟用，改用標準', err); aaMode = 'std'; }
   aaLoading = false; }
 function setAA(m){ aaMode = m === 'std' ? 'std' : 'high'; try { localStorage.setItem('wfm.aa', aaMode); } catch(_){} const el = document.getElementById('optAA'); if (el) el.value = aaMode; setupAA(); }
-function drawFrame(){ if (composer) composer.render(); else if (aaMode === 'high' && aaComposer) aaComposer.render(); else renderer.render(scene, camera); }
+function drawFrame(){ if (PROMO && window.__noRender) return;   // v4.5 宣傳片：錄影腳本的預跑格不必渲染
+  if (composer) composer.render(); else if (aaMode === 'high' && aaComposer) aaComposer.render(); else renderer.render(scene, camera); }
 setupAA();
 if (PROMO){ sun.shadow.mapSize.set(4096, 4096);
   scene.traverse(o => { if (o.isMesh && o.material && o.material.isMeshBasicMaterial && o.material.color.getHex() === 0x40ffb0) o.visible = false; });
@@ -2497,6 +2498,7 @@ function makeLaser(){   // 每台機體只建一次，之後每幀重複使用
   const line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xff2010, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
   line.frustumCulled = false; line.visible = false; scene.add(line);
   const dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: laserDotTex, color: 0xff5040, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  if (PROMO) line.material.color.setRGB(5, 0.45, 0.25);   // v4.5 宣傳片：雷射亮一點（泛光後看得出來）
   dot.visible = false; scene.add(dot); return { line, dot };
 }
 // v4.3 射控預判：虛線「幽靈」敵人（低模：扁機身＋炮塔＋砲管＋四隻腳）畫在砲彈到達時它會在的位置，只有自己看得到
@@ -2641,6 +2643,7 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
             sl.geometry.setDrawRange(0, Math.max(1, st) * 6);
             const op = ml.hit ? (v < 0.73 ? 1 : 1 - (v - 0.73) / 0.22) : (v < 0.33 ? 1 : 1 - (v - 0.33) / 0.15);
             sl.material.opacity = clamp(op, 0, 1) * 0.9; sl.visible = op > 0.01; } }
+        else if (PROMO && A.slash.visible){ A.slash.material.opacity -= dt * 1.4; A.slash.visible = A.slash.material.opacity > 0.01; }   // v4.5 宣傳片：上一刀的刀光慢慢淡出，兩刀疊成 X
         else A.slash.visible = false;
         A.S.rotation.set(sx, 0, sz); A.E.rotation.x = ex; }
       if (ml && ml.vis != null){ if (ml.stop > 0) ml.stop -= dt; else ml.vis += dt; if (ml.vis > 0.95) ml.vis = null; } }   // 命中時揮臂頓 70ms（只是畫面，判定與冷卻不受影響）   // v3.6 收：上臂斜前下、前臂往後上折貼在機鼻下（螳螂）；展：L 形   // v2.9 收：V 字開口朝前（前臂斜向前上、不進機鼻）；展：上臂斜前下＋前臂水平
@@ -3030,9 +3033,33 @@ function drawShells(dt){
     const vp = V().copy(s2.p); if (s2.voff && s2.vt > 0){ vp.addScaledVector(s2.voff, s2.vt / 0.2); s2.vt -= dt; }
     o.me.position.copy(vp); const a = o.tl.geometry.attributes.position, L = 6 / s2.v.length();
     a.setXYZ(0, vp.x, vp.y, vp.z); a.setXYZ(1, vp.x - s2.v.x * L, vp.y - s2.v.y * L, vp.z - s2.v.z * L); a.needsUpdate = true; });
-  for (const b of booms) if (b.life > 0){ b.life -= dt; const BL = PROMO ? 0.55 : 0.35, k = 1 - b.life / BL; b.m.scale.setScalar((0.5 + k * CONFIG.cannon.splashR) * (PROMO ? 1.7 : 1)); b.m.material.opacity = 0.8 * (1 - k); if (b.life <= 0) b.m.visible = false; }
+  for (const b of booms) if (b.life > 0){ b.life -= dt; const BL = PROMO ? 0.55 : 0.35, k = 1 - b.life / BL; b.m.scale.setScalar((0.5 + k * CONFIG.cannon.splashR) * (PROMO ? 1.7 * (window.__promoBoomK ?? 1) : 1)); b.m.material.opacity = 0.8 * (1 - k); if (b.life <= 0) b.m.visible = false; }   // v4.5 宣傳片：特寫鏡頭可用 __promoBoomK 把爆炸縮小
 }
 function spawnSparks(p, n){ for (let i=0;i<6;i++){ const s = sparks[sparkIdx++ % sparks.length]; s.m.position.copy(p); s.v.set((Math.random()-.5)*8, Math.random()*6, (Math.random()-.5)*8); if (n) s.v.addScaledVector(n, 4); s.life = 0.3; s.m.visible = true; } }
+// v4.5 宣傳片（?promo=1）專用：螳螂鐮斷腳特效 —— 只是畫面（小腿複製一份飛出去＋發光斷面＋火花），不影響判定與一般遊玩
+const promoFx = { debris: [], sparks: [], tick: null };
+if (PROMO){
+  const hot = new THREE.MeshBasicMaterial({ color: new THREE.Color(5, 2.2, 0.6), toneMapped: false }), hot2 = new THREE.MeshBasicMaterial({ color: new THREE.Color(3.2, 1.0, 0.25), toneMapped: false });
+  const capGeo = new THREE.SphereGeometry(0.26, 12, 8).scale(1, 0.55, 1), sg = new THREE.BoxGeometry(0.05, 0.05, 0.55), _pq = new THREE.Quaternion(), _pe = new THREE.Euler(), _pv = V();
+  for (let i = 0; i < 160; i++){ const m = new THREE.Mesh(sg, i % 3 ? hot : hot2); m.visible = false; m.frustumCulled = false; scene.add(m); promoFx.sparks.push({ m, v: V(), life: 0 }); }
+  let si = 0;
+  const burst = (p, n, k, up = 0) => { for (let i = 0; i < n; i++){ const s = promoFx.sparks[si++ % promoFx.sparks.length]; s.m.position.copy(p); s.v.set((Math.random() - .5) * k, Math.random() * k * 0.7 + up, (Math.random() - .5) * k); s.life = 0.3 + Math.random() * 0.45; s.m.visible = true; } };
+  window.__promoBurst = burst;
+  window.__promoSever = (who, idx, dx, dz) => { const M = who === 'bot' ? bot.mech : mech, L = M && M.legs[idx]; if (!L || !L.kneeG || !L.kneeG.visible) return false;
+    M.root.updateMatrixWorld(true);
+    const c = L.kneeG.clone(true); L.kneeG.matrixWorld.decompose(c.position, c.quaternion, c.scale); scene.add(c);
+    const cut = L.kneeG.getWorldPosition(V()), capD = new THREE.Mesh(capGeo, hot); c.add(capD);   // 斷腳上的發光斷面
+    const capS = new THREE.Mesh(capGeo, hot); capS.position.copy(L.kneeG.position); L.hipG.add(capS);   // 殘肢上的發光斷面
+    L.kneeG.visible = false; const d = Math.hypot(dx, dz) || 1;
+    promoFx.debris.push({ o: c, L, capS, v: V(dx / d * 8, 10, dz / d * 8), w: V(Math.random() * 6 - 3, Math.random() * 4 - 2, 10), t: 0 });
+    burst(cut, 60, 16, 3); for (let k = 0; k < 4; k++) spawnSparks(cut, null); return true; };
+  window.__promoSeverReset = () => { for (const d of promoFx.debris){ scene.remove(d.o); d.L.kneeG.visible = true; if (d.capS.parent) d.capS.parent.remove(d.capS); } promoFx.debris.length = 0; for (const s of promoFx.sparks){ s.life = 0; s.m.visible = false; } };
+  promoFx.tick = dt => {
+    for (const d of promoFx.debris){ d.t += dt; d.v.y -= 22 * dt; d.o.position.addScaledVector(d.v, dt);
+      _pq.setFromEuler(_pe.set(d.w.x * dt, d.w.y * dt, d.w.z * dt)); d.o.quaternion.premultiply(_pq);
+      if (d.t < 0.7 && dt > 0) burst(d.o.position, 2, 4); if (d.t < 1.5 && dt > 0 && Math.random() < 0.6) burst(d.capS.getWorldPosition(_pv), 1, 5, 1); }
+    for (const s of promoFx.sparks) if (s.life > 0){ s.life -= dt; s.v.y -= 16 * dt; s.m.position.addScaledVector(s.v, dt); s.m.lookAt(_pv.copy(s.m.position).add(s.v)); if (s.life <= 0) s.m.visible = false; } };
+}
 
 // =====================================================================
 // AUDIO（WebAudio 合成，不需音檔）
@@ -3805,10 +3832,11 @@ function frame(now){
     P.prevPos.copy(P.currPos);
     simTick(buildCommand());
     const tr = playerBody.translation(); P.currPos.set(tr.x, tr.y, tr.z);
-    if (bot && bot.active && bot.kind === 'bot' && match.state === 'live'){   // v3.0 AI 跟玩家跑同一套物理與武器
+    const promoBot = PROMO && window.__botCmd;   // v4.5 宣傳片（?promo=1）：腳本直接指定 AI 的操作（一般遊玩不會有）
+    if (bot && bot.active && bot.kind === 'bot' && (match.state === 'live' || promoBot)){   // v3.0 AI 跟玩家跑同一套物理與武器
       const n0 = events.length;
       const gr = G.range; G.range = BOTCFG.ropeRange;   // AI 輔助：鋼索射程 90m（玩家 60m），不然這張圖它很難自己跨島
-      try { withActor(bot, () => { bot.P.prevPos.copy(bot.P.currPos); simTick(bot.brain.command(DT), true); const tb = bot.body.translation(); bot.P.currPos.set(tb.x, tb.y, tb.z); }); } finally { G.range = gr; }
+      try { withActor(bot, () => { bot.P.prevPos.copy(bot.P.currPos); simTick(promoBot ? window.__botCmd(DT, bot) : bot.brain.command(DT), true); const tb = bot.body.translation(); bot.P.currPos.set(tb.x, tb.y, tb.z); }); } finally { G.range = gr; }
       for (let i = n0; i < events.length; i++) events[i].by = bot.pid;
     }
     match.tick(DT);
@@ -3858,7 +3886,7 @@ function frame(now){
   const sp = P.vel.length();
   const fovT = Math.min(CONFIG.camera.fovMax, CONFIG.camera.fovBase + (CONFIG.camera.fovAt40 - CONFIG.camera.fovBase) * clamp(sp/40, 0, 1.4));
   fovNow += (fovT - fovNow) * (1 - Math.exp(-dt / CONFIG.camera.fovTau));
-  camera.fov = fovNow; camera.updateProjectionMatrix();
+  camera.fov = PROMO && window.__camOverride && window.__camOverride.fov ? window.__camOverride.fov : fovNow; camera.updateProjectionMatrix();   // v4.5 宣傳片：錄影腳本可指定鏡頭視角
   _right.set(Math.cos(P.yaw), 0, -Math.sin(P.yaw));
   const lateral = P.vel.dot(_right);
   const rollT = -clamp(lateral / CONFIG.speedCap, -1, 1) * CONFIG.camera.rollMaxDeg * DEG;
@@ -3911,6 +3939,7 @@ function frame(now){
     camera.position.copy(_cam); tpCam.pos.copy(_cam); tpCam.valid = true; mech.root.visible = dist > T.hideBelow && (mech.loaded || mech.failed);   // 模型載入完成才顯示；載入失敗才用過渡模型
   } else { tpCam.valid = false; mech.root.visible = false; }
   updateMech(dt, alpha);
+  if (PROMO && promoFx.tick) promoFx.tick(dt);   // v4.5 宣傳片：斷腳特效
   if (window.__camOverride){ const o = window.__camOverride; camera.position.set(o.x, o.y, o.z); camera.lookAt(o.lx, o.ly, o.lz); }   // 測試用的自由鏡頭
   else if (match.state === 'intro'){ const t = (performance.now() - vsT0) / 1000, a = 0.6 + t * 0.22, cx0 = 200;   // v3.9 開場：鏡頭繞著戰場慢慢轉
     camera.position.set(cx0 + Math.cos(a) * 230, 95 - t * 6, Math.sin(a) * 170); camera.lookAt(cx0, 4, 0); }
@@ -3985,6 +4014,7 @@ camera.position.set(S.x, S.y + CONFIG.camera.eye, S.z); camera.rotation.set(0, C
 // =====================================================================
 const startEl = document.getElementById('start');
 const MENU = { scr: 'home', back: 'home', t: 0 };
+if (PROMO) window.__MENU = MENU;   // v4.5 宣傳片：讓錄影腳本轉動機庫的機體（轉台）
 function menuOn(){ return startEl.style.display !== 'none'; }
 function menuShow(scr = 'home'){ startEl.style.display = ''; menuGo(scr); }
 function menuHide(){ menuBackdrop(false); startEl.style.display = 'none';   // 一定要把遊戲按鈕層顯示回來（v3.9 的 bug：進遊戲後按鈕層一直隱藏，只剩陀螺儀能用）
