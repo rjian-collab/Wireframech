@@ -265,14 +265,22 @@
   @keyframes woFade { from { opacity:0; } to { opacity:1; } }
   .pf-wrap { display:flex; gap:clamp(14px, 3vw, 28px); align-items:flex-start; }
   .pf-card { --c:var(--mint); --wo-dl:.06s; position:relative; flex:none; border:1px solid rgba(var(--c),.75); background:rgba(6,20,22,.22); box-shadow:0 0 5px rgba(var(--c),.22); font-family:var(--f-disp); }
-  .pf-art { aspect-ratio:3/4; height:clamp(170px, calc(100vh - 160px - var(--st, 0px)), 460px); }
-  .pf-art .vs-mech { width:100%; height:100%; object-fit:contain; }
-  .pf-load { position:absolute; left:8px; bottom:8px; z-index:3; } .pf-load img { width:clamp(34px, 6.5vmin, 50px); }
-  .pf-bar { display:block; min-height:0; padding:5px 10px 7px; cursor:text; }
+  .pf-card { --rk:clamp(104px, 27vmin, 150px); }   /* v4.4 --rk＝中央戰績徽章寬度（高度＝寬×92/148） */
+  .pf-art { aspect-ratio:3/4; height:clamp(170px, calc(100vh - 162px - var(--rk) * .22 - var(--st, 0px)), 460px); }
+  .pf-art .vs-mech { width:100%; height:100%; object-fit:cover; }   /* v4.4 機體圖照名片尺寸×裝置像素比算好，直接鋪滿（腳尖被裁掉沒關係） */
+  .pf-load { position:absolute; left:8px; bottom:8px; z-index:3; flex-direction:column; } .pf-load img { width:clamp(34px, 6.5vmin, 50px); }   /* v4.4 零件圖改直排，讓出底部中央給徽章 */
+  .pf-bar { position:relative; display:block; min-height:0; padding:calc(var(--rk) * .22 + 3px) 10px 7px; text-align:center; cursor:text; }
   .pf-bar small { display:block; font-size:10px; letter-spacing:.22em; color:rgba(var(--c),.8); } .pf-bar b { display:block; font-size:clamp(17px, 4.2vmin, 26px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .pf-tag { position:absolute; left:-14px; top:-14px; z-index:6; min-width:58px; padding:3px 10px 4px; box-sizing:border-box; background:rgb(92,214,120); color:var(--ink); text-align:center; line-height:1;
-    box-shadow:0 0 6px rgba(92,214,120,.45); }
-  .pf-tag b { display:block; font-size:clamp(20px, 5vmin, 28px); font-weight:700; letter-spacing:.04em; } .pf-tag small { display:block; margin-top:2px; font-size:10px; font-weight:700; letter-spacing:.16em; }
+  /* v4.4 戰績徽章（排位名牌中央牌位圖標的感覺，用自己的細線科幻風）：六角斜面＋兩側小翼，跨在機體圖與 USER ID 列的交界，只放「勝:敗」數字 */
+  .pf-rank { position:absolute; left:50%; top:0; z-index:4; width:var(--rk); aspect-ratio:148/92; transform:translate(-50%, -64%); pointer-events:none;
+    filter:drop-shadow(0 0 6px rgba(var(--c),.45)) drop-shadow(0 3px 4px rgba(0,0,0,.55)); }
+  .pf-rank svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+  .pf-rank b { position:absolute; left:0; right:0; top:50%; transform:translateY(-52%); text-align:center; line-height:1; font-size:calc(var(--rk) * .245 * var(--k, 1)); font-weight:700; letter-spacing:.02em;
+    color:#fff; text-shadow:0 0 6px rgba(var(--c),.85), 0 1px 0 rgba(0,40,36,.9), 0 2px 3px rgba(0,0,0,.7); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .pf-rank[data-n="4"] b { --k:.86; } .pf-rank[data-n="5"] b { --k:.72; } .pf-rank[data-n="6"] b, .pf-rank[data-n="7"] b { --k:.6; }
+  .m-modal.on .pf-rank { animation:pfRk .32s .48s cubic-bezier(.2,1.4,.4,1) both; }   /* 名片開完才「蓋章」落下 */
+  @keyframes pfRk { from { opacity:0; transform:translate(-50%, -64%) scale(1.6); } to { opacity:1; transform:translate(-50%, -64%); } }
+  @media (prefers-reduced-motion: reduce) { .m-modal.on .pf-rank { animation:none; } }
   .pf-side { --wo-dl:.18s; position:relative; min-width:min(240px, 40vw); max-width:300px; padding-top:4px; }
   .pf-side .m-field { flex-direction:column; align-items:stretch; gap:4px; font-size:12.5px; color:#8fb9cf; } .pf-side .m-field input { width:100%; box-sizing:border-box; border-radius:0; border-color:rgba(var(--mint),.55); }
   .pf-side .m-recs { gap:4px 12px; font-size:13px; }
@@ -522,14 +530,25 @@
       <div style="opacity:.7;font-size:11px;max-width:min(640px,92vw);text-align:center;margin-top:6px;line-height:1.5">機體模型：<a href="https://skfb.ly/oL9Qx" target="_blank" style="color:#9fe8ff">“Eighty-Six XM2 Reginleif [Undertaker]”</a> by Z7RO，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>；已修改（腳部關節與站姿、外形比例與塗裝、移除左刀臂與徽記、加裝機槍與鋼索發射器、壓縮）<br>松樹與地面材質：<a href="https://sketchfab.com/3d-models/pine-forest-ece69535f7584e099488f65f2072264e" target="_blank" style="color:#9fe8ff">“Pine Forest”</a> by fangzhangmnm，<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" style="color:#9fe8ff">CC BY 4.0</a>（已拆出單棵樹、縮小貼圖）</div>
     </div>
     <div id="mProfBody"><div class="pf-wrap">
-      <div class="pf-card" id="pfCard"><div class="pf-tag" title="勝:敗"><b id="pfWL">0:0</b><small id="pfWLs">勝:敗</small></div>
+      <div class="pf-card" id="pfCard">
         <div class="vs-art pf-art"><img class="vs-mech" id="pfImg" alt=""><div class="vs-load pf-load" id="pfLoad"></div></div>
-        <div class="vs-bar pf-bar" id="pfBar"><small>USER ID</small><b id="pfName">PILOT</b></div></div>
+        <div class="vs-bar pf-bar" id="pfBar"><div class="pf-rank" id="pfRank" title="總戰績 勝:敗"><svg viewBox="0 0 148 92" aria-hidden="true"><defs>
+          <linearGradient id="pfRkRim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4fff2"/><stop offset=".42" stop-color="#5fd2b6"/><stop offset=".55" stop-color="#1f7f70"/><stop offset="1" stop-color="#0a3a35"/></linearGradient>
+          <linearGradient id="pfRkFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#155349"/><stop offset=".5" stop-color="#0b2e2a"/><stop offset="1" stop-color="#030f0e"/></linearGradient>
+          <linearGradient id="pfRkGloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+          <g fill="rgba(6,20,22,.92)" stroke="rgb(142,243,218)" stroke-width="1"><polygon points="36,35 15,35 5,46 15,57 36,57"/><polygon points="112,35 133,35 143,46 133,57 112,57"/></g>
+          <g fill="none" stroke="rgb(142,243,218)" stroke-width=".8" opacity=".75"><path d="M33 41H18l-5 5 5 5h15M115 41h15l5 5-5 5h-15"/></g>
+          <polygon points="52,2 96,2 118,46 96,90 52,90 30,46" fill="url(#pfRkRim)" stroke="rgb(142,243,218)" stroke-width="1"/>
+          <polygon points="55.5,8 92.5,8 111,46 92.5,84 55.5,84 37,46" fill="url(#pfRkFace)" stroke="#031210" stroke-width="1.2"/>
+          <polygon points="58.5,13 89.5,13 105,46 89.5,79 58.5,79 43,46" fill="none" stroke="rgb(142,243,218)" stroke-width=".7" opacity=".5"/>
+          <polygon points="55.5,8 92.5,8 111,46 37,46" fill="url(#pfRkGloss)"/>
+          <path d="M66 84h16" stroke="rgb(142,243,218)" stroke-width="2.4"/><path d="M68 2.6h12" stroke="#fff" stroke-width="1.6" opacity=".85"/></svg><b id="pfWL">0:0</b></div>
+          <small>USER ID</small><b id="pfName">PILOT</b></div></div>
       <div class="pf-side">
         <h3>個人資料</h3>
         <label class="m-field">駕駛員名稱（USER ID） <input id="mNameIn" maxlength="12" autocomplete="off" spellcheck="false" placeholder="PILOT"></label>
         <div class="m-recs" id="mRecs"></div>
-        <div class="m-note">綠色標籤＝總戰績 勝:敗（AI＋線上）<br>線上對戰時，對手會看到你的名稱。</div>
+        <div class="m-note">名片中央徽章＝總戰績 勝:敗（AI＋線上）<br>線上對戰時，對手會看到你的名稱。</div>
       </div></div>
     </div>
   </div></div>
@@ -4023,11 +4042,14 @@ function recordResult(mode, r){ if (mode !== 'ai' && mode !== 'net') return; con
 function menuProfile(){ const R = profRec(), a = R.ai || { w: 0, l: 0, d: 0 }, n = R.net || { w: 0, l: 0, d: 0 };
   $('mName').textContent = profName(); $('mRec').textContent = LOCKS.mProfile ? '個人資料・尚未開放' : `AI ${a.w}勝${a.l}敗・線上 ${n.w}勝${n.l}敗`;
   $('mRecs').innerHTML = `<span></span><b>勝</b><b>敗</b><b>平手</b><span>對戰 AI</span><span>${a.w}</span><span>${a.l}</span><span>${a.d}</span><span>線上對戰</span><span>${n.w}</span><span>${n.l}</span><span>${n.d}</span>`;
-  // v4.4 直立名片：綠色標籤＝AI＋線上合計 勝:敗（有平手才在下面小字加「平 N」）
-  const w = a.w + n.w, l = a.l + n.l, d = a.d + n.d; $('pfWL').textContent = `${w}:${l}`; $('pfWLs').textContent = d ? `勝:敗・平${d}` : '勝:敗'; $('pfName').textContent = profName(); }
-let pfTry = 0;
+  // v4.4 直立名片：中央徽章＝AI＋線上合計 勝:敗，只放數字（位數多就縮字）
+  const wl = `${a.w + n.w}:${a.l + n.l}`; $('pfWL').textContent = wl; $('pfRank').dataset.n = wl.length; $('pfName').textContent = profName(); }
+let pfTry = 0, PF_ZOOM = 2.05, PF_AIMY = 0.3;
 function profCard(){ clearTimeout(pfTry); const img = $('pfImg'); vsLoad($('pfLoad'), LOADOUT.s2);   // v4.4 目前塗裝＋02 選裝的機體直立圖（每次打開重畫，機庫換過塗裝也會跟上）
-  let u = null; try { u = mechPortrait(mech, { s2: LOADOUT.s2, active: 'main' }, true, 255, 340); } catch (err){ console.warn('個人資料機體圖', err); }
+  // v4.4 依名片機體區實際大小×裝置像素比（最多 2 倍、高最多 900px，且不超過主畫布）算渲染尺寸，鏡頭拉近讓機體撐滿名片
+  const art = img.parentElement, dw = art.clientWidth || 255, dh = art.clientHeight || 340, pr = renderer.getPixelRatio(), cvs = renderer.domElement;
+  const k = Math.min(Math.min(devicePixelRatio || 1, 2) / pr, 900 / (dh * pr), cvs.width / (dw * pr), cvs.height / (dh * pr));
+  let u = null; try { u = mechPortrait(mech, { s2: LOADOUT.s2, active: 'main' }, true, Math.max(60, Math.floor(dw * k)), Math.max(80, Math.floor(dh * k)), { zoom: PF_ZOOM, aimX: -0.1, aimY: PF_AIMY, hi: true }); } catch (err){ console.warn('個人資料機體圖', err); }
   if (u) img.src = u; else { img.removeAttribute('src'); pfTry = setTimeout(() => { if ($('mModal').classList.contains('on') && $('mModal').dataset.v === 'prof') profCard(); }, 500); } }
 function menuModal(v){ const m = $('mModal'); m.dataset.v = v; m.classList.add('on'); if (v === 'prof'){ $('mNameIn').value = profName() === 'PILOT' ? '' : profName(); menuProfile(); profCard(); } }
 $('pfBar').addEventListener('click', () => { const i = $('mNameIn'); i.focus(); i.select(); });   // v4.4 點名片上的名字＝改名
@@ -4167,7 +4189,7 @@ document.getElementById('goTut').addEventListener('click', async () => { await s
 document.getElementById('optTutSet').addEventListener('click', e => { e.preventDefault(); if (tutorial.on) tutorial.finish(false); tutorial.start('settings'); });
 // v3.9 開場對戰畫面（荒野亂鬥風）：雙方機體全身圖（照各自塗裝與選裝）＋名稱＋三個武裝欄；顯示 2.6 秒，期間比賽還沒開始（不計時、不受傷、AI 不動）
 let vsTimer = 0, vsTick = 0, vsT0 = 0;
-function mechPortrait(M, w, faceRight, W = 520, H = 340){   // 黑底、白底各渲染一次，相減算出透明度 → 去背的機體圖（v4.4 可指定尺寸：個人資料直立名片用）
+function mechPortrait(M, w, faceRight, W = 520, H = 340, opt = {}){   // 黑底、白底各渲染一次，相減算出透明度 → 去背的機體圖（v4.4 可指定尺寸：個人資料直立名片用；opt.zoom 拉近、opt.hi 照渲染器像素比輸出）
   if (!M || !M.loaded) return null; const pr = renderer.getPixelRatio(), size = renderer.getSize(new THREE.Vector2());
   const oc = renderer.getClearColor(new THREE.Color()), oa = renderer.getClearAlpha();
   const ts = new THREE.Scene(); ts.environment = scene.environment; ts.add(new THREE.HemisphereLight(0xd8ecff, 0x40382c, 0.9));
@@ -4183,13 +4205,18 @@ function mechPortrait(M, w, faceRight, W = 520, H = 340){   // 黑底、白底�
     const rt = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1), tV = Math.tan(12 * DEG) * 0.97, tH = tV * W / H;
     let need = 0; for (let i = 0; i < 8; i++){ const o = new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).sub(ctr), z = o.dot(dir);
       need = Math.max(need, Math.abs(o.dot(rt)) / tH + z, Math.abs(o.dot(up)) / tV + z); }
-    cam.position.copy(ctr).addScaledVector(dir, need); cam.lookAt(ctr); cam.updateProjectionMatrix(); }
-  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d'), shots = [];
+    cam.position.copy(ctr).addScaledVector(dir, need); cam.lookAt(ctr);
+    if (opt.zoom > 1){ cam.fov = 2 * Math.atan(Math.tan(12 * DEG) / opt.zoom) / DEG; cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);   // v4.4 名片放大：縮小視角＝純裁切放大（不改透視）
+      const bp = M.body.getWorldPosition(new THREE.Vector3()), dep = bp.clone().sub(cam.position).dot(dir.clone().negate()), n = bp.clone().project(cam), hh = dep * Math.tan(cam.fov * DEG / 2);   // 平移鏡頭讓機身落在畫面 (aimX, aimY)，四腳往外裁
+      cam.position.addScaledVector(rt, (n.x - (opt.aimX || 0)) * hh * W / H).addScaledVector(up, (n.y - (opt.aimY || 0)) * hh); }
+    cam.updateProjectionMatrix(); }
+  const os = opt.hi ? pr : 1, CW = Math.round(W * os), CH = Math.round(H * os);   // v4.4 opt.hi：輸出＝實際渲染像素（名片在高 DPI 螢幕上不糊）
+  const cv = document.createElement('canvas'); cv.width = CW; cv.height = CH; const ctx = cv.getContext('2d'), shots = [];
   renderer.setScissorTest(true); renderer.setViewport(0, 0, W, H); renderer.setScissor(0, 0, W, H);
   for (const bg of [0x000000, 0xffffff]){ renderer.setClearColor(bg, 1); renderer.clear(); renderer.render(ts, cam);
-    ctx.clearRect(0, 0, W, H); ctx.drawImage(renderer.domElement, 0, renderer.domElement.height - H * pr, W * pr, H * pr, 0, 0, W, H); shots.push(ctx.getImageData(0, 0, W, H)); }
+    ctx.clearRect(0, 0, CW, CH); ctx.drawImage(renderer.domElement, 0, renderer.domElement.height - H * pr, W * pr, H * pr, 0, 0, CW, CH); shots.push(ctx.getImageData(0, 0, CW, CH)); }
   renderer.setScissorTest(false); renderer.setViewport(0, 0, size.x, size.y); renderer.setClearColor(oc, oa); ts.remove(c);
-  const A = shots[0].data, B = shots[1].data, out = ctx.createImageData(W, H), O = out.data;
+  const A = shots[0].data, B = shots[1].data, out = ctx.createImageData(CW, CH), O = out.data;
   for (let i = 0; i < A.length; i += 4){ const al = 1 - ((B[i] - A[i]) + (B[i + 1] - A[i + 1]) + (B[i + 2] - A[i + 2])) / 765;
     if (al > 0.004){ O[i] = Math.min(255, A[i] / al); O[i + 1] = Math.min(255, A[i + 1] / al); O[i + 2] = Math.min(255, A[i + 2] / al); O[i + 3] = al * 255; } }
   ctx.putImageData(out, 0, 0); return cv.toDataURL('image/png'); }
