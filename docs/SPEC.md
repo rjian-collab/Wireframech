@@ -480,11 +480,20 @@
 ## v4.5 — 線上對戰加上 TURN 轉傳伺服器（修正「找到對手，但兩台裝置無法直接連線」）
 - **原因**：原本只有 STUN（Trystero 預設的 Google／Cloudflare STUN）。手機網路（電信 CGNAT）、學校／公司網路常是對稱型 NAT，STUN 打洞一定失敗 → Trystero 回報 `peer-connect-failed`。大廳的「找人」訊息也是走 WebRTC，所以連大廳都看不到對方
 - **TURN 帳密**：新增 Vercel 函式 `api/turn.js`（網址 `/api/turn`），在伺服器讀環境變數、向 TURN 服務換 4 小時就過期的帳密；密鑰不會出現在網頁或 git 裡
-  - Metered Open Relay（主要，不用信用卡）：`METERED_DOMAIN`、`METERED_API_KEY`（每月 20 GB 免費）
+  - Metered Open Relay（主要，不用信用卡，每月 20 GB 免費），兩種設定擇一（兩種都設 → 用 API Key）：
+
+    | 環境變數 | 必填 | 說明 |
+    |---|---|---|
+    | `METERED_DOMAIN` | API Key 方式 | Metered 網域，例如 `wireframech.metered.live` |
+    | `METERED_API_KEY` | API Key 方式 | TURN API Key（伺服器去換帳密，不會外流） |
+    | `METERED_USERNAME` | 固定帳密方式 | 免費方案後台給的 username |
+    | `METERED_PASSWORD` | 固定帳密方式 | 免費方案後台給的 password（credential） |
+    | `METERED_URLS` | 選填 | 逗號分隔；預設 `turn:global.relay.metered.ca:80`、`:80?transport=tcp`、`:443`、`turns:global.relay.metered.ca:443?transport=tcp`（STUN `stun:stun.relay.metered.ca:80`） |
+
   - ExpressTURN（加碼，固定長期帳密）：`EXPRESSTURN_USERNAME`、`EXPRESSTURN_PASSWORD`，選填 `EXPRESSTURN_URLS`（預設 `turn:relay1.expressturn.com:3478` udp／tcp＋`turns:relay1.expressturn.com:443`；免費方案每月 1000 GB）
   - Cloudflare Realtime TURN（選用，要綁信用卡）：`CF_TURN_KEY_ID`、`CF_TURN_API_TOKEN`（每月前 1000 GB 免費，之後 $0.05/GB）
   - 設了好幾家 → 同時問、全部一起回傳（順序 Metered → ExpressTURN → Cloudflare），瀏覽器自己挑能通的；某一家壞掉照樣回其他家；網頁最多收 3 組 TURN＋1 組 STUN
-  - TURN 帳密本來就要交給瀏覽器才能連，所以 ExpressTURN 的固定帳密玩家看得到（可能被別人拿去用額度；被濫用就到後台換一組）；Metered／Cloudflare 的 API 金鑰只留在伺服器
+  - TURN 帳密本來就要交給瀏覽器才能連，所以 Metered 固定帳密與 ExpressTURN 的固定帳密玩家用開發者工具看得到（可能被別人拿去用額度；被濫用就到各家後台重新產生一組、更新環境變數）；Metered API Key／Cloudflare 的 API 金鑰只留在伺服器
   - 選填 `TURN_ALLOWED_ORIGINS`：允許呼叫的網站；預設允許 wireframech.vercel.app、*.vercel.app、itch.io（*.itch.io／*.itch.zone／*.hwcdn.net）、localhost
   - 沒設定 → 回 503，遊戲自動改回只用 STUN（跟以前一樣）
 - **網頁端**：進 MAIN LOBBY 時先拿帳密（最多等 3.5 秒，失敗一分鐘內不重試；快過期會重拿）；有 TURN → `iceServers`＝2 個 STUN＋TURN、`iceTransportPolicy:'all'`（能直連就直連，不行瀏覽器自己改走轉傳）
@@ -502,5 +511,5 @@
   - 模擬直連壞掉：代碼約戰 8.5 秒、快速配對 9.4 秒改走轉傳連上，快照正常傳
   - 一邊有 TURN、一邊沒有：代碼約戰 12.5 秒、快速配對 9.1 秒連上
   - 端點 503／回應沒有 TURN／逾時 → 7 ms／0.3 秒／3.5 秒內改回只用 STUN，照樣連上
-  - `api/turn.js`：模擬 Metered／ExpressTURN／Cloudflare 單獨與組合（順序、一家壞掉、全部壞掉）、去掉 53 埠、CORS、擋其他網站、上游錯誤
+  - `api/turn.js`：模擬 Metered（API Key／固定帳密）／ExpressTURN／Cloudflare 單獨與組合（順序、一家壞掉、全部壞掉）、去掉 53 埠、CORS、擋其他網站、上游錯誤
 - **沒辦法在這裡測**：真的對稱型 NAT、手機 4G/5G、學校網路（要用兩台實機測）
