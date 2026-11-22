@@ -178,6 +178,8 @@
   #settings .tabs button { min-height:44px; border:0; border-radius:10px; background:transparent; color:#8fb4c8; font-size:15px; text-align:left; padding:0 12px; }
   #settings .tabs button.on { background:rgba(80,200,255,.16); color:#e8fbff; box-shadow:inset 3px 0 0 #5fd4ff; }
   #settings .pages { overflow:auto; touch-action:pan-y; padding:4px 14px 12px; }
+  /* v4.4 可捲動的面板：捲到底不要把捲動傳給整頁（iOS 橡皮筋），慣性捲動要順 */
+  #settings .pages, .m-hangar, .m-modal .m-panel, #rotate { overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
   #settings section { display:none; } #settings section.on { display:block; }
   #settings .row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:52px; padding:6px 0; border-bottom:1px solid rgba(140,220,255,.08); }
   #settings .tx { display:flex; flex-direction:column; min-width:0; } #settings .tx b { font-weight:600; color:#e6f6ff; }
@@ -3359,7 +3361,23 @@ for (const ev of ['touchstart', 'touchend']) touchEl.addEventListener(ev, e => {
 document.addEventListener('selectstart', e => e.preventDefault());
 document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
 document.addEventListener('selectionchange', () => { const sel = getSelection && getSelection(); if (sel && sel.rangeCount && !document.activeElement?.matches?.('input,select')) sel.removeAllRanges(); });
-document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+// v4.4 觸控捲動：以前這裡把「所有」touchmove 都擋掉，結果機庫、說明、設定頁在平板／手機上完全滑不動。
+// 現在只放行「手指底下真的有面板還能往這個方向捲」的情況；遊戲畫面、雙指縮放、捲到底的橡皮筋照樣擋。
+let touchY0 = 0;
+document.addEventListener('touchstart', e => { if (e.touches.length === 1) touchY0 = e.touches[0].clientY; }, { passive: true });
+function canTouchScroll(t, dy){   // dy > 0：手指往下拖（內容往上捲回去）
+  for (let el = t && t.nodeType === 1 ? t : t?.parentElement; el && el !== document.body; el = el.parentElement){
+    if (el.scrollHeight <= el.clientHeight + 1) continue;
+    const oy = getComputedStyle(el).overflowY; if (oy !== 'auto' && oy !== 'scroll') continue;
+    if (dy === 0 || (dy > 0 ? el.scrollTop > 0 : el.scrollTop + el.clientHeight < el.scrollHeight - 1)) return true;
+  }
+  return false;
+}
+document.addEventListener('touchmove', e => {
+  const y = e.touches[0]?.clientY ?? touchY0, dy = y - touchY0; touchY0 = y;
+  if (e.touches.length === 1 && canTouchScroll(e.target, dy)) return;
+  if (e.cancelable) e.preventDefault();
+}, { passive: false });
 document.addEventListener('contextmenu', e => e.preventDefault());
 
 // v4.1 裝置判斷：行動裝置（觸控按鈕）或電腦（鍵盤＋滑鼠）；設定 → 操作 → 裝置 可以手動切換
