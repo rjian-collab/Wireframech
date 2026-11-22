@@ -1515,24 +1515,105 @@ function ensureBot(){
 //  - 裁判＝建房者（host）：比分、計時、勝負由 host 決定並廣播（ms 事件）
 //  - 配對：Trystero（公開 Nostr 中繼找人，資料走 P2P）；網址加 ?net=local 改用 BroadcastChannel（同一個瀏覽器兩個分頁測試，可加 &lag=80 模擬延遲）
 // =====================================================================
+// v4.5 連線時間：connectMs＝快速配對進私人房間後最多等多久（原本 9 秒，經過 Nostr 交換資料＋打洞有時不夠 → 12 秒）
+//   directMs＝先試直連多久，還沒連上就改「只走轉傳伺服器」重進房間（有 TURN 時才會）；relayMs＝改走轉傳後再等多久
 const NETCFG = { ver: 'v3.8', appId: 'wireframech.vercel.app/pvp', snapHz: 30, interpMs: 110, extrapMs: 150, lobbyWaitS: 20, helloS: 1.2, inviteMs: 2500,
-  connectMs: 9000, codeWaitMs: 60000, lostS: 3, dropS: 10, msS: 0.5 };
+  connectMs: 12000, codeWaitMs: 60000, lostS: 3, dropS: 10, msS: 0.5,
+  directMs: 8000, relayMs: 15000, iceFetchMs: 3500, iceRetryMs: 60000,
+  turnUrl: 'https://wireframech.vercel.app/api/turn',   // v4.5 拿 TURN 帳密的 Vercel 函式（itch.io 版也打這個網址；Vercel 網域上改用同網域 /api/turn）
+  stun: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] };
 const NET_Q = new URLSearchParams(location.search), NET_LOCAL = NET_Q.get('net') === 'local', NET_LAG = +(NET_Q.get('lag') || 0);
+// v4.5 測試用網址參數：?turn=off 不用轉傳（只用 STUN）；?turn=<網址> 改用別的 TURN 端點；?relay=1 一開始就強制只走轉傳（用來確認 TURN 有沒有設定好）；
+//   ?nostr=ws://… 改用指定的 Nostr 中繼（自動測試用本機中繼）
+const NET_TURN = NET_Q.get('turn') || '', NET_FORCE_RELAY = NET_Q.get('relay') === '1', NET_NOSTR = NET_Q.get('nostr') || '';
 let trysteroMod = null;
-// ---- 傳輸層：join(roomId) → { id, send(type, data, target?), on('msg'|'join'|'leave', fn), leave() } ----
-async function netJoin(roomId){
+// ---- v4.5 ICE 伺服器（STUN＋TURN）----
+//  症狀：一直出現「找到對手，但兩台裝置無法直接連線」＝Trystero 的 peer-connect-failed。原因：只設了 STUN（Trystero 預設），
+//  手機網路（電信 CGNAT）、學校／公司網路常是對稱型 NAT，STUN 打洞一定失敗 → 必須有 TURN 轉傳伺服器。
+//  TURN 的帳密是短效的（Cloudflare／Metered 都要用密鑰換），密鑰不能放在網頁裡 → 由 Vercel 函式 api/turn.js 讀環境變數代換，網頁只拿到幾小時就過期的帳密。
+//  取不到（沒設定、離線、逾時）→ 回 null，照舊只用 STUN，不會卡住配對。
+const NET_ICE = { servers: null, exp: 0, failT: -1e9, p: null, src: 'none' };
+function netTurnUrl(){
+  if (NET_TURN === 'off') return '';
+  if (NET_TURN) return NET_TURN;
+  return /(^|\.)vercel\.app$/.test(location.hostname) ? '/api/turn' : NETCFG.turnUrl;   // 同網域不用跨網域（預覽網址也可以）
+}
+// 整理端點回傳的 iceServers：只留 stun/turn/turns、去掉 53 埠（瀏覽器會擋、只會拖慢）、TURN 一定要有帳密；沒有任何 TURN → null
+function netIceSanitize(j){
+  const list = j && Array.isArray(j.iceServers) ? j.iceServers : Array.isArray(j) ? j : null; if (!list) return null;
+  const out = [];
+  for (const s of list){
+    if (!s || typeof s !== 'object') continue;
+    const urls = (Array.isArray(s.urls) ? s.urls : [s.urls || s.url]).filter(u => typeof u === 'string' && /^(stun|turns?):/i.test(u) && !/:53(\?|$)/.test(u));
+    const turn = urls.filter(u => /^turns?:/i.test(u));
+    if (!turn.length) continue;   // STUN 我們自己有，只收 TURN
+    if (typeof s.username !== 'string' || typeof s.credential !== 'string') continue;
+    const same = out.find(o => o.username === s.username && o.credential === s.credential);   // Metered 每個網址一筆 → 同帳密合併成一組
+    if (same){ for (const u of turn) if (!same.urls.includes(u)) same.urls.push(u); }
+    else out.push({ urls: turn, username: s.username, credential: s.credential });
+  }
+  return out.length ? out.slice(0, 2) : null;   // 伺服器太多會拖慢收集（Firefox 超過 4 組會警告）
+}
+async function netIce(){
+  const now = Date.now();
+  if (NET_ICE.servers && now < NET_ICE.exp - 10 * 60e3) return NET_ICE.servers;   // 快過期（剩 10 分鐘）就重拿
+  const url = netTurnUrl(); if (!url){ NET_ICE.src = 'off'; return null; }
+  if (now - NET_ICE.failT < NETCFG.iceRetryMs) return null;   // 剛失敗過：一分鐘內不再試，免得每次配對都多等
+  if (NET_ICE.p) return NET_ICE.p;
+  NET_ICE.p = (async () => {
+    const ac = typeof AbortController === 'function' ? new AbortController() : null, tm = setTimeout(() => ac && ac.abort(), NETCFG.iceFetchMs);
+    try {
+      const r = await fetch(url, { cache: 'no-store', signal: ac ? ac.signal : undefined, credentials: 'omit' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json(), sv = netIceSanitize(j); if (!sv) throw new Error('沒有 TURN');
+      const ttl = Math.max(600, Math.min(48 * 3600, +(j.ttl || 3600)));
+      Object.assign(NET_ICE, { servers: sv, exp: Date.now() + ttl * 1000, src: j.provider || 'turn' }); NET.L(`TURN ok ${NET_ICE.src}`);
+      return sv;
+    } catch (err){
+      NET_ICE.failT = Date.now(); NET_ICE.src = 'fail'; NET.L(`TURN 取不到：${err && err.message || err}`); console.warn('[net] TURN 取不到，只用 STUN', err);
+      return NET_ICE.servers && Date.now() < NET_ICE.exp ? NET_ICE.servers : null;   // 舊的還沒過期就先用
+    } finally { clearTimeout(tm); NET_ICE.p = null; }
+  })();
+  return NET_ICE.p;
+}
+function netIcePrefetch(){ if (!NET_LOCAL) netIce().catch(() => {}); }   // 進 MAIN LOBBY 時先拿，按配對時通常已經拿好
+// 組 Trystero 的 joinRoom 設定：有 TURN → 自己給 iceServers（STUN＋TURN）；relay＝只走轉傳（iceTransportPolicy:'relay'）
+function netRoomCfg(ice, relay){
+  const cfg = { appId: NETCFG.appId, identity: 'none' };
+  if (ice) cfg.rtcConfig = { iceServers: [{ urls: NETCFG.stun }, ...ice], iceTransportPolicy: relay ? 'relay' : 'all' };
+  if (NET_NOSTR) cfg.relayConfig = { urls: NET_NOSTR.split(',') };
+  return cfg;
+}
+// v4.5 查目前和對手走哪條路（直連／轉傳）：看 WebRTC 統計裡選中的候選配對
+async function netPathOf(tr, peer){
+  try {
+    const info = tr && tr.peers ? tr.peers()[peer] : null, pc = info && info.connection; if (!pc || !pc.getStats) return '';
+    const st = await pc.getStats(); let pair = null;
+    st.forEach(r => { if (r.type === 'transport' && r.selectedCandidatePairId) pair = st.get(r.selectedCandidatePairId); });
+    if (!pair) st.forEach(r => { if (!pair && r.type === 'candidate-pair' && (r.selected || (r.nominated && r.state === 'succeeded'))) pair = r; });
+    if (!pair) return '';
+    const lc = st.get(pair.localCandidateId), rc = st.get(pair.remoteCandidateId);
+    return (lc && lc.candidateType === 'relay') || (rc && rc.candidateType === 'relay') ? 'relay' : 'direct';
+  } catch (_){ return ''; }
+}
+// ---- 傳輸層：join(roomId, relay?) → { id, send(type, data, target?), on('msg'|'join'|'leave', fn), leave(), peers(), turn, relay } ----
+async function netJoin(roomId, relay = false){
   if (NET_LOCAL) return netLocalTransport(roomId);
-  if (!trysteroMod) trysteroMod = await import('https://esm.run/trystero@0.27.0');
-  const room = trysteroMod.joinRoom({ appId: NETCFG.appId, identity: 'none' }, roomId);
+  const [mod, ice] = await Promise.all([trysteroMod || import('https://esm.run/trystero@0.27.0'), netIce()]); trysteroMod = mod;
+  relay = !!(ice && (relay || NET_FORCE_RELAY));
+  NET.L(`join ${roomId} turn=${ice ? NET_ICE.src : 'none'} relay=${relay}`);
+  const room = trysteroMod.joinRoom(netRoomCfg(ice, relay), roomId);
   const act = room.makeAction('m'), self = await room.getSelf();
-  const T = { id: self.peerId, h: { msg: [], join: [], leave: [] }, closed: false,
+  const T = { id: self.peerId, h: { msg: [], join: [], leave: [] }, closed: false, turn: !!ice, relay,
     send(t, d, target){ if (this.closed) return; act.send({ t, d }, target ? { target } : undefined).catch(() => {}); },
     on(k, fn){ this.h[k].push(fn); },
+    peers(){ try { return room.getPeers ? room.getPeers() : {}; } catch (_){ return {}; } },
     leave(){ this.closed = true; try { room.leave(); } catch (_){} } };
   act.onMessage((m, ctx) => { if (!T.closed && m && m.t) for (const f of T.h.msg) f(m.t, m.d, ctx.peerId); });
   room.onPeerJoin(ctx => { if (!T.closed) for (const f of T.h.join) f(ctx.peerId); });
   room.onPeerLeave(ctx => { if (!T.closed) for (const f of T.h.leave) f(ctx.peerId); });
-  room.onError && room.onError(e => netDiag(e && e.code, e && (e.peerId || '')));
+  // v4.5 有設 TURN 還是連不上 → 換另一句說明（不是「沒有轉傳」，而是轉傳也失敗）
+  room.onError && room.onError(e => { if (T.closed) return; const c = e && e.code; netDiag(c === 'peer-connect-failed' && (e.turnConfigured || T.turn) ? 'peer-connect-failed-turn' : c, e && (e.peerId || '')); });
   return T;
 }
 function netLocalTransport(roomId){
@@ -1541,7 +1622,7 @@ function netLocalTransport(roomId){
     post(m){ if (!this.closed) bc.postMessage(m); },
     send(t, d, target){ this.post({ from: id, to: target || null, t, d }); },
     on(k, fn){ this.h[k].push(fn); },
-    leave(){ this.post({ from: id, bye: 1 }); this.closed = true; setTimeout(() => bc.close(), 50); } };
+    leave(){ this.post({ from: id, bye: 1 }); this.closed = true; setTimeout(() => bc.close(), 50); }, turn: false, relay: false };
   const deliver = m => {
     if (T.closed || (m.to && m.to !== id)) return;
     if (m.bye){ if (peers.delete(m.from)) T.h.leave.forEach(f => f(m.from)); return; }
@@ -1558,12 +1639,12 @@ function netLocalTransport(roomId){
 // ---- 配對／連線狀態 ----
 //  IDLE → LOBBY（快速配對大廳）→ INVITING → CONNECTING（私人房間）→ IN_MATCH
 //  代碼約戰：CODE_WAIT（建房等人）／CONNECTING（輸入代碼加入）
-const NET = { ready: { me: false, op: false }, state: 'idle', host: false, tr: null, peer: null, code: null, via: null, skip: new Set(), lobby: new Map(),
+const NET = { ready: { me: false, op: false }, state: 'idle', host: false, tr: null, trs: [], peer: null, code: null, via: null, skip: new Set(), lobby: new Map(),
   t0: 0, inviteTo: null, inviteT: 0, helloT: 0, snapT: 0, msT: 0, lastRecv: 0, fx: [], buf: [], off: null, lostShown: false, gotHi: false, sentGo: false,
   send(t, d){ if (this.tr && this.peer) this.tr.send(t, d, this.peer); },
   log: [], L(m){ this.log.push(Math.round(performance.now()) + ' ' + m); if (this.log.length > 60) this.log.shift(); },
 };
-window.__net = NET;
+window.__net = NET; window.__netIce = { NET_ICE, netIce, netIceSanitize, netRoomCfg, netTurnUrl };   // v4.5 給自動測試用
 addEventListener('pagehide', () => { if (NET.tr) NET.tr.leave(); });   // 關掉分頁時通知對方
 const netUI = { el: null, txt: null, btn: null };
 function netShow(msg, btnText = '取消', onBtn = netCancel){
@@ -1574,7 +1655,9 @@ function netShow(msg, btnText = '取消', onBtn = netCancel){
 }
 const netCode = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += A[Math.floor(Math.random() * A.length)]; return s; };
 // v3.8b 連線診斷：把 Trystero 的錯誤翻成看得懂的話，顯示在紫色提示列下方
-const NET_DIAG_TXT = { 'peer-connect-failed': '找到對手，但兩台裝置無法直接連線（網路擋住了，需要轉傳伺服器 TURN）',
+// v4.5 沒有 TURN 時的說明改成「轉傳伺服器沒有啟用」；有 TURN 還失敗是另一句
+const NET_DIAG_TXT = { 'peer-connect-failed': '找到對手，但兩台裝置無法直接連線，而且轉傳伺服器（TURN）沒有啟用',
+  'peer-connect-failed-turn': '找到對手，但直連和轉傳伺服器都連不上（網路可能擋住了 WebRTC）',
   'relay-failed': '連不到配對服務（Nostr 中繼），可能是網路擋住了', 'handshake-failed': '找到對手，但交換連線資料失敗',
   'decrypt-failed': '連線資料解不開（兩邊版本可能不同）', 'identity-failed': '瀏覽器無法建立連線身分（無痕模式？）', 'peer-error': '和對手的連線發生錯誤' };
 function netDiag(code, peer){
@@ -1584,8 +1667,9 @@ function netDiag(code, peer){
 }
 function netDiagShow(){ const el = document.getElementById('netDiag'); if (!el) return; const c = NET.lastDiag; menuNetMsg();
   el.textContent = c ? `⚠ ${NET_DIAG_TXT[c] || c}（${NET.diag[c]} 次）` : ''; el.style.display = c ? 'block' : 'none'; }
-function netLeave(){ if (NET.tr){ NET.tr.leave(); NET.tr = null; } NET.peer = null; }
-function netReset(){ netLeave(); Object.assign(NET, { ready: { me: false, op: false }, diag: {}, lastDiag: null, state: 'idle', host: false, code: null, via: null, inviteTo: null, buf: [], off: null, fx: [], lostShown: false, gotHi: false, sentGo: false }); NET.lobby.clear(); }
+function netLeave(){ for (const t of new Set([NET.tr, ...NET.trs.splice(0)])) if (t) t.leave(); NET.tr = null; NET.peer = null; }   // v4.5 trs＝房主多待的轉傳房間
+function netReset(){ netLeave(); Object.assign(NET, { ready: { me: false, op: false }, diag: {}, lastDiag: null, state: 'idle', host: false, code: null, via: null, inviteTo: null, buf: [], off: null, fx: [], lostShown: false, gotHi: false, sentGo: false,
+  relayTry: false, tR: 0, path: '' }); NET.lobby.clear(); }   // v4.5 relayTry／tR／path：轉傳重試與連線路線
 function netCancel(){ const wasMatch = match.mode === 'net'; netReset(); netShow(null); if (wasMatch) match.start('practice'); }
 
 // 快速配對：所有人進同一個大廳；ID 小的一方才能邀請；20 秒沒人 → 改打 AI
@@ -1619,7 +1703,7 @@ function netLobbyTick(dt){
   }
   const others = [...NET.lobby.values()].filter(p => p.s === 'w').length;
   netShow(`尋找對手… ${Math.ceil(Math.max(0, NETCFG.lobbyWaitS - waitS))} 秒${others ? `（大廳 ${others} 人）` : ''}`);
-  if (waitS > NETCFG.lobbyWaitS && NET.state === 'lobby'){ const blocked = NET.diag && NET.diag['peer-connect-failed']; netReset(); netShow(null); toast(blocked ? '有找到對手，但網路擋住了直連，先和 AI 對戰' : '沒有找到對手，先和 AI 對戰', 3500); playMode('ai'); }
+  if (waitS > NETCFG.lobbyWaitS && NET.state === 'lobby'){ const blocked = NET.diag && (NET.diag['peer-connect-failed'] || NET.diag['peer-connect-failed-turn']); netReset(); netShow(null); toast(blocked ? '有找到對手，但網路擋住了連線，先和 AI 對戰' : '沒有找到對手，先和 AI 對戰', 3500); playMode('ai'); }
 }
 // 代碼約戰
 async function netHostCode(){ netReset(); const code = netCode(); NET.via = 'code'; NET.code = code; menuNetMsg(); await netEnterRoom(code, true, null); if (NET.state === 'connecting') NET.state = 'codewait'; menuNetMsg(); }
@@ -1629,32 +1713,64 @@ async function netEnterRoom(code, host, peerHint){
   NET.L(`enter ${code} host=${host}`);
   const lobbyTr = NET.tr; NET.tr = null; if (lobbyTr) setTimeout(() => lobbyTr.leave(), 1500);   // 晚一點才離開大廳：先讓 accept 送到對方
   NET.state = 'connecting'; NET.host = host; NET.code = code; NET.peer = null; NET.t0 = performance.now(); NET.gotHi = false; NET.sentGo = false; NET.peerHint = peerHint;
+  NET.relayTry = false; NET.tR = 0; NET.path = '';
   netShow(NET.via === 'code' ? (host ? `房間代碼：${code}　請對方在「代碼約戰」輸入` : `加入房間 ${code}…`) : '找到對手，連線中…');
-  let tr; try { tr = await netJoin('m-' + code); } catch (err){ console.warn(err); netShow('連線失敗', '關閉', () => netShow(null)); NET.state = 'idle'; return; }
-  if (NET.state !== 'connecting'){ tr.leave(); return; }
-  NET.tr = tr;
+  await netRoomOpen(false);
+}
+// v4.5 直連等太久 → 離開房間，改「只走轉傳伺服器」進同代碼的轉傳房間 m-<代碼>~r（只要一邊走轉傳就連得上）
+//   為什麼換房間而不是重進同一間：Trystero 會記住「這個人剛剛連失敗」（約 23 秒內不接受新連線），重進同一間會卡很久
+//   快速配對：雙方同時逾時、一起換過去；代碼約戰：房主一開始就同時待在兩間（直連房＋轉傳房），加入者直連不通才換過去
+async function netRelayRetry(){
+  NET.relayTry = true; NET.tR = performance.now(); NET.L('改用轉傳房間');
+  netLeave();
+  netShow(NET.via === 'code' ? `加入房間 ${NET.code}：直連不通，改用轉傳伺服器…` : '直連不通，改用轉傳伺服器…');
+  await netRoomOpen(true);
+}
+async function netRoomOpen(relay){
+  const code = NET.code, host = NET.host, gen = NET.roomGen = (NET.roomGen || 0) + 1;
+  let tr; try { tr = await netJoin('m-' + code + (relay ? '~r' : ''), relay); } catch (err){ console.warn(err); netShow('連線失敗', '關閉', () => netShow(null)); NET.state = 'idle'; return; }
+  if (NET.state !== 'connecting' || NET.code !== code || NET.roomGen !== gen){ tr.leave(); return; }
+  NET.tr = tr; netRoomWire(tr);
+  if (!host || NET.via === 'quick'){   // v4.5 狀態提示：直連中／轉傳中
+    const s = tr.relay ? (NET.relayTry ? '改用轉傳伺服器連線…' : '經轉傳伺服器連線…') : NET.relayTry ? '再試一次直連…（轉傳伺服器沒有啟用）' : tr.turn ? '直連中…（不行會自動改用轉傳伺服器）' : '直連中…';
+    netShow(NET.via === 'code' ? `加入房間 ${code}：${s}` : `找到對手，${s}`);
+  }
+  if (host && NET.via === 'code' && !relay){   // v4.5 房主也待在轉傳房間，等直連不通的加入者（自己沒有 TURN 也進：加入者那邊有就通）
+    let tr2; try { tr2 = await netJoin('m-' + code + '~r', false); } catch (err){ console.warn(err); return; }
+    if (NET.code !== code || NET.roomGen !== gen || !(NET.state === 'connecting' || NET.state === 'codewait' || NET.state === 'room')){ tr2.leave(); return; }
+    NET.trs.push(tr2); netRoomWire(tr2);
+  }
+}
+// 進私人房間的訊息處理：雙方互送 hi（帶版本），host 收到後送 go（快速配對）或等雙方按 BATTLE（代碼約戰）
+function netRoomWire(tr){
+  const host = NET.host, mine = () => NET.tr === tr;
   const hi = id => tr.send('hi', { ver: NETCFG.ver, host, name: profName() }, id);
   tr.on('join', id => { if (!NET.peer) hi(id); });
-  tr.on('leave', id => { if (id === NET.peer) netPeerGone('對手離開了'); });
+  tr.on('leave', id => { if (id === NET.peer && mine()) netPeerGone('對手離開了'); });
   tr.on('msg', (t, d, from) => {
     if (t !== 's') NET.L(`room ${t} from ${from} peer=${NET.peer} st=${NET.state}`);
-    if (NET.peer && from !== NET.peer) return;   // 只接受第一個對手
+    if (NET.peer && (from !== NET.peer || !mine())) return;   // 只接受第一個對手（v4.5 而且是他所在的那間房）
     if (t === 'hi'){
       if (d.ver !== NETCFG.ver){ netShow(`對方版本不同（${d.ver}），請兩邊都重新整理`, '關閉', netCancel); return; }
       if (d.host === host){ if (host) return; netShow('這個代碼已有人建房但是設定衝突，請重新建房', '關閉', netCancel); return; }
-      NET.peer = from; NET.peerName = (d.name || '對手').slice(0, 12); NET.lastRecv = performance.now();
+      NET.tr = tr;   // v4.5 房主同時待兩間：對手從哪間來，之後就用那間傳資料
+      NET.peer = from; NET.peerName = (d.name || '對手').slice(0, 12); NET.lastRecv = performance.now(); netPathCheck();
       if (!NET.gotHi){ NET.gotHi = true; hi(from); }
       if (NET.via === 'code'){ if (NET.state !== 'match'){ NET.state = 'room'; NET.ready = { me: false, op: false }; NET.sentGo = false; } menuNetMsg(); return; }   // v3.9 房間：等房主按 BATTLE
       if (host && !NET.sentGo){ NET.sentGo = true; tr.send('go', {}, from); netBegin(); }
       return; }
-    if (t === 'go' && !host && NET.state !== 'match'){ NET.peer = from; netBegin(); return; }
+    if (t === 'go' && !host && NET.state !== 'match'){ NET.peer = from; NET.tr = tr; netBegin(); return; }
     netOnMsg(t, d);
   });
 }
 // v3.9c 房間：雙方都按 BATTLE（準備）才開打；之後出擊前選裝也在這一步（各自選完再按準備）
 function netRoomBattle(){ if (NET.state !== 'room' || !NET.peer) return; NET.ready.me = !NET.ready.me; NET.send('ready', { r: NET.ready.me ? 1 : 0 }); menuNetMsg(); netCheckGo(); }
 function netCheckGo(){ if (NET.host && NET.state === 'room' && NET.peer && NET.ready.me && NET.ready.op && !NET.sentGo){ NET.sentGo = true; NET.send('go', {}); netBegin(); } }
-function netBegin(){ NET.state = 'match'; NET.lastRecv = performance.now(); NET.buf = []; NET.off = null; netShow(null); playMode('net'); if (bot) bot.name = NET.peerName || '對手'; toast(NET.host ? '對手已連線！你從基地 A 出發' : '對手已連線！你從基地 B 出發', 2200); }
+function netBegin(){ NET.state = 'match'; NET.lastRecv = performance.now(); NET.buf = []; NET.off = null; netShow(null); playMode('net'); if (bot) bot.name = NET.peerName || '對手';
+  toast((NET.host ? '對手已連線！你從基地 A 出發' : '對手已連線！你從基地 B 出發') + (NET.path === 'relay' ? '（經轉傳伺服器）' : ''), 2200); }
+// v4.5 連上後查一次走哪條路，記在 NET.path（'direct'／'relay'），房間畫面會顯示；?net=local 沒有 WebRTC → 不查
+function netPathCheck(){ const tr = NET.tr, peer = NET.peer; if (!tr || !tr.peers) return;
+  netPathOf(tr, peer).then(p => { if (!p || NET.tr !== tr || NET.peer !== peer) return; NET.path = p; NET.L('路線 ' + p); menuNetMsg(); }); }
 function netPeerGone(msg){
   if (NET.state === 'match' && match.mode === 'net'){ const live = match.state === 'live'; netLeave(); NET.state = 'idle'; if (live){ match.state = 'over'; input.fire = false; showResult(msg); } return; }
   if (NET.state === 'room'){   // v3.9 房間裡對手離開
@@ -1668,7 +1784,10 @@ function netRequeue(){ netQuick(); }   // NET.skip 保留：這次配對中跳�
 function netFrame(dt){
   const now = performance.now();
   if (NET.state === 'lobby' || NET.state === 'inviting'){ if (NET.tr) netLobbyTick(dt); return; }
-  if (NET.state === 'connecting' && !NET.peer && now - NET.t0 > (NET.via === 'code' ? NETCFG.codeWaitMs : NETCFG.connectMs)){
+  // v4.5 直連 8 秒還沒連上 → 換到轉傳房間（快速配對雙方都會；代碼約戰由加入的一方做，房主一直兩間都在）
+  //   就算自己這邊沒拿到 TURN 也照樣換：對方可能有 TURN，只要一邊走轉傳就通；兩邊時間表一樣才不會一個換房一個沒換
+  if (NET.state === 'connecting' && !NET.peer && !NET.relayTry && NET.tr && (NET.via === 'quick' || !NET.host) && now - NET.t0 > NETCFG.directMs){ netRelayRetry(); return; }
+  if (NET.state === 'connecting' && !NET.peer && (NET.via === 'code' ? now - NET.t0 > NETCFG.codeWaitMs : NET.relayTry ? now - NET.tR > NETCFG.relayMs : now - NET.t0 > NETCFG.connectMs)){
     if (NET.via === 'quick'){ NET.skip.add(NET.peerHint); netRequeue(); } else { netReset(); netShow('找不到這個房間（或對方網路連不上）', '關閉', () => netShow(null)); } return; }
   if (NET.state !== 'match' || match.mode !== 'net') return;
   // 快照（每秒 30 次）＋這段時間的特效
@@ -4001,7 +4120,7 @@ const menuDragEnd = e => { const d = MENU.drag; if (!d || d.id !== e.pointerId) 
 startEl.addEventListener('pointerup', menuDragEnd); startEl.addEventListener('pointercancel', menuDragEnd);
 function menuGo(scr){
   if (scr === 'hangar' && MENU.scr !== 'hangar') MENU.back = MENU.scr;
-  MENU.scr = scr; startEl.dataset.scr = scr;
+  MENU.scr = scr; startEl.dataset.scr = scr; if (scr === 'lobby' || scr === 'room') netIcePrefetch();   // v4.5 先拿 TURN 帳密
   for (const el of startEl.querySelectorAll('.m-scr')) el.classList.toggle('on', el.dataset.scr === scr);
   $('mOffSub').classList.remove('on'); $('mJoinRow').classList.remove('on');
   menuNetMsg(); menuProfile();
@@ -4080,7 +4199,8 @@ function menuNetMsg(msg){
   $('mBattle').disabled = !peer; $('mBattle').classList.toggle('on', !!meReady);
   $('mBattleT').textContent = meReady ? 'READY ✓' : 'BATTLE';
   $('mBattleS').textContent = !peer ? '等待對手加入' : meReady ? (opReady ? '開打！' : '等對手按 BATTLE（再按一次取消）') : (opReady ? '對手已準備，按下開打' : '雙方都按下才開打');
-  $('mRoomMsg').textContent = [!inRoom ? '' : host ? (peer ? '' : '把上方代碼告訴朋友，或按「分享代碼」') : (peer ? '' : menuMsgText), diag].filter(Boolean).join('\n');
+  const path = peer && NET.path ? (NET.path === 'relay' ? '連線：經轉傳伺服器' : '連線：直連') : '';   // v4.5
+  $('mRoomMsg').textContent = [!inRoom ? '' : host ? (peer ? path : '把上方代碼告訴朋友，或按「分享代碼」') : (peer ? path : menuMsgText), diag].filter(Boolean).join('\n');
 }
 // ---- 機庫：塗裝（和設定的「外觀」同步）----
 function menuPaints(){ const sel = $('optPaint'), box = $('mPaints'); box.innerHTML = '';
