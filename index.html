@@ -184,20 +184,20 @@
   .mi-w { color:var(--wc, rgb(var(--mint))); } .mi-w > i { flex:1 1 auto; min-width:0; font-style:normal; overflow:hidden; text-overflow:ellipsis; }
   .mi-w > b.blink { animation:miBlink .5s steps(1, end) infinite; } @keyframes miBlink { 50% { opacity:.35; } }
   #mInfo.nohp #miHpRow { display:none; }
-  /* 擊破卡片：[擊破者 縮圖／名字] [死因圖示] [被擊破者]；最新的在最上面，約 4 秒後淡出 */
+  /* 擊破卡片：[擊破者 縮圖／名字] [死因圖示] [被擊破者]；最新的在最上面，最多 2 張，每張約 1.5 秒（含開啟／淡出） */
   #kFeed { position:fixed; z-index:4; left:calc(var(--pad) + var(--sl)); top:calc(110px + var(--st)); display:flex; flex-direction:column; gap:3px; pointer-events:none; overflow:hidden; --u:1; --kfn:clamp(9px, calc(11.6px * var(--u)), 11px); }
-  .kf { --c:var(--mint); position:relative; display:flex; align-items:center; gap:calc(3px * var(--u)); padding:calc(2px * var(--u)) calc(4px * var(--u)); width:max-content; max-width:var(--kw, 240px); box-sizing:border-box;
-    border:1px solid rgba(var(--c),.45); background:rgba(6,20,22,.55); color:#eafff8; transition:opacity .35s, transform .35s; animation:woOpen .4s both, woFlk .55s steps(1, end) both; }
+  .kf { --c:var(--mint); position:relative; display:flex; align-items:center; gap:calc(2px * var(--u)); padding:calc(2px * var(--u)) calc(2px * var(--u)); width:max-content; max-width:var(--kw, 240px); box-sizing:border-box;
+    border:1px solid rgba(var(--c),.45); background:rgba(6,20,22,.55); color:#eafff8; transition:opacity .2s, transform .2s; animation:woOpen .18s both, woFlk .24s steps(1, end) both; }
   .kf.me { border-color:rgba(var(--mint),.95); box-shadow:0 0 5px rgba(var(--mint),.35); } .kf.dn { --c:var(--alert); border-color:rgba(255,150,80,.95); box-shadow:0 0 5px rgba(255,150,80,.35); }
-  .kf.out { animation:kfOut .35s both; } @keyframes kfOut { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(-14px); } }
+  .kf.out { animation:kfOut .2s both; } @keyframes kfOut { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(-14px); } }
   .kf::after { content:''; position:absolute; inset:0; pointer-events:none; background-image:var(--wo-noise, none), repeating-linear-gradient(0deg, rgba(0,0,0,.4) 0 1px, transparent 1px 3px);
-    background-size:256px 256px, 100% 3px; animation:woNoise .6s ease-out both, woJit .6s steps(1, end) both; --c:var(--mint); }
+    background-size:256px 256px, 100% 3px; animation:woNoise .3s ease-out both, woJit .3s steps(1, end) both; --c:var(--mint); }
   .kf-p { display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; width:var(--pw, 52px); }
   .kf-av { width:calc(28px * var(--u)); height:calc(16px * var(--u)); background:var(--av, none) center / cover no-repeat, rgba(var(--pc, var(--mint)),.08); filter:brightness(1.35) saturate(1.15); border:1px solid rgba(var(--pc, var(--mint)),.5); box-sizing:border-box; }
   .kf-av.na { background:none; display:flex; align-items:center; justify-content:center; } .kf-av svg { width:80%; height:90%; fill:none; stroke:rgb(var(--pc, var(--mint))); stroke-width:1.6; }
   .kf-p b { max-width:100%; overflow:hidden; white-space:nowrap; font:700 var(--kfn)/1 var(--f-disp); color:rgb(var(--pc, var(--mint))); }
   .kf-p.op { --pc:255,168,96; }
-  .kf-ic { flex:0 0 auto; width:calc(24px * var(--u)); height:calc(16px * var(--u)); } .kf-ic svg { width:100%; height:100%; fill:none; stroke:#eafff8; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; overflow:visible; }
+  .kf-ic { flex:0 0 auto; width:calc(20px * var(--u)); height:calc(16px * var(--u)); } .kf-ic svg { width:100%; height:100%; fill:none; stroke:#eafff8; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; overflow:visible; }
   .kf-ic svg .f { fill:#eafff8; stroke:none; }
   .kf em { font:700 var(--kfn) var(--f-disp); font-style:normal; color:rgb(var(--mint)); white-space:nowrap; } .kf em.op { color:#ffa860; }
   .kf-txt { font:700 var(--kfn) var(--f-disp); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
@@ -1782,7 +1782,7 @@ const match = {
     if (this.mode === 'net'){   // v3.8 連線：只有本機會在這裡死亡（受傷方宣告），比分由房主算
       if (v !== local) return;
       const k = !!(killer && killer !== v);
-      this.feed.unshift({ msg: k ? `${killer.name} 擊破 ${v.name}` : `${v.name} 墜落`, t: 4, k: k ? killer.pid : null, v: v.pid, c: k ? cause || 'other' : 'void', sc: k ? null : v !== local });
+      this.feed.unshift({ msg: k ? `${killer.name} 擊破 ${v.name}` : `${v.name} 墜落`, t: 1.5, k: k ? killer.pid : null, v: v.pid, c: k ? cause || 'other' : 'void', sc: k ? null : v !== local });
       events.push({ type: 'died', victim: v.pid, killer: k ? killer.pid : null, by: k ? 'net' : undefined });
       v.hp = CONFIG.pvp.hp; placeActor(v, v.spawn, v.spawnYaw);
       NET.send('died', { k: k ? 1 : 0, c: k ? cause || 'other' : 'void' });   // c＝死因（v4.6 新增；舊版收到會忽略）
@@ -1791,7 +1791,7 @@ const match = {
     }
     const other = v.team === 0 ? 1 : 0; this.score[other]++;
     const msg = killer && killer !== v ? `${killer.name} 擊破 ${v.name}` : `${v.name} 墜落（${other === 0 ? '你' : 'AI'} +1）`;
-    const k = !!(killer && killer !== v); this.feed.unshift({ msg, t: 4, k: k ? killer.pid : null, v: v.pid, c: k ? cause || 'other' : 'void', sc: k ? null : other === local.team }); events.push({ type: 'died', victim: v.pid, killer: killer ? killer.pid : null });
+    const k = !!(killer && killer !== v); this.feed.unshift({ msg, t: 1.5, k: k ? killer.pid : null, v: v.pid, c: k ? cause || 'other' : 'void', sc: k ? null : other === local.team }); events.push({ type: 'died', victim: v.pid, killer: killer ? killer.pid : null });
     v.hp = CONFIG.pvp.hp; placeActor(v, v.spawn, v.spawnYaw);
     if (this.score[other] >= CONFIG.pvp.killLimit) this.end();
     hudMatch();
@@ -1802,7 +1802,7 @@ const match = {
   },
   tick(dt){
     if (this.state !== 'live') return;
-    this.timeLeft -= dt; for (const f of this.feed) f.t -= dt; this.feed = this.feed.filter(f => f.t > 0).slice(0, 3);
+    this.timeLeft -= dt; for (const f of this.feed) f.t -= dt; this.feed = this.feed.filter(f => f.t > 0).slice(0, 2);
     if (this.timeLeft <= 0){ this.timeLeft = 0; if (!(this.mode === 'net' && !NET.host)) this.end(); }   // 連線時只有房主能判結束
   },
   end(){ this.state = 'over'; input.fire = false; if (this.mode === 'net' && NET.host) netSendMs(); showResult(); },
@@ -2368,7 +2368,7 @@ function netOnMsg(t, d){
     local.hp = Math.max(0, local.hp - d.dmg); local.lastHitBy = bot; events.push({ type: 'actorHit', victim: local.pid, dmg: d.dmg, by: 'net' });
     if (local.hp <= 0) match.died(local, bot, typeof d.c === 'string' ? d.c : 'other'); return; }   // 舊版對手沒帶死因 → 一般圖示
   if (t === 'died'){   // 對方宣告自己死亡（被我擊破或墜落）
-    match.feed.unshift({ msg: d.k ? `${local.name} 擊破 ${bot.name}` : `${bot.name} 墜落`, t: 4, k: d.k ? local.pid : null, v: bot.pid, c: d.k ? (typeof d.c === 'string' ? d.c : bot.lastCauseSent || 'other') : 'void', sc: d.k ? null : true });
+    match.feed.unshift({ msg: d.k ? `${local.name} 擊破 ${bot.name}` : `${bot.name} 墜落`, t: 1.5, k: d.k ? local.pid : null, v: bot.pid, c: d.k ? (typeof d.c === 'string' ? d.c : bot.lastCauseSent || 'other') : 'void', sc: d.k ? null : true });
     events.push({ type: 'died', victim: bot.pid, killer: d.k ? local.pid : null, by: 'net' });
     if (NET.host) match.score_(bot, d.k); return; }
   if (t === 'ms' && !NET.host){   // 裁判（host）廣播的比賽狀態
@@ -4334,7 +4334,7 @@ function kfLayout(){   // 卡片放在自機視窗正下方；觸控時別蓋到
     if (bl && bl.offsetParent !== null){ const b = bl.getBoundingClientRect();
       if (b.width && b.bottom > top && b.top < bottom){ if (b.left - 6 - left >= 84 * kfU) maxW = Math.min(maxW, b.left - 6 - left); else bottom = Math.min(bottom, b.top - 6); } } }
   maxW = Math.max(maxW, 84 * kfU);
-  kfPW = Math.max(36, Math.min((mouseMode ? 72 : 52) * kfU, Math.floor((maxW - 8 * kfU - 6 * kfU - 24 * kfU - 2) / 2)));
+  kfPW = Math.max(28, Math.min((mouseMode ? 55 : 40) * kfU, Math.floor((maxW - 4 * kfU - 4 * kfU - 20 * kfU - 2) / 2)));   // 名字欄窄一點，放不下就「…」
   const tb = document.getElementById('topbar').getBoundingClientRect(); hudSide.l = r ? r.right : 0; hudSide.b = r ? r.bottom : 0; hudSide.r = tb.width ? tb.left : innerWidth;
   kfEl.style.top = top + 'px'; kfEl.style.maxHeight = Math.max(0, bottom - top) + 'px'; kfEl.style.setProperty('--kw', maxW + 'px'); kfEl.style.setProperty('--pw', kfPW + 'px');
 }
@@ -4359,7 +4359,7 @@ function kfUpdate(){
   const feed = on ? match.feed : [];
   for (const e of feed) if (!kfList.some(x => x.e === e)){ if (!kfList.length) kfLayout(); const el = kfCard(e); kfEl.prepend(el); kfList.push({ e, el, out: false }); kfDirty = true; }   // 最新的在最上面
   for (let i = kfList.length - 1; i >= 0; i--){ const x = kfList[i];
-    if (!x.out && (!feed.includes(x.e) || x.e.t < 0.35)){ x.out = true; x.el.classList.add('out'); setTimeout(() => { x.el.remove(); kfDirty = true; }, 360); }
+    if (!x.out && (!feed.includes(x.e) || x.e.t < 0.2)){ x.out = true; x.el.classList.add('out'); setTimeout(() => { x.el.remove(); kfDirty = true; }, 210); }   // 被第 3 張擠掉的也直接淡出
     if (x.out && !x.el.isConnected) kfList.splice(i, 1); }
   if (kfDirty){ kfDirty = false; const H = kfEl.clientHeight; for (const x of kfList) x.el.style.visibility = x.el.offsetTop + x.el.offsetHeight <= H + 1 ? '' : 'hidden'; }   // 放不下整張的舊卡片先藏起來（小螢幕）
 }
