@@ -185,25 +185,25 @@
   .mi-w > b.blink { animation:miBlink .5s steps(1, end) infinite; } @keyframes miBlink { 50% { opacity:.35; } }
   #mInfo.nohp #miHpRow { display:none; }
   /* 擊破卡片：[擊破者 縮圖／名字] [死因圖示] [被擊破者]；最新的在最上面，約 4 秒後淡出 */
-  #kFeed { position:fixed; z-index:4; left:calc(var(--pad) + var(--sl)); top:calc(110px + var(--st)); display:flex; flex-direction:column; gap:4px; pointer-events:none; overflow:hidden; --u:1; }
-  .kf { --c:var(--mint); position:relative; display:flex; align-items:center; gap:calc(4px * var(--u)); padding:calc(3px * var(--u)) calc(6px * var(--u)); width:max-content; max-width:var(--kw, 240px); box-sizing:border-box;
+  #kFeed { position:fixed; z-index:4; left:calc(var(--pad) + var(--sl)); top:calc(110px + var(--st)); display:flex; flex-direction:column; gap:3px; pointer-events:none; overflow:hidden; --u:1; --kfn:clamp(9px, calc(11.6px * var(--u)), 11px); }
+  .kf { --c:var(--mint); position:relative; display:flex; align-items:center; gap:calc(3px * var(--u)); padding:calc(2px * var(--u)) calc(4px * var(--u)); width:max-content; max-width:var(--kw, 240px); box-sizing:border-box;
     border:1px solid rgba(var(--c),.45); background:rgba(6,20,22,.55); color:#eafff8; transition:opacity .35s, transform .35s; animation:woOpen .4s both, woFlk .55s steps(1, end) both; }
-  .kf.me { border-color:rgba(var(--mint),.95); box-shadow:0 0 6px rgba(var(--mint),.35); } .kf.dn { --c:var(--alert); border-color:rgba(255,150,80,.95); box-shadow:0 0 6px rgba(255,150,80,.35); }
+  .kf.me { border-color:rgba(var(--mint),.95); box-shadow:0 0 5px rgba(var(--mint),.35); } .kf.dn { --c:var(--alert); border-color:rgba(255,150,80,.95); box-shadow:0 0 5px rgba(255,150,80,.35); }
   .kf.out { animation:kfOut .35s both; } @keyframes kfOut { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(-14px); } }
   .kf::after { content:''; position:absolute; inset:0; pointer-events:none; background-image:var(--wo-noise, none), repeating-linear-gradient(0deg, rgba(0,0,0,.4) 0 1px, transparent 1px 3px);
     background-size:256px 256px, 100% 3px; animation:woNoise .6s ease-out both, woJit .6s steps(1, end) both; --c:var(--mint); }
-  .kf-p { display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; width:var(--pw, 64px); }
-  .kf-av { width:calc(40px * var(--u)); height:calc(26px * var(--u)); background:var(--av, none) center / cover no-repeat, rgba(var(--pc, var(--mint)),.08); filter:brightness(1.35) saturate(1.15); border:1px solid rgba(var(--pc, var(--mint)),.5); box-sizing:border-box; }
+  .kf-p { display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; width:var(--pw, 52px); }
+  .kf-av { width:calc(28px * var(--u)); height:calc(16px * var(--u)); background:var(--av, none) center / cover no-repeat, rgba(var(--pc, var(--mint)),.08); filter:brightness(1.35) saturate(1.15); border:1px solid rgba(var(--pc, var(--mint)),.5); box-sizing:border-box; }
   .kf-av.na { background:none; display:flex; align-items:center; justify-content:center; } .kf-av svg { width:80%; height:90%; fill:none; stroke:rgb(var(--pc, var(--mint))); stroke-width:1.6; }
-  .kf-p b { max-width:100%; overflow:hidden; white-space:nowrap; font:700 calc(10px * var(--u))/1.1 var(--f-disp); color:rgb(var(--pc, var(--mint))); }
+  .kf-p b { max-width:100%; overflow:hidden; white-space:nowrap; font:700 var(--kfn)/1 var(--f-disp); color:rgb(var(--pc, var(--mint))); }
   .kf-p.op { --pc:255,168,96; }
-  .kf-ic { flex:0 0 auto; width:calc(33px * var(--u)); height:calc(22px * var(--u)); } .kf-ic svg { width:100%; height:100%; fill:none; stroke:#eafff8; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; overflow:visible; }
+  .kf-ic { flex:0 0 auto; width:calc(24px * var(--u)); height:calc(16px * var(--u)); } .kf-ic svg { width:100%; height:100%; fill:none; stroke:#eafff8; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; overflow:visible; }
   .kf-ic svg .f { fill:#eafff8; stroke:none; }
-  .kf em { font:700 calc(10px * var(--u)) var(--f-disp); font-style:normal; color:rgb(var(--mint)); white-space:nowrap; } .kf em.op { color:#ffa860; }
-  .kf-txt { font:700 calc(11px * var(--u)) var(--f-disp); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .kf em { font:700 var(--kfn) var(--f-disp); font-style:normal; color:rgb(var(--mint)); white-space:nowrap; } .kf em.op { color:#ffa860; }
+  .kf-txt { font:700 var(--kfn) var(--f-disp); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
   @media (min-height:700px) and (min-width:1000px) { #mInfo { --u:1.15; top:calc(30px + var(--st)); } #kFeed { --u:1.15; } }
   @media (max-height:430px) { #mInfo { --u:.86; top:calc(22px + var(--st)); } #kFeed { --u:.86; } }
-  @media (max-height:340px) { #mInfo { --u:.76; top:calc(19px + var(--st)); } #kFeed { --u:.76; gap:3px; } }
+  @media (max-height:340px) { #mInfo { --u:.76; top:calc(19px + var(--st)); } #kFeed { --u:.76; gap:2px; } }
   .small { pointer-events:auto; width:40px; height:40px; border-radius:50%; background:rgba(15,30,45,.6); border:1px solid rgba(140,220,255,.5);
     color:#cfefff; font-size:18px; padding:0; }
   /* v2.9 設定面板：置中視窗＋左側分頁＋開關樣式 */
@@ -4332,9 +4332,9 @@ function kfLayout(){   // 卡片放在自機視窗正下方；觸控時別蓋到
     const sb = document.getElementById('stickBase'), bl = document.getElementById('bRopeL');
     if (sb && sb.style.display !== 'none'){ const s = sb.getBoundingClientRect(); if (s.width) bottom = Math.min(bottom, s.top - 6); }
     if (bl && bl.offsetParent !== null){ const b = bl.getBoundingClientRect();
-      if (b.width && b.bottom > top && b.top < bottom){ if (b.left - 6 - left >= 104 * kfU) maxW = Math.min(maxW, b.left - 6 - left); else bottom = Math.min(bottom, b.top - 6); } } }
-  maxW = Math.max(maxW, 104 * kfU);
-  kfPW = Math.max(36, Math.min(96 * kfU, Math.floor((maxW - 12 * kfU - 8 * kfU - 33 * kfU - 2) / 2)));
+      if (b.width && b.bottom > top && b.top < bottom){ if (b.left - 6 - left >= 84 * kfU) maxW = Math.min(maxW, b.left - 6 - left); else bottom = Math.min(bottom, b.top - 6); } } }
+  maxW = Math.max(maxW, 84 * kfU);
+  kfPW = Math.max(36, Math.min((mouseMode ? 72 : 52) * kfU, Math.floor((maxW - 8 * kfU - 6 * kfU - 24 * kfU - 2) / 2)));
   const tb = document.getElementById('topbar').getBoundingClientRect(); hudSide.l = r ? r.right : 0; hudSide.b = r ? r.bottom : 0; hudSide.r = tb.width ? tb.left : innerWidth;
   kfEl.style.top = top + 'px'; kfEl.style.maxHeight = Math.max(0, bottom - top) + 'px'; kfEl.style.setProperty('--kw', maxW + 'px'); kfEl.style.setProperty('--pw', kfPW + 'px');
 }
@@ -4344,7 +4344,7 @@ function kfPlayer(pid){ const d = document.createElement('div'); d.className = '
   if (!feedAv[pid]){ const me = pid === local.pid, M = me ? mech : bot && bot.mech; try { if (M && M.loaded) feedAv[pid] = mechPortrait(M, me ? local.weapon : bot.weapon, me, 68, 44, KF_SHOT); } catch (_){} }   // 開場時模型還沒載完：第一次用到再畫
   if (feedAv[pid]) av.style.setProperty('--av', `url(${feedAv[pid]})`); else { av.classList.add('na'); av.innerHTML = KF_MECH; }
   const b = document.createElement('b'), n = kfName(pid);
-  kfM.font = `700 ${(10 * kfU).toFixed(1)}px ${getComputedStyle(document.documentElement).getPropertyValue('--f-disp')}`; b.textContent = clipPx(kfM, n, kfPW - 2); b.title = n;
+  kfM.font = `700 ${Math.min(11, Math.max(9, 11.6 * kfU)).toFixed(1)}px ${getComputedStyle(document.documentElement).getPropertyValue('--f-disp')}`; b.textContent = clipPx(kfM, n, kfPW - 2); b.title = n;
   d.append(av, b); return d; }
 function kfCard(e){ const el = document.createElement('div'); el.className = 'kf';
   if (e.v == null){ const t = document.createElement('span'); t.className = 'kf-txt'; t.textContent = _T(e.msg || ''); el.appendChild(t); return el; }   // 舊格式（只有文字）
