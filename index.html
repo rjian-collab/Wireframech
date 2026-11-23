@@ -192,7 +192,9 @@
   .mi-bar.bst s { --bc:#ffb040; } .mi-bar.thin { height:calc(3px * var(--u)); border-color:rgba(var(--mint),.2); }
   .mi-w { color:var(--wc, rgb(var(--mint))); } .mi-w > i { flex:1 1 auto; min-width:0; font-style:normal; overflow:hidden; text-overflow:ellipsis; }
   .mi-w > b.blink { animation:miBlink .5s steps(1, end) infinite; } @keyframes miBlink { 50% { opacity:.35; } }
-  #mInfo.nohp #miHpRow { display:none; }
+  #mInfo.nohp #miHpRow { display:none; } #mInfo.nobd #miBdRow { display:none; }
+  .mi-bd > b { min-width:2.4em; } .mi-bd > em { flex:0 0 auto; font-style:normal; font-size:.8em; color:rgba(var(--mint),.85); font-variant-numeric:tabular-nums; } .mi-bd > em.no { color:#ff7a5c; }   /* v4.8 刀刃耐久＋備用刃 */
+  .mi-bd.grd .mi-bar { box-shadow:0 0 6px rgba(200,255,250,.8); border-color:rgba(225,255,250,.9); } .mi-bd.brk > b, .mi-bd.rld > b { animation:miBlink .5s steps(1, end) infinite; } .mi-bd.brk > b { color:#ff5a48; }
   /* 擊破卡片（單列）：[擊破者 縮圖 名字] [死因圖示] [名字 縮圖 被擊破者]；一次只有一張（新的 0.1 秒內換掉舊的），約 1.5 秒
      一律在右上角、從右邊滑進來：右上按鈕列左邊的上緣空位，放不下就貼在按鈕列正下方；外框顏色＝得分方在開場對戰畫面名片的顏色（我方青綠、對手紅） */
   #kFeed { position:fixed; z-index:4; inset:0; pointer-events:none; overflow:hidden; --kfn:10px; --kah:22px; --kaw:36px; --kih:20px; --kiw:26px; --pw:56px; --kg:3px; }
@@ -471,7 +473,8 @@
   <div class="mi-row" id="miHpRow"><span>HP</span><i class="mi-bar"><s id="miHp"></s></i><b id="miHpV"></b></div>
   <div class="mi-row"><span>BST</span><i class="mi-bar bst"><s id="miBst"></s></i><b id="miBstV"></b></div>
   <div class="mi-row mi-w"><span id="miSlot">01</span><i id="miWName" data-i18n-skip></i><b id="miAmmo"></b></div>
-  <div class="mi-row"><i class="mi-bar thin"><s id="miWBar"></s></i></div></div></div>
+  <div class="mi-row"><i class="mi-bar thin"><s id="miWBar"></s></i></div>
+  <div class="mi-row mi-bd" id="miBdRow"><span>BLD</span><i class="mi-bar"><s id="miBd"></s></i><b id="miBdV"></b><em id="miBdS"></em></div></div></div>
 <div id="kFeed" data-i18n-skip></div>
 <div id="pause"><div class="pz-win"><p>按 <b>P</b> 或「繼續」回到戰鬥</p><div class="pz-b"><button id="pzGo">繼續</button><button id="pzSet">設定</button><button id="pzHome">回到首頁</button></div></div></div>
 <div id="lockHint">點一下畫面鎖定滑鼠（Esc 放開＝暫停）</div>
@@ -584,7 +587,7 @@
     <li>點一下畫面鎖定滑鼠，移動滑鼠＝轉視角；<b>Esc</b> 放開滑鼠（同時暫停）</li>
     <li><b>WASD</b> 移動　<b>空白鍵</b> 跳躍（按著方向鍵＝往那邊跳）　<b>Shift</b> 噴氣</li>
     <li><b>Q／E</b> 左／右鋼索　<b>左鍵</b> 射擊　<b>右鍵</b> 直接用 02 副武器（放開切回）　<b>中鍵</b> 換武器（也可以按 1／2／3）</li>
-    <li><b>R</b> 換彈（手機按「換彈」鈕；每種武器身上帶 3 個備用彈匣，站上補給平台補回）　<b>P</b> 暫停（線上對戰不能暫停）　<b>V</b> 切換第一／第三人稱</li></ul></details><details open><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
+    <li><b>R</b> 換彈（手機按「換彈」鈕；每種武器身上帶 3 個備用彈匣，站上補給平台補回；螳螂鐮＝換上備用刃，身上 1 把）　<b>P</b> 暫停（線上對戰不能暫停）　<b>V</b> 切換第一／第三人稱</li></ul></details><details open><summary style="cursor:pointer;color:#9fe4ff">完整操作說明（第一次玩建議直接按「新手教學」）</summary>
   <ul data-i18n-html="help.full">
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
     <li><b style="color:#c99bff">線上對戰</b>（1v1，真人）：首頁按「MAIN LOBBY」進大廳。「QUICK MATCH」自動找人，20 秒沒找到就改打 AI；「ROOM」建立房間，把房間代碼告訴朋友，對方在「JOIN」輸入代碼加入，房主按「BATTLE」開打。房主從基地 A、加入者從基地 B 出發，規則和對戰 AI 相同</li>
@@ -592,7 +595,7 @@
     <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），在<b>設定→鏡頭</b>可改成第一人稱（電腦按 <b>V</b>）；卡住時<b>設定→操作→重生</b>回到基地 A，掉進虛空也會回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>輕點＝原地跳；快速往任一方向滑出並放開＝往那邊跳</b>；推得越遠走越快（在地上、坡上、貼牆或釘在牆上時都能跳）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
-    <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">外圈的上／右／左有三個小武器標記（目前的武器會亮），按住朝標記方向一甩就切換：上＝01 主武 57mm、右＝02 螳螂鐮（近身按射擊揮刀，一刀擊破，冷卻 3 秒）、左＝03 腿部釘槍</b></li>
+    <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">外圈的上／右／左有三個小武器標記（目前的武器會亮），按住朝標記方向一甩就切換：上＝01 主武 57mm、右＝02 螳螂鐮（近身按射擊揮刀，一刀擊破，冷卻 6 秒；架刀待命時正面來的攻擊自動格擋最多 1 秒，之後同樣進冷卻；刀刃有耐久，越鈍越砍不進去，R 換上備用刃）、左＝03 腿部釘槍</b></li>
     <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、欄位（01 主武／02 副武／03 腿部）、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
     <li><b>腿部釘槍</b>（不佔手臂，共 24 根）：釘在牆上時用搖桿可以沿牆爬行，每 2.5m 用掉一根，用完就掉下來；身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器打敵人。</li>
     <li><b>57mm 滑膛炮</b>：每 0.8 秒一發、6 發一匣，砲彈有飛行時間與下墜，落點 4m 內有爆炸傷害；空中開砲會被後座力往後推</li>
@@ -685,7 +688,7 @@ const D = {
   "14.5mm 機槍": ["14.5mm機関銃", "14.5mm 기관총", "14.5mm MG"],
   "釘槍": ["ネイルガン", "네일건", "Nail Gun"],
   "在左邊空白處拖曳可以轉動機體": ["左側の空きエリアをドラッグで機体を回転", "왼쪽 빈 곳을 드래그하면 기체가 회전", "Drag the empty area on the left to rotate the mech"],
-  "近身一刀擊破（冷卻 3 秒）；拿著刀時正面 ±60° 的子彈、砲彈、刀都擋得掉": ["接近戦で一撃撃破（クールダウン3秒）。構えている間は正面±60°の弾・砲弾・刃を防げる", "근접 일격 격파 (쿨다운 3초). 들고 있으면 정면 ±60°의 총알·포탄·칼날을 막음", "One-hit KO up close (3 s cooldown); blocks bullets, shells and blades within ±60° in front"],
+  "近身一刀擊破（冷卻 6 秒）；架刀待命時正面 ±60° 的子彈、砲彈、刀自動格擋，最多 1 秒，之後和揮刀共用冷卻；刀刃耐久 100＋1 把備用刃（R 換刃、補給平台補），越鈍越砍不進去": ["接近戦で一撃撃破（クールダウン6秒）。構え中は正面±60°の弾・砲弾・刃を自動ガード（最大1秒、その後は斬撃と共通のクールダウン）。刃の耐久100＋予備の刃1本（R で交換、補給台で補充）、鈍るほど斬れない", "근접 일격 격파 (쿨다운 6초). 대기 자세에서 정면 ±60°의 총알·포탄·칼날을 자동으로 막음 (최대 1초, 그 뒤 베기와 같은 쿨다운). 칼날 내구도 100 + 예비 칼날 1개 (R로 교체, 보급대에서 보충), 무뎌질수록 안 베임", "One-hit KO up close (6 s cooldown); in the ready stance it auto-blocks bullets, shells and blades within ±60° ahead for up to 1 s, then shares the swing cooldown; blade durability 100 + 1 spare (R to swap, refilled at supply pads) — a dull blade can't cut"],
   "每分鐘 600 發、射程 500m；不能格擋": ["毎分600発・射程500m。パリィ不可", "분당 600발, 사거리 500m. 막기 불가", "600 rounds/min, 500 m range; can't parry"],
   "機庫": ["格納庫", "격납고", "Hangar"],
   "載入中…": ["読み込み中…", "로딩 중…", "Loading…"],
@@ -934,6 +937,10 @@ const D = {
   "{a} 墜落": ["{a} 落下", "{a} 추락", "{a} fell"],
   "{a} 墜落（{b} +1）": ["{a} 落下（{b} +1）", "{a} 추락 ({b} +1)", "{a} fell ({b} +1)"],
   "格擋！刀被彈開": ["パリィ！刃を弾いた", "패링! 칼날을 튕겨냈다", "Parry! Blade deflected"],
+  "刀太鈍，砍不進去！": ["刃が鈍って斬れない！", "칼날이 무뎌서 안 베인다!", "Blade too dull to cut!"],
+  "斷刃！按 R 換上備用刃": ["刃が折れた！R で予備の刃に交換", "칼날 파손! R로 예비 칼날 교체", "Blade broken! Press R for the spare"],
+  "斷刃！到補給平台補備用刃": ["刃が折れた！補給台で予備の刃を補充", "칼날 파손! 보급대에서 예비 칼날 보충", "Blade broken! Get a spare at a supply pad"],
+  "斷刃": ["折損", "파손", "BROKEN"],
   "擋下！": ["ガード！", "막았다!", "Blocked!"],
   "被格擋！": ["パリィされた！", "패링당했다!", "Parried!"],
   "01 主武：57mm 滑膛炮": ["01 メイン：57mm滑腔砲", "01 주무기: 57mm 활강포", "01 Main: 57mm Smoothbore"],
@@ -977,15 +984,15 @@ const H = {
 `<li>画面をクリックでマウスをロック、マウス移動＝視点操作。<b>Esc</b> でマウス解除（同時に一時停止）</li>
 <li><b>WASD</b> 移動　<b>スペース</b> ジャンプ（方向キーを押しながら＝その方向へ）　<b>Shift</b> ブースト</li>
 <li><b>Q／E</b> 左／右ワイヤー　<b>左クリック</b> 射撃　<b>右クリック</b> 02 サブ武器を直接使用（離すと戻る）　<b>中クリック</b> 武器切替（1／2／3 キーでも可）</li>
-<li><b>R</b> リロード（スマホは「リロード」ボタン。各武器に予備マガジン3個、補給台に乗ると補充）　<b>P</b> 一時停止（オンライン対戦中は不可）　<b>V</b> 一人称／三人称切替</li>`,
+<li><b>R</b> リロード（スマホは「リロード」ボタン。各武器に予備マガジン3個、補給台に乗ると補充。マンティスブレードは予備の刃1本に交換）　<b>P</b> 一時停止（オンライン対戦中は不可）　<b>V</b> 一人称／三人称切替</li>`,
 `<li>화면을 클릭하면 마우스 고정, 마우스 이동 = 시점 회전. <b>Esc</b>로 마우스 해제 (동시에 일시정지)</li>
 <li><b>WASD</b> 이동　<b>스페이스</b> 점프 (방향키를 누른 채 = 그 방향으로)　<b>Shift</b> 부스트</li>
 <li><b>Q/E</b> 왼쪽/오른쪽 와이어　<b>좌클릭</b> 사격　<b>우클릭</b> 02 보조무기 바로 사용 (떼면 복귀)　<b>휠 클릭</b> 무기 교체 (1/2/3 키도 가능)</li>
-<li><b>R</b> 재장전 (모바일은 ‘재장전’ 버튼. 무기마다 예비 탄창 3개, 보급대에 서면 보충)　<b>P</b> 일시정지 (온라인 대전 중 불가)　<b>V</b> 1인칭/3인칭 전환</li>`,
+<li><b>R</b> 재장전 (모바일은 ‘재장전’ 버튼. 무기마다 예비 탄창 3개, 보급대에 서면 보충. 맨티스 블레이드는 예비 칼날 1개로 교체)　<b>P</b> 일시정지 (온라인 대전 중 불가)　<b>V</b> 1인칭/3인칭 전환</li>`,
 `<li>Click the screen to lock the mouse; move the mouse to look. <b>Esc</b> releases the mouse (and pauses)</li>
 <li><b>WASD</b> Move　<b>Space</b> Jump (hold a direction to jump that way)　<b>Shift</b> Boost</li>
 <li><b>Q / E</b> Left / right wire　<b>Left click</b> Fire　<b>Right click</b> Use 02 sub weapon (release to switch back)　<b>Middle click</b> Switch weapon (or 1 / 2 / 3)</li>
-<li><b>R</b> Reload (on mobile, the Reload button; each weapon carries 3 spare mags, refilled on supply pads)　<b>P</b> Pause (not in online matches)　<b>V</b> Toggle 1st / 3rd person</li>`],
+<li><b>R</b> Reload (on mobile, the Reload button; each weapon carries 3 spare mags, refilled on supply pads; the Mantis Blade swaps in its 1 spare blade)　<b>P</b> Pause (not in online matches)　<b>V</b> Toggle 1st / 3rd person</li>`],
   'help.full': [
 `<li>リング状の空島戦場：両チームの基地は両端。<b>外周</b>は内側へ傾き段々に高くなる空島（機動力は高いが狙いにくい）。<b>中央プラットフォーム</b>は最も低く落下の危険はないが、上から撃たれる。最下層は虚空。光る台で燃料と弾薬を補給</li>
 <li><b style="color:#c99bff">オンライン対戦</b>（1v1・対人）：ホームの「MAIN LOBBY」でロビーへ。「QUICK MATCH」は自動マッチング、20秒で見つからなければAI戦に。「ROOM」でルームを作り、コードをフレンドに伝え、相手が「JOIN」で入力して参加、ホストが「BATTLE」で開戦。ホストは基地A、参加者は基地Bから出撃。ルールはAI対戦と同じ</li>
@@ -993,7 +1000,7 @@ const H = {
 <li>標準は<b>三人称視点</b>（自分のスパイダーメカが見える）。<b>設定→カメラ</b>で一人称に切替（PC は <b>V</b>）。スタックしたら<b>設定→操作→リスポーン</b>で基地Aへ。虚空落下でも基地Aに戻る</li>
 <li><b>青いスティック</b>：移動。<b>軽くタップ＝その場ジャンプ、任意の方向へ素早く弾いて離す＝その方向へジャンプ</b>。倒すほど速く走る（地面・斜面・壁際・壁に固定中でもジャンプ可）。脚は70°までの斜面に立て、高速でも地面に張り付く</li>
 <li><b style="color:#63e6ff">左／右ワイヤー</b>（どちらも小さなスティック）：押す＝ワイヤー発射。円内ドラッグ＝上で巻き取り・下で繰り出し・左右でスイング。<b style="color:#ffb040">外周まで引き出す＝ブースト</b>（フック先がなくても使える）</li>
-<li><b style="color:#ff7a5c">射撃</b>：押し続けて連射、押したままドラッグ＝撃ちながら照準。射撃ボタンを<b style="color:#ffc94a">外周の上・右・左に小さな武器マーク（現在の武器が点灯）。押してマークの方向へ弾くと切替：上＝01 メイン 57mm、右＝02 マンティスブレード（接近して射撃で斬撃、一撃撃破、クールダウン3秒）、左＝03 脚部ネイルガン</b></li>
+<li><b style="color:#ff7a5c">射撃</b>：押し続けて連射、押したままドラッグ＝撃ちながら照準。射撃ボタンを<b style="color:#ffc94a">外周の上・右・左に小さな武器マーク（現在の武器が点灯）。押してマークの方向へ弾くと切替：上＝01 メイン 57mm、右＝02 マンティスブレード（接近して射撃で斬撃、一撃撃破、クールダウン6秒。構え中は正面からの攻撃を自動で最大1秒ガードし、その後もクールダウン。刃には耐久があり、鈍るほど斬れなくなる。R で予備の刃に交換）、左＝03 脚部ネイルガン</b></li>
 <li>照準：中央の小円が黄＝ワイヤーが届く、青＝フック中。大きな弧の赤いひし形＝敵の方向（中抜き＝背後）。下＝残弾・スロット（01 メイン／02 サブ／03 脚部）・弾種。左右の数値＝高度／速度。両側の目盛り：左＝ブースト燃料、右＝残弾</li>
 <li><b>脚部ネイルガン</b>（腕を使わない、全24本）：壁に固定中はスティックで壁を這える（2.5mごとに1本消費、尽きると落下）。6m以内に壁があるときに撃つ＝最寄りの壁に固定、どの角度でもOK（ワイヤーは自動回収。ブースト・フック・飛びかかりで解除）。敵への武器にもなる</li>
 <li><b>57mm滑腔砲</b>：0.8秒に1発・1マガジン6発。砲弾には飛翔時間と落下があり、着弾点4m以内に爆発ダメージ。空中で撃つと反動で後ろへ押される</li>
@@ -1007,7 +1014,7 @@ const H = {
 <li>기본은 <b>3인칭</b> (내 거미 메카가 보임). <b>설정→카메라</b>에서 1인칭으로 전환 (PC는 <b>V</b>). 끼었을 때는 <b>설정→조작→리스폰</b>으로 기지 A 복귀. 허공 추락 시에도 기지 A로 복귀</li>
 <li><b>파란 스틱</b>: 이동. <b>가볍게 탭 = 제자리 점프, 원하는 방향으로 빠르게 튕기고 놓기 = 그 방향으로 점프</b>. 많이 밀수록 빨리 달림 (지면·경사·벽 옆·벽 고정 중에도 점프 가능). 다리는 70° 이내 경사에 설 수 있고 고속에서도 지면에 붙음</li>
 <li><b style="color:#63e6ff">왼쪽/오른쪽 와이어</b> (둘 다 작은 스틱): 누르기 = 와이어 발사. 원 안에서 드래그 = 위로 감기, 아래로 풀기, 좌우 스윙. <b style="color:#ffb040">바깥 원까지 끌기 = 부스트</b> (고정점이 없어도 가능)</li>
-<li><b style="color:#ff7a5c">사격</b>: 누르고 있으면 연사, 누른 채 드래그 = 쏘면서 조준. 사격 버튼을 <b style="color:#ffc94a">테두리 위·오른쪽·왼쪽에 작은 무기 마크 (현재 무기가 켜짐). 누른 채 마크 방향으로 튕기면 교체: 위 = 01 주무기 57mm, 오른쪽 = 02 맨티스 블레이드 (근접해서 사격으로 베기, 일격 격파, 쿨다운 3초), 왼쪽 = 03 다리 네일건</b></li>
+<li><b style="color:#ff7a5c">사격</b>: 누르고 있으면 연사, 누른 채 드래그 = 쏘면서 조준. 사격 버튼을 <b style="color:#ffc94a">테두리 위·오른쪽·왼쪽에 작은 무기 마크 (현재 무기가 켜짐). 누른 채 마크 방향으로 튕기면 교체: 위 = 01 주무기 57mm, 오른쪽 = 02 맨티스 블레이드 (근접해서 사격으로 베기, 일격 격파, 쿨다운 6초. 대기 자세에서는 정면 공격을 자동으로 최대 1초 막고, 그 뒤에도 쿨다운. 칼날에 내구도가 있어 무뎌질수록 안 베임. R로 예비 칼날 교체), 왼쪽 = 03 다리 네일건</b></li>
 <li>조준점: 중앙 작은 원이 노랑 = 와이어가 닿음, 청록 = 연결됨. 큰 호 위의 빨간 마름모 = 적 방향 (속이 빈 것 = 뒤쪽). 아래 = 탄약·슬롯 (01 주무기/02 보조/03 다리)·탄종. 좌우 수치 = 고도/속도. 양옆 눈금: 왼쪽 = 부스트 연료, 오른쪽 = 탄약</li>
 <li><b>다리 네일건</b> (팔을 쓰지 않음, 총 24발): 벽에 고정된 동안 스틱으로 벽을 타고 이동 (2.5m마다 1발 소모, 다 쓰면 떨어짐). 6m 안에 벽이 있을 때 쏘면 = 가장 가까운 벽에 고정, 어떤 각도든 가능 (와이어 자동 회수. 부스트·와이어·도약으로 해제). 적을 공격하는 무기로도 사용</li>
 <li><b>57mm 활강포</b>: 0.8초에 1발, 탄창당 6발. 포탄은 비행 시간과 낙하가 있고 착탄점 4m 안에 폭발 피해. 공중에서 쏘면 반동으로 뒤로 밀림</li>
@@ -1021,7 +1028,7 @@ const H = {
 <li><b>Third person</b> by default (you can see your spider mech); switch to first person in <b>Settings → Camera</b> (PC: <b>V</b>). If you get stuck, <b>Settings → Controls → Respawn</b> returns you to Base A; falling into the void does too</li>
 <li><b>Blue stick</b>: move. <b>Tap = jump in place; flick quickly in any direction and release = jump that way</b>. Push further to run faster (you can jump on the ground, slopes, against walls or while pinned). The spider legs stand on slopes up to 70° and stick to the ground at speed</li>
 <li><b style="color:#63e6ff">Left / right wire</b> (both are mini sticks): hold = fire a wire; drag inside the circle = up reels in, down lets out, left/right swings; <b style="color:#ffb040">drag past the outer ring = boost</b> (works with no anchor too)</li>
-<li><b style="color:#ff7a5c">Fire</b>: hold to shoot, drag while holding = aim while firing. <b style="color:#ffc94a">Small weapon marks sit on the fire button's rim at top, right and left (the current one lights up); press and flick toward a mark to switch: up = 01 Main 57mm, right = 02 Mantis Blade (fire up close to slash — one-hit KO, 3 s cooldown), left = 03 Leg Nail Gun</b></li>
+<li><b style="color:#ff7a5c">Fire</b>: hold to shoot, drag while holding = aim while firing. <b style="color:#ffc94a">Small weapon marks sit on the fire button's rim at top, right and left (the current one lights up); press and flick toward a mark to switch: up = 01 Main 57mm, right = 02 Mantis Blade (fire up close to slash — one-hit KO, 6 s cooldown; in the ready stance it auto-guards frontal attacks for up to 1 s, then also goes on cooldown; the blade wears down and a dull blade can't cut — R swaps in the spare), left = 03 Leg Nail Gun</b></li>
 <li>Reticle: small center circle yellow = a wire will hook, cyan = hooked. Red diamonds on the big arc = enemy direction (hollow = behind you). Below = ammo, slot (01 Main / 02 Sub / 03 Leg), ammo type. Left/right readouts = altitude / speed. Side gauges: left = boost fuel, right = ammo</li>
 <li><b>Leg Nail Gun</b> (doesn't use your arms, 24 nails): while pinned, use the stick to crawl along the wall — one nail per 2.5 m, you drop when they run out. Fire with a wall within 6 m = pin to the nearest wall at any angle (wires retract; boost, hook or pounce to detach). Also works as a weapon</li>
 <li><b>57mm Smoothbore</b>: one shot per 0.8 s, 6 per mag. Shells have travel time and drop, with blast damage within 4 m of impact. Firing in mid-air pushes you back with recoil</li>
@@ -1132,7 +1139,10 @@ const CONFIG = Object.freeze({
              mag: 6, reserve: 18, reload: 2.5, recoilDeg: 2.5, knockback: 3, ammoPerSec: 4 },
   nail: { crawlSpeed: 5, crawlPerNail: 6, damage: 1000, mag: 6, reserve: 18, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6, brake: 0.3 },   // 副武：釘槍（5×2 發）
   safeZone: { radius: 18 },
-  melee: { dmg: 6000, range: 7.5, vReach: 5, arcDeg: 60, guardDeg: 60, parryPush: 12, windup: 0.25, recoverHit: 0.25, recoverMiss: 0.6, cooldown: 3, lunge: 6 },   // v3.9 螳螂鐮：前搖 0.25 秒（對手看得到手臂舉起）→ 下劈；揮空硬直 0.6 秒、冷卻 3 秒
+  melee: { dmg: 6000, range: 7.5, vReach: 5, arcDeg: 60, guardDeg: 60, parryPush: 12, windup: 0.25, recoverHit: 0.25, recoverMiss: 0.6, cooldown: 6, lunge: 6,
+    // v4.8 刀刃耐久：一把 100、身上 1 把備用刃（R／換彈鈕換上，補給平台補回）；格擋一次最多 1 秒，結束後和揮刀共用 6 秒冷卻
+    durMax: 100, spare: 1, reload: 2, durSwing: 8, durShell: 30, durParry: 30, durClash: 30, durBullet: 3, durNail: 5,
+    dullFull: 60, dullZero: 25, guardMax: 1, promoCooldown: 3 },   // v3.9 螳螂鐮：前搖 0.25 秒（對手看得到手臂舉起）→ 下劈；揮空硬直 0.6 秒、冷卻 6 秒（v4.8：3→6）
   pvp: { hp: 6000, killLimit: 5, timeLimit: 300, spawnB: { x: 354, y: 12.2, z: 0 } },   // v3.0b 機體 6000 HP＝之後的螳螂鐮（6000，近戰）一刀滿血擊破；先擊破 5 次、5 分鐘
   weapon: { rpm: 600, range: 500, damage: 100, ammo: 200, reserve: 600, reload: 3,   // v4.1 改成彈匣制：一匣 200 發、身上帶 3 個備用彈匣
       // v1.9 起為副武：14.5mm 機槍（格鬥臂）
@@ -1717,7 +1727,8 @@ const newRopes = () => [
 // v3.9 機庫選裝：02 欄可選螳螂鐮（blade）或 14.5mm 機槍（mg）；欄位 id 仍是 'mg'，用 w.s2 區分
 const LOADOUT = { s2: (() => { try { return localStorage.getItem('wfm.s2') === 'mg' ? 'mg' : 'blade'; } catch(_){ return 'blade'; } })() };
 const bladeOn = w => !w || w.s2 !== 'mg';
-const newWeapon = () => ({ s2: LOADOUT.s2, active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, reserve: CONFIG.weapon.reserve, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0, melee: { cd: 0, t: 0, ph: 0, prev: false, vis: null } });
+const newBlade = () => ({ cd: 0, t: 0, ph: 0, prev: false, vis: null, dur: CONFIG.melee.durMax, spare: CONFIG.melee.spare, rl: 0, gt: 0 });   // v4.8 dur＝刀刃耐久、spare＝備用刃、rl＝換刃倒數、gt＝格擋剩餘秒數
+const newWeapon = () => ({ s2: LOADOUT.s2, active: 'main', cannon: { ammo: CONFIG.cannon.mag, reserve: CONFIG.cannon.reserve, reloading: 0, cool: 0 }, shells: [], nail: { ammo: CONFIG.nail.mag, reserve: CONFIG.nail.reserve, reloading: 0, cool: 0 }, prevFire: false, ammo: CONFIG.weapon.ammo, reserve: CONFIG.weapon.reserve, cooldown: 0, reloading: 0, bloom: 0, shots: 0, recoil: 0, hits: 0, fired: 0, melee: newBlade() });
 const state = { tick: 0, player: newPlayerState(S, CONFIG.map.spawnYaw), ropes: newRopes(), weapon: newWeapon() };
 const events = []; // {type, ...} 給 render/hud/audio 用
 const opts = { shadows: true, paint: 'steel', view3P: true, assistReel: false, aimAssist: true, shake: true, sens: 0.25, smart: true, autoFire: false, stab: true, roll: false, follow: 'none', lockEnemy: true, ropeBuffer: true };
@@ -1747,7 +1758,23 @@ function placeActor(a, p, yaw){
 // v3.9 高周波刀（螳螂鐮）架刀：拿著刀、沒在揮的時候，正面 ±60° 來的子彈、砲彈、刀全部擋掉；刀對刀＝兩台都被彈開
 let dmgKind = null;   // v4.6 目前這發傷害的來源：cannon／mg／melee／nail（擊破卡片的圖示、連線時一起傳給對方）
 function dmgAs(kind, t, dmg){ const k0 = dmgKind; dmgKind = kind; try { return damageTarget(t, dmg); } finally { dmgKind = k0; } }
-function isGuarding(v){ const w = v.weapon, ml = w && w.melee; return !!w && w.active === 'mg' && bladeOn(w) && !(ml && (ml.ph || ml.vis != null)); }
+// v4.8 平衡：格擋不再是無限的 —— 只有「架刀待命」（沒在揮、不在冷卻、沒在換刃、刀沒斷）才擋得住；
+//   第一發被擋下的瞬間自動開始格擋，最多撐 guardMax（1 秒），結束（時間到／切走武器／換刃／刀斷）就進入和揮刀共用的冷卻
+//   每次格擋、拼刀、揮刀都會磨損刀刃（耐久 dur），刀鈍了砍不進去（傷害隨耐久遞減），耐久 0＝斷刃，要換上備用刃
+//   ?promo=1（宣傳片）維持舊規則：冷卻 3 秒、不磨損、格擋沒有時間上限（腳本會連續擋砲彈→拼刀→反擊）
+const bladeCd = () => PROMO ? CONFIG.melee.promoCooldown : CONFIG.melee.cooldown;
+function bladeDmg(dur){ const MC = CONFIG.melee; return MC.dmg * clamp((dur - MC.dullZero) / (MC.dullFull - MC.dullZero), 0, 1); }   // ≥60 全傷害、60→25 線性降到 0、≤25 砍不進去
+function bladeReady(ml){ return !!ml && (ml.dur ?? 1) > 0 && !(ml.rl > 0) && !(ml.cd > 0) && !ml.ph; }
+function bladeWear(ml, n){ if (!ml || PROMO || !(n > 0)) return; ml.dur = Math.max(0, (ml.dur ?? CONFIG.melee.durMax) - n); if (ml.dur <= 0 && ml.gt > 0) bladeGuardEnd(ml); }
+function bladeGuardEnd(ml){ if (!(ml.gt > 0)) return; ml.gt = 0; if (!PROMO) ml.cd = Math.max(ml.cd || 0, bladeCd()); }
+function bladeGuardStart(ml){ if (PROMO || !ml || ml.gt > 0) return; ml.gt = CONFIG.melee.guardMax; }
+function bladeGuardTick(ml, dt, holding){ if (!ml || !(ml.gt > 0)) return; if (!holding){ bladeGuardEnd(ml); return; } ml.gt -= dt; if (ml.gt <= 0){ ml.gt = 0; if (!PROMO) ml.cd = Math.max(ml.cd || 0, bladeCd()); } }
+const blockCost = kind => { const MC = CONFIG.melee; return kind === 'cannon' ? MC.durShell : kind === 'melee' ? MC.durParry : kind === 'nail' ? MC.durNail : kind === 'mg' ? MC.durBullet : MC.durBullet; };
+function isGuarding(v){ const w = v.weapon, ml = w && w.melee; if (!w || w.active !== 'mg' || !bladeOn(w)) return false;
+  if (!ml) return true;
+  if (v.kind === 'net'){ if (ml.vis != null) return false;   // 對手：揮刀動作（fx）＋對方快照回報的「能不能擋」＋本機記的 1 秒上限／冷卻
+    if (PROMO) return true; if (ml.nbg === 0) return false; return !(ml.cd > 0) && (ml.dur ?? 1) > 0; }
+  return bladeReady(ml); }
 function guardBlocks(v, from){ if (!from || !isGuarding(v)) return false;
   const dx = from.x - v.P.currPos.x, dz = from.z - v.P.currPos.z, d = Math.hypot(dx, dz); if (d < 0.5) return true;
   return (dx * -Math.sin(v.P.yaw) + dz * -Math.cos(v.P.yaw)) / d >= Math.cos(CONFIG.melee.guardDeg * DEG); }
@@ -1759,7 +1786,9 @@ function actorDamage(v, dmg){
       const dx = v.P.currPos.x - curActor.P.currPos.x, dz = v.P.currPos.z - curActor.P.currPos.z, d = Math.hypot(dx, dz) || 1, MC = CONFIG.melee;
       const la = curActor.body.linvel(); curActor.body.setLinvel({ x: la.x - dx / d * MC.parryPush, y: la.y + 3, z: la.z - dz / d * MC.parryPush }, true);
       if (v.kind !== 'net'){ const lb = v.body.linvel(); v.body.setLinvel({ x: lb.x + dx / d * MC.parryPush * 0.5, y: lb.y + 2, z: lb.z + dz / d * MC.parryPush * 0.5 }, true); } }
-    events.push({ type: 'block', victim: v.pid, at, parry: dmgKind === 'melee' });
+    { const vml = v.weapon && v.weapon.melee; bladeGuardStart(vml); if (v.kind !== 'net') bladeWear(vml, blockCost(dmgKind));   // v4.8 第一發被擋下＝開始 1 秒格擋；擋下的東西磨損刀刃（連線對手：本機只記 1 秒／冷卻的鏡像，耐久由對方收到 block 後自己扣、再用快照 bd 傳回來）
+      if (dmgKind === 'melee' && curActor.weapon) bladeWear(curActor.weapon.melee, CONFIG.melee.durClash); }   // 拼刀：攻擊方的刀也磨損
+    events.push({ type: 'block', victim: v.pid, at, parry: dmgKind === 'melee', kind: dmgKind || 'other' });
     return false; }
   if (match.mode === 'net'){ if (v.kind !== 'net') return false; v.lastCauseSent = dmgKind || 'other'; NET.send('hit', { dmg: Math.round(dmg), c: dmgKind || 'other' }); events.push({ type: 'actorHit', victim: v.pid, dmg }); return true; }   // v3.8 連線：開槍方判定，傷害交給對方自己扣
   v.hp = Math.max(0, v.hp - dmg); v.lastHitBy = curActor; events.push({ type: 'actorHit', victim: v.pid, dmg });
@@ -1910,7 +1939,7 @@ function createBotBrain(a){
       const fire = a.weapon.active === 'mg' && bladeOn(a.weapon) ? !!st.meleeReq : st.nailFire || (st.wantFire && aimErr < Math.max(1.5 * DEG, Math.atan(1.6 / Math.max(1, st.dist || 99))) && !P.safe && (a.weapon.active !== 'mg' || st.burst > 0));   // 鐮刀：每次思考重新按一次；機槍：點放   // v3.9 近距離：準星在機體寬度內就開火（以前要 1.5° 內，貼臉時轉不過來就一直不開）   // 鐮刀：每次思考（0.1 秒）重新按一次
       const cmd = { seq: 0, tick: state.tick, moveX: st.moveX || 0, moveZ: st.reel || 0, yaw: st.travel && st.moveYaw != null ? st.moveYaw : st.gunYaw, pitch: st.gunPitch, fire, hookL: false, hookR: st.hold, hookMain: false,
         smart: true, autoFire: false, swap: false, swapTo: st.wantW !== a.weapon.active ? st.wantW : null, gunYaw: st.gunYaw, gunPitch: st.gunPitch,
-        aimYaw: st.aimYaw, aimPitch: st.aimPitch, ropeYaw: st.aimYaw, ropePitch: st.aimPitch, jump: !!st.jump, jumpPow: 1, jumpX: st.jumpX || 0, jumpZ: st.jumpZ || 0, boost: st.boost, thrust: false, reload: false };
+        aimYaw: st.aimYaw, aimPitch: st.aimPitch, ropeYaw: st.aimYaw, ropePitch: st.aimPitch, jump: !!st.jump, jumpPow: 1, jumpX: st.jumpX || 0, jumpZ: st.jumpZ || 0, boost: st.boost, thrust: false, reload: !!st.bladeRl && a.weapon.active === 'mg' && bladeOn(a.weapon) };
       st.jump = false; st.burst = Math.max(-1, st.burst - dt);   // v3.9 修正：以前只在 >0 時倒數，永遠到不了 −0.5 → AI 機槍從來不會開火
       return cmd;
     },
@@ -1921,12 +1950,16 @@ function createBotBrain(a){
       if (ep){ const to = V().subVectors(ep, eye); dist = to.length(); to.divideScalar(dist);
         const h = castRay(eye, to, dist + 2); see = !h || targetsByCollider.get(h.handle) === enemy; }
       if (see){ st.seeT += dt; st.lostT = 0; } else { st.seeT = 0; st.lostT += dt; }
-      st.meleeReq = see && dist < CONFIG.melee.range * 0.85 && a.weapon.active === 'mg' && bladeOn(a.weapon) && !(a.weapon.melee && (a.weapon.melee.cd > 0 || a.weapon.melee.ph));   // v3.9 近身就揮鐮
+      const bml = a.weapon.melee || newBlade(), MCb = CONFIG.melee;   // v4.8 AI 跟玩家同一套規則：冷卻、耐久、換刃、格擋上限
+      st.bladeRl = bladeOn(a.weapon) && bml.spare > 0 && !(bml.rl > 0) && (bml.dur <= MCb.dullZero || (bml.dur < MCb.dullFull && !(see && dist < MCb.range * 3)));   // 鈍到砍不進去就換；只是變鈍就等離遠一點再換
+      const bUse = bml.dur > MCb.dullZero || bml.spare > 0;   // 刀沒救（鈍＋沒備用刃）→ 不拿刀，改用主砲
+      if (st.bladeRl && !st.climb) st.wantW = 'mg';   // 先切到刀換刃（下面看得到敵人時會再重新決定）
+      st.meleeReq = see && dist < MCb.range * 0.85 && a.weapon.active === 'mg' && bladeOn(a.weapon) && bladeReady(bml) && bml.dur > MCb.dullZero;   // v3.9 近身就揮鐮
       // ---- 戰鬥：挑武器、算瞄準點 ----
       st.wantFire = false; st.nailFire = false;
       if (P.grounded && !P.pinned) st.climb = false;
       if (ep && see && dist < 600){
-        if (!st.climb) st.wantW = bladeOn(a.weapon) ? (dist < CONFIG.melee.range * 1.1 ? 'mg' : 'main') : (dist < B.mgRange ? 'mg' : 'main');   // v3.9 帶刀：進入斬擊距離才換刀；帶機槍：90m 內換機槍
+        if (!st.climb) st.wantW = bladeOn(a.weapon) ? (st.bladeRl || (bUse && dist < CONFIG.melee.range * 1.1) ? 'mg' : 'main') : (dist < B.mgRange ? 'mg' : 'main');   // v3.9 帶刀：進入斬擊距離才換刀；帶機槍：90m 內換機槍
         st.dist = dist;
         if (!bladeOn(a.weapon) && st.wantW === 'mg' && st.burst <= -0.5) st.burst = B.mgBurst;   // 機槍點放
         const tf = st.wantW === 'main' ? dist / CN.speed : 0;
@@ -2355,6 +2388,7 @@ function netFrame(dt){
   else if (quiet > NETCFG.lostS){ if (!NET.lostShown){ NET.lostShown = true; netShow('連線不穩，等待對手…', '離開', netCancel); } }
   else if (NET.lostShown){ NET.lostShown = false; netShow(null); }
   netShellsTick(dt);
+  { const m = bot && bot.weapon.melee; if (m){ m.cd = Math.max(0, (m.cd || 0) - dt); bladeGuardTick(m, dt, bot.weapon.active === 'mg' && bladeOn(bot.weapon)); } }   // v4.8 對手格擋的本機鏡像：1 秒上限＋冷卻
 }
 const r2 = x => Math.round(x * 100) / 100, r3 = x => Math.round(x * 1000) / 1000;
 const v3a = (v, f = r2) => [f(v.x), f(v.y), f(v.z)];
@@ -2362,7 +2396,8 @@ function netSnap(){
   const P = state.player, p = P.currPos;
   return { s: Math.round(performance.now()), p: v3a(p), v: v3a(P.vel), y: r3(P.yaw), pi: r3(P.pitch), gy: r3(P.gunY ?? P.yaw), gp: r3(P.gunP ?? P.pitch), g: P.grounded ? 1 : 0,   // v4.3 gy/gp＝砲管方向（對手的紅外線）
     gn: P.grounded && P.groundN ? v3a(P.groundN, r3) : 0, pn: P.pinned && P.pinned.normal ? v3a(P.pinned.normal, r3) : 0,
-    r: state.ropes.map(r => r.hooked ? v3a(r.anchor) : 0), w: state.weapon.active, l: state.weapon.s2 === 'mg' ? 1 : 0, hp: Math.round(local.hp), sf: P.safe ? 1 : 0, fx: NET.fx };
+    r: state.ropes.map(r => r.hooked ? v3a(r.anchor) : 0), w: state.weapon.active, l: state.weapon.s2 === 'mg' ? 1 : 0, hp: Math.round(local.hp), sf: P.safe ? 1 : 0, fx: NET.fx,
+    ...(bladeOn(state.weapon) && state.weapon.melee ? { bd: Math.round(state.weapon.melee.dur ?? CONFIG.melee.durMax), bg: isGuarding(local) ? 1 : 0 } : {}) };   // v4.8 刀刃耐久＋現在能不能格擋（舊版沒有 → 對方照本機鏡像判斷）
 }
 function netSendMs(){ NET.send('ms', { sc: match.score, tl: Math.round(match.timeLeft * 10) / 10, st: match.state }); }
 // 收到對方的訊息
@@ -2416,7 +2451,8 @@ function netApplyRemote(){
   P.groundN = s.gn ? (P.groundN && P.groundN.isVector3 ? P.groundN : V()).fromArray(s.gn) : null;
   P.pinned = s.pn ? { normal: V().fromArray(s.pn), pos: _ns.p.clone() } : null; P.safe = !!s.sf;
   s.r.forEach((r, i) => { a.ropes[i].hooked = !!r; if (r) a.ropes[i].anchor.fromArray(r); });
-  a.weapon.active = s.w; a.weapon.s2 = s.l ? 'mg' : 'blade'; a.hp = s.hp;   // v3.9 對手的 02 欄選裝（決定外觀、格擋）
+  a.weapon.active = s.w; a.weapon.s2 = s.l ? 'mg' : 'blade'; a.hp = s.hp;
+  { const ml = a.weapon.melee || (a.weapon.melee = newBlade()); ml.nbg = s.bg == null ? null : s.bg; if (s.bd != null) ml.dur = s.bd; }   // v4.8 對手的刀刃狀態（格擋判定用）   // v3.9 對手的 02 欄選裝（決定外觀、格擋）
   a.body.setTranslation({ x: _ns.p.x, y: _ns.p.y, z: _ns.p.z }, true); a.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
   a.tgt.mesh.position.copy(_ns.p);
 }
@@ -2427,15 +2463,20 @@ function netQueueFx(ev){
   else if (ev.type === 'cannon'){ const sh = state.weapon.shells[state.weapon.shells.length - 1]; if (sh) NET.fx.push({ k: 'c', p: v3a(sh.p), v: v3a(sh.v) }); }
   else if (ev.type === 'meleeStart') NET.fx.push({ k: 'm', s: ev.side || 1 });   // v3.9 揮鐮動作（傷害照樣走 hit）
   else if (ev.type === 'melee') NET.fx.push({ k: 'mh', h: ev.hit ? 1 : 0, at: v3a(ev.at), s: ev.side || 1 });
-  else if (ev.type === 'block') NET.fx.push({ k: 'b', at: v3a(ev.at), p: ev.parry ? 1 : 0, me: ev.victim === local.pid ? 0 : 1 });   // me=1：被擋的是對方（從對方角度＝自己擋下）
+  else if (ev.type === 'block') NET.fx.push({ k: 'b', at: v3a(ev.at), p: ev.parry ? 1 : 0, me: ev.victim === local.pid ? 0 : 1, bk: ev.kind || 'other' });   // me=1：被擋的是對方（從對方角度＝自己擋下）
+  else if (ev.type === 'glance') NET.fx.push({ k: 'gl', at: v3a(ev.at) });   // v4.8 鈍刀彈開（舊版收到不認得的 k 會略過）
   if (NET.fx.length > 40) NET.fx.shift();
 }
 function netFx(f){
   if (!bot || !bot.active) return;
   if (f.k === 's' || f.k === 'n'){ const n = f.n ? V().fromArray(f.n) : null; remoteEvent({ type: 'shot', from: V().fromArray(f.f), to: V().fromArray(f.to), hit: !!f.h, normal: n, nail: f.k === 'n', by: 'net' }); }
-  else if (f.k === 'm'){ const ml = bot.weapon.melee || (bot.weapon.melee = { cd: 0, t: 0, ph: 0, prev: false }); ml.vis = 0; ml.side = f.s || 1; remoteEvent({ type: 'meleeStart', from: bot.P.currPos.clone(), by: 'net' }); }
-  else if (f.k === 'b') remoteEvent({ type: 'block', at: V().fromArray(f.at), parry: !!f.p, victim: f.me ? local.pid : bot.pid, by: 'net' });
+  else if (f.k === 'm'){ const ml = bot.weapon.melee || (bot.weapon.melee = newBlade()); ml.vis = 0; ml.side = f.s || 1; remoteEvent({ type: 'meleeStart', from: bot.P.currPos.clone(), by: 'net' }); }
+  else if (f.k === 'b'){ if (f.me){ const lw = local.weapon, lml = lw.melee;   // v4.8 對方判定「我擋下了」：在自己這邊開始 1 秒格擋＋扣耐久（舊版對手沒帶 bk → 拼刀算刀、其他算子彈）
+      if (lml && lw.active === 'mg' && bladeOn(lw) && bladeReady(lml)) bladeGuardStart(lml);
+      bladeWear(lml, blockCost(typeof f.bk === 'string' ? f.bk : f.p ? 'melee' : 'mg')); }
+    remoteEvent({ type: 'block', at: V().fromArray(f.at), parry: !!f.p, victim: f.me ? local.pid : bot.pid, by: 'net' }); }
   else if (f.k === 'mh'){ const ml = bot.weapon.melee; if (ml){ ml.hit = !!f.h; if (f.h) ml.stop = 0.07; } remoteEvent({ type: 'melee', hit: !!f.h, at: V().fromArray(f.at), side: f.s || 1, by: 'net' }); }
+  else if (f.k === 'gl') remoteEvent({ type: 'glance', at: V().fromArray(f.at), by: 'net' });
   else if (f.k === 'c'){ bot.weapon.shells.push({ p: V().fromArray(f.p), v: V().fromArray(f.v), life: CONFIG.cannon.range / CONFIG.cannon.speed + 0.5, net: true }); remoteEvent({ type: 'cannon', from: V().fromArray(f.p), by: 'net' }); }
 }
 function netShellsTick(dt){   // 對手的砲彈：只做飛行與爆炸外觀
@@ -2908,12 +2949,21 @@ function weaponTick(cmd, dt){
   if (cmd.swap){ w.active = w.active === 'main' ? 'mg' : w.active === 'mg' ? 'sub' : 'main'; events.push({ type: 'swap' }); }
   if (cmd.swapTo && cmd.swapTo !== w.active){ w.active = cmd.swapTo; events.push({ type: 'swap' }); }   // v2.2 三方向直接選欄位
   // v3.9 螳螂鐮：按下（上升緣）→ 前搖 → 下劈判定 → 硬直；揮刀期間不能開火
-  { const ml = w.melee || (w.melee = { cd: 0, t: 0, ph: 0, prev: false, vis: null }), MC = CONFIG.melee;
+  { const ml = w.melee || (w.melee = newBlade()), MC = CONFIG.melee;
+    if (ml.dur == null){ ml.dur = MC.durMax; ml.spare = MC.spare; ml.rl = 0; ml.gt = 0; }   // 舊存檔／舊物件補欄位
     ml.cd = Math.max(0, ml.cd - dt);
-    const want = w.active === 'mg' && bladeOn(w) && cmd.fire;   // 02 欄＝螳螂鐮（欄位 id 沿用 'mg'，連線與教學不用改）：按下射擊鈕的瞬間出刀
-    if (want && !ml.prev && ml.ph === 0 && ml.cd <= 0 && !P.safe){ ml.ph = 1; ml.t = MC.windup; ml.vis = 0; ml.hit = false; ml.stop = 0; ml.side = -(ml.side || -1); ml.yaw = cmd.gunYaw ?? P.yaw; events.push({ type: 'meleeStart', from: P.currPos.clone(), side: ml.side }); }
+    const holding = w.active === 'mg' && bladeOn(w);
+    // v4.8 換刃：R／換彈鈕（耐久沒滿才換）或斷刃時自動換；舊刃丟掉、備用刃 −1，換刃中不能揮也不能擋
+    if (ml.rl > 0){ ml.rl -= dt; if (ml.rl <= 0){ ml.rl = 0; ml.dur = MC.durMax; ml.brk = false; events.push({ type: 'reloaded', blade: true }); } }
+    else if (holding && !ml.ph && ml.spare > 0 && ((cmd.reload && ml.dur < MC.durMax) || ml.dur <= 0)){ bladeGuardEnd(ml); ml.spare--; ml.rl = MC.reload; events.push({ type: 'reload', blade: true }); }
+    if (ml.dur <= 0 && !ml.brk){ ml.brk = true; events.push({ type: 'bladeBroken', spare: ml.spare }); }
+    const want = holding && cmd.fire;   // 02 欄＝螳螂鐮（欄位 id 沿用 'mg'，連線與教學不用改）：按下射擊鈕的瞬間出刀
+    if (want && !ml.prev && ml.ph === 0 && ml.cd <= 0 && ml.dur > 0 && !(ml.rl > 0) && !P.safe){ ml.gt = 0;   // 格擋中出刀＝反擊：格擋直接結束（冷卻由這一刀算）
+      ml.ph = 1; ml.t = MC.windup; ml.vis = 0; ml.hit = false; ml.stop = 0; ml.side = -(ml.side || -1); ml.yaw = cmd.gunYaw ?? P.yaw; events.push({ type: 'meleeStart', from: P.currPos.clone(), side: ml.side }); }
+    else if (want && !ml.prev && ml.dur <= 0) events.push({ type: 'bladeBroken', spare: ml.spare, again: true });
     ml.prev = !!want;
-    if (ml.ph === 1){ ml.t -= dt; if (ml.t <= 0){ const hit = meleeStrike(cmd.gunYaw ?? ml.yaw); ml.ph = 2; ml.t = hit ? MC.recoverHit : MC.recoverMiss; ml.cd = MC.cooldown; } }
+    bladeGuardTick(ml, dt, holding && !ml.ph && !(ml.rl > 0) && ml.dur > 0);   // 格擋最多 1 秒；切走武器也算結束 → 進冷卻
+    if (ml.ph === 1){ ml.t -= dt; if (ml.t <= 0){ const hit = meleeStrike(cmd.gunYaw ?? ml.yaw); ml.ph = 2; ml.t = hit ? MC.recoverHit : MC.recoverMiss; ml.cd = bladeCd(); } }
     else if (ml.ph === 2){ ml.t -= dt; if (ml.t <= 0) ml.ph = 0; }
     if (ml.ph || (w.active === 'mg' && bladeOn(w))){ w.prevFire = cmd.fire; w.blocked = !!P.safe; shellsTick(dt); return; } }   // 揮刀期間不能開火；02 欄沒有槍
   const fireEdge = cmd.fire && !w.prevFire; w.prevFire = cmd.fire;
@@ -3012,7 +3062,13 @@ function meleeStrike(yaw){
     if (h && targetsByCollider.get(h.handle) !== t && h.toi < dE - 1.5) continue;   // 中間有地形擋住
     if (d < bd){ bd = d; best = t; } }
   const at = best ? best.mesh.position.clone() : o.clone().addScaledVector(fwd, MC.range * 0.6);
-  let landed = false; if (best){ dmgKind = 'melee'; try { landed = damageTarget(best, MC.dmg); } finally { dmgKind = null; } }
+  const ml0 = state.weapon.melee, dmg = PROMO || !ml0 ? MC.dmg : bladeDmg(ml0.dur ?? MC.durMax);   // v4.8 刀越鈍傷害越低（用揮下去那一刻的耐久）
+  let landed = false, glance = false;
+  if (best){ dmgKind = 'melee';
+    try { if (dmg > 0 || (best.actor && curActor && guardBlocks(best.actor, curActor.P.currPos))) landed = damageTarget(best, dmg) && dmg > 0;   // 對方在格擋＝照樣拼刀
+      else glance = true; } finally { dmgKind = null; } }   // 鈍到砍不進去：只有火花＋金屬聲，沒有傷害
+  bladeWear(ml0, MC.durSwing);   // 每揮一刀都磨損（不論有沒有砍中）
+  if (glance) events.push({ type: 'glance', at: at.clone() });
   { const ml = state.weapon.melee; if (ml){ ml.hit = landed; if (landed) ml.stop = 0.07; } }   // v3.9b 刀光停留／揮臂頓一下（只是畫面）
   events.push({ type: 'melee', hit: landed, at, from: o.clone(), side: state.weapon.melee ? state.weapon.melee.side : 1 });
   return landed;
@@ -3142,7 +3198,8 @@ function actorEnvTick(dt){   // v3.0 每台機體各自：後座回復、保護�
       P.onPad = true; P.fuel = Math.min(CONFIG.boost.fuel, P.fuel + CONFIG.boost.regenPad * dt);
       const w = state.weapon; w.reserve = Math.min(W.reserve, (w.reserve ?? W.reserve) + CONFIG.supply.ammoPerSec * dt);   // v4.1 補給平台補備用彈匣
       w.nail.reserve = CONFIG.nail.reserve; if (!w.nail.reloading) w.nail.ammo = CONFIG.nail.mag;
-      w.cannon.reserve = Math.min(CN.reserve, w.cannon.reserve + CN.ammoPerSec * dt); } } }
+      w.cannon.reserve = Math.min(CN.reserve, w.cannon.reserve + CN.ammoPerSec * dt);
+      if (w.melee && w.melee.spare != null) w.melee.spare = CONFIG.melee.spare; } } }   // v4.8 補給平台補回備用刃（不會直接修好手上這把）
   if (curActor) curActor.tgt.mesh.position.set(_p.x, _p.y, _p.z);   // 給別台瞄準／判定用的位置
 }
 function worldTick(dt){
@@ -3675,6 +3732,7 @@ function remoteEvent(ev){
     case 'cannon': { const mz = M2 ? M2.muzzle('cannon', V()) : null, shl = bot.weapon.shells[bot.weapon.shells.length - 1];
       if (mz){ spawnSparks(mz, null); if (shl && !shl.voff){ shl.voff = mz.clone().sub(shl.p); shl.vt = 0.2; } } if (M2) M2.recoil(); sfx(vol > 0.5 ? 'cannon' : 'boom', vol); break; }
     case 'meleeStart': sfx('slash', vol); break;
+    case 'glance': sfx('clang', 0.5 * vol); spawnSparks(ev.at, null); break;   // v4.8 對方的鈍刀砍不進去
     case 'block': sfx('clang', 0.8); for (let k = 0; k < 4; k++) spawnSparks(ev.at, null); if (ev.victim === local.pid) toast(ev.parry ? '格擋！刀被彈開' : '擋下！', 700); else if (ev.parry) toast('被格擋！', 700); break;
     case 'melee': if (bot && bot.mech) slashSparks(bot.mech, ev.side, ev.hit); if (ev.hit){ sfx('slashHit', 1); spawnBoom(ev.at, null); } break;
     case 'boom': sfx('boom', 0.6); spawnBoom(ev.at, ev.normal); break;
@@ -4279,7 +4337,7 @@ const miEl = document.getElementById('mInfo'), kfEl = document.getElementById('k
 const MI = { shown: false, hp: -1, hitT: 0 }, miLast = {};
 function miSet(k, el, prop, v){ if (miLast[k] === v) return; miLast[k] = v; if (prop === 'text') el.textContent = v; else if (prop === 'class') el.setAttribute('class', v); else el.style.setProperty(prop, v); }
 const miQ = id => document.getElementById(id);
-const miE = { hp: miQ('miHp'), hpV: miQ('miHpV'), bst: miQ('miBst'), bstV: miQ('miBstV'), slot: miQ('miSlot'), wn: miQ('miWName'), am: miQ('miAmmo'), wb: miQ('miWBar') };
+const miE = { hp: miQ('miHp'), hpV: miQ('miHpV'), bst: miQ('miBst'), bstV: miQ('miBstV'), slot: miQ('miSlot'), wn: miQ('miWName'), am: miQ('miAmmo'), wb: miQ('miWBar'), bd: miQ('miBd'), bdV: miQ('miBdV'), bdS: miQ('miBdS'), bdRow: miQ('miBdRow') };
 miE.kind = miE.wb.parentElement.parentElement.insertBefore(document.createElement('span'), miE.wb.parentElement);
 // 機體剪影的顏色：遊戲沒有部位傷害，所以依整體 HP 分段（>60% 青綠、>30% 黃、以下紅色閃爍），被打中閃白 0.12 秒
 function hpCol(fr){ return fr > 0.6 ? 'rgb(127,245,224)' : fr > 0.3 ? '#ffc94a' : (Math.floor(performance.now() / 260) % 2 ? '#ff5a48' : '#ff9a80'); }
@@ -4301,7 +4359,11 @@ function miUpdate(dt){
   const sub = w.active === 'sub', isB = w.active === 'mg' && bladeOn(w), isG = w.active === 'mg' && !isB, ml = w.melee || {};
   let am, bar, blink = false;
   if (sub){ const N = w.nail; blink = N.reloading > 0; am = blink ? 'RLD' : N.ammo + '/' + N.reserve; bar = blink ? 1 - N.reloading / CONFIG.nail.reload : N.ammo / CONFIG.nail.mag; }
-  else if (isB){ am = ml.cd > 0 ? ml.cd.toFixed(1) + 's' : 'READY'; bar = 1 - (ml.cd || 0) / CONFIG.melee.cooldown; }
+  else if (isB){ const MC = CONFIG.melee;   // v4.8 換刃 RLD → 斷刃 BROKEN → 格擋中 GUARD（剩餘時間）→ 冷卻秒數 → READY
+    if (ml.rl > 0){ blink = true; am = 'RLD'; bar = 1 - ml.rl / MC.reload; }
+    else if ((ml.dur ?? 1) <= 0){ blink = true; am = 'BROKEN'; bar = 0; }
+    else if (ml.gt > 0){ am = 'GUARD'; bar = ml.gt / MC.guardMax; }
+    else { am = ml.cd > 0 ? ml.cd.toFixed(1) + 's' : 'READY'; bar = 1 - (ml.cd || 0) / bladeCd(); } }
   else if (isG){ blink = w.reloading > 0; am = blink ? 'RLD' : Math.floor(w.ammo) + '/' + Math.floor(w.reserve ?? 0); bar = blink ? 1 - w.reloading / W.reload : w.ammo / W.ammo; }
   else { const C = w.cannon; blink = C.reloading > 0; am = blink ? 'RLD' : C.ammo + '/' + Math.floor(C.reserve); bar = blink ? 1 - C.reloading / CN.reload : C.ammo / CONFIG.cannon.mag; }
   if (w.blocked){ am = 'SAFE'; blink = false; }   // 保護區不能開火
@@ -4311,7 +4373,13 @@ function miUpdate(dt){
   miSet('wn', miE.wn, 'text', sub ? _T('釘槍') : isB ? _T('螳螂鐮') : isG ? '14.5mm MG' : '57mm');
   miSet('am', miE.am, 'text', am); miSet('amb', miE.am, 'class', blink ? 'blink' : '');
   miSet('wc', miE.am.parentElement, '--wc', wc); miSet('wbf', miE.wb, '--f', (clamp(bar, 0, 1) * 100).toFixed(1) + '%');
-  miSet('wbc', miE.wb, '--bc', blink ? '#9fe8ff' : isB && !(ml.cd > 0) ? 'rgb(225,255,250)' : wc);
+  miSet('wbc', miE.wb, '--bc', blink ? (isB && !(ml.rl > 0) ? '#ff5a48' : '#9fe8ff') : isB && !(ml.cd > 0) ? 'rgb(225,255,250)' : wc);
+  // v4.8 刀刃耐久列（02 選裝螳螂鐮時一直顯示，不管目前拿哪把武器）：條＝耐久（≥60 青綠、鈍 黃、≤25 紅＝砍不進去）、數字、SP＝備用刃
+  const hasB = bladeOn(w) && !!w.melee; if (miLast.nobdC !== hasB){ miLast.nobdC = hasB; miEl.classList.toggle('nobd', !hasB); }
+  if (hasB){ const MC = CONFIG.melee, d = Math.max(0, Math.round(ml.dur ?? MC.durMax)), sp = ml.spare ?? 0;
+    miSet('bdf', miE.bd, '--f', (d / MC.durMax * 100).toFixed(1) + '%'); miSet('bdc', miE.bd, '--bc', d >= MC.dullFull ? 'rgb(127,245,224)' : d > MC.dullZero ? '#ffc94a' : '#ff5a48');
+    miSet('bdv', miE.bdV, 'text', ml.rl > 0 ? 'RLD' : d <= 0 ? _T('斷刃') : String(d)); miSet('bds', miE.bdS, 'text', 'SP ' + sp); miSet('bdsc', miE.bdS, 'class', sp > 0 ? '' : 'no');
+    miSet('bdr', miE.bdRow, 'class', 'mi-row mi-bd' + (ml.gt > 0 ? ' grd' : '') + (ml.rl > 0 ? ' rld' : d <= 0 ? ' brk' : '')); }
 }
 // ---- 擊破卡片 ----
 // 死因（實際存在的傷害來源）：cannon＝57mm 直擊／爆風、mg＝14.5mm 機槍、melee＝螳螂鐮、nail＝腿部釘槍、void＝掉進虛空（沒有擊破者）、other＝其他／舊版連線沒帶死因
@@ -4456,7 +4524,7 @@ function drawHUD(dt){
     }
     // 兩側梯狀刻度：左＝推進燃料、右＝彈量（由下往上點亮）
     const nL = 9, gapL = 0.3 * R0, top = cy - (nL - 1) / 2 * gapL;
-    const fuelFr = P.fuel / CONFIG.boost.fuel, isMG = wst2.active === 'mg' && bladeOn(wst2), isGun = wst2.active === 'mg' && !isMG, mlS = wst2.melee || {}, ammoFr = sub ? wst2.nail.ammo / CONFIG.nail.mag : isMG ? 1 - (mlS.cd || 0) / CONFIG.melee.cooldown : isGun ? wst2.ammo / W.ammo : wst2.cannon.ammo / CONFIG.cannon.mag;   // isMG＝螳螂鐮、isGun＝機槍（選裝）   // v3.9 02＝螳螂鐮：右側刻度改成冷卻
+    const fuelFr = P.fuel / CONFIG.boost.fuel, isMG = wst2.active === 'mg' && bladeOn(wst2), isGun = wst2.active === 'mg' && !isMG, mlS = wst2.melee || {}, ammoFr = sub ? wst2.nail.ammo / CONFIG.nail.mag : isMG ? (mlS.dur ?? CONFIG.melee.durMax) / CONFIG.melee.durMax : isGun ? wst2.ammo / W.ammo : wst2.cannon.ammo / CONFIG.cannon.mag;   // isMG＝螳螂鐮、isGun＝機槍（選裝）   // v3.9 02＝螳螂鐮：右側刻度＝刀刃耐久（v4.8；冷卻看準星中央的圓弧）
     const lowFuel = fuelFr < 0.25, blink = Math.floor(performance.now() / 250) % 2;
     for (let i = 0; i < nL; i++){
       const y = top + i * gapL; if (Math.abs(y - yL) < gapL * 0.5) continue;
@@ -4497,7 +4565,7 @@ function drawHUD(dt){
     // 內圈括弧＝射擊散布（散得越開括弧越開），各帶兩條刻度
     const spread = currentSpread(), Ri = (0.62 + spread * 0.08 + crossPulse * 0.08) * R0, hb = 0.48;
     if (isMG){   // v3.9 螳螂鐮準星：大 X（兩道刃痕）；剛揮的那一邊亮起；敵人進入斬擊範圍時兩道軌跡亮起來；冷卻中變暗
-      const ready = !(mlS.cd > 0) && !mlS.ph, inR = meleeInRange(), Lx = 1.05 * R0, Ly = 0.8 * R0;
+      const ready = bladeReady(mlS), inR = meleeInRange(), Lx = 1.05 * R0, Ly = 0.8 * R0;
       const lastSide = mlS.vis != null ? (mlS.side || 1) : 0, glow = mlS.vis != null ? clamp(1 - Math.max(0, mlS.vis - 0.25) / 0.6, 0, 1) : 0;
       // v3.9b 每一刀畫成兩端收尖的月牙（外緣、內緣兩條二次曲線共用端點），往下外側鼓；剛揮的那邊有亮點沿弧劃過
       const kk = 0.7071, bow = 0.26 * R0, th = 2 * sc, v = mlS.vis;
@@ -4514,7 +4582,8 @@ function drawHUD(dt){
           const bx = (1 - q) * (1 - q) * P0x + 2 * (1 - q) * q * Cx + q * q * P1x, by = (1 - q) * (1 - q) * P0y + 2 * (1 - q) * q * Cy + q * q * P1y;
           c.shadowBlur = 12; c.fillStyle = '#ffffff'; c.beginPath(); c.arc(bx, by, 3 * sc, 0, Math.PI * 2); c.fill(); }
         c.restore(); }
-      if (!ready && mlS.cd > 0){ c.strokeStyle = MINT; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, 0.42 * R0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - mlS.cd / CONFIG.melee.cooldown)); c.stroke(); }
+      if (!ready && mlS.cd > 0){ c.strokeStyle = MINT; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, 0.42 * R0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - mlS.cd / bladeCd())); c.stroke(); }
+      if (mlS.gt > 0){ c.strokeStyle = 'rgba(225,255,250,.9)'; c.lineWidth = 3; c.beginPath(); c.arc(cx, cy, 0.5 * R0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (mlS.gt / CONFIG.melee.guardMax)); c.stroke(); }   // v4.8 格擋剩餘時間
     } else {
     for (const mid of [Math.PI, 0]){
       c.strokeStyle = hot; c.lineWidth = 1.8; c.beginPath(); c.arc(cx, cy, Ri, mid - hb, mid + hb); c.stroke();
@@ -4534,7 +4603,7 @@ function drawHUD(dt){
     if (hitMarkT > 0){ for (const [a2,b2] of [[-1,-1],[1,-1],[-1,1],[1,1]]) line([[cx+a2*7*sc, cy+b2*7*sc], [cx+a2*13*sc, cy+b2*13*sc]], '#ff5050', 2); }
     // 彈種資訊（準星附近）：弧頂＝彈量、弧頂上方＝彈種；準星下方＝武器欄位
     c.shadowBlur = 4;
-    const cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : isMG ? (mlS.cd > 0 ? mlS.cd.toFixed(1) + 's' : 'READY') : isGun ? (wst2.reloading > 0 ? 'RLD' : Math.floor(wst2.ammo) + '/' + Math.floor(wst2.reserve ?? 0)) : (wst2.cannon.reloading > 0 ? 'RLD' : wst2.cannon.ammo + '/' + Math.floor(wst2.cannon.reserve));
+    const cnt = sub ? (wst2.nail.reloading > 0 ? 'RLD' : wst2.nail.ammo + '/' + wst2.nail.reserve) : isMG ? (mlS.rl > 0 ? 'RLD' : (mlS.dur ?? 1) <= 0 ? 'BROKEN' : mlS.gt > 0 ? 'GUARD' : mlS.cd > 0 ? mlS.cd.toFixed(1) + 's' : 'READY') : isGun ? (wst2.reloading > 0 ? 'RLD' : Math.floor(wst2.ammo) + '/' + Math.floor(wst2.reserve ?? 0)) : (wst2.cannon.reloading > 0 ? 'RLD' : wst2.cannon.ammo + '/' + Math.floor(wst2.cannon.reserve));
     const wcol = blocked ? '#9aa6b2' : sub ? '#ffd770' : isMG || isGun ? '#ffc890' : MINT;
     c.font = `700 ${Math.round(13*sc)}px ui-monospace, Menlo, monospace`; c.fillStyle = wcol; c.textAlign = 'center';
     
@@ -4600,7 +4669,7 @@ function updateButtons(){
     if (lastUI['c'+i] !== cls){ lastUI['c'+i] = cls; el.classList.toggle('hooked', cls === 'hooked'); el.classList.toggle('none', cls === 'none'); el.classList.toggle('thrustmode', cls === 'thrustmode'); }
   });
   const w = state.weapon, sub = w.active === 'sub', mg = w.active === 'mg';
-  const ft = sub ? (w.nail.reloading > 0 ? IC_RELOAD : w.nail.ammo + '/' + w.nail.reserve) : mg ? (bladeOn(w) ? (w.melee && w.melee.cd > 0 ? w.melee.cd.toFixed(1) + 's' : '斬') : (w.reloading > 0 ? IC_RELOAD : Math.floor(w.ammo) + '/' + Math.floor(w.reserve ?? 0))) : (w.cannon.reloading > 0 ? IC_RELOAD : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
+  const ft = sub ? (w.nail.reloading > 0 ? IC_RELOAD : w.nail.ammo + '/' + w.nail.reserve) : mg ? (bladeOn(w) ? (w.melee && w.melee.rl > 0 ? IC_RELOAD : w.melee && w.melee.dur <= 0 ? '斷' : w.melee && w.melee.cd > 0 ? w.melee.cd.toFixed(1) + 's' : '斬') : (w.reloading > 0 ? IC_RELOAD : Math.floor(w.ammo) + '/' + Math.floor(w.reserve ?? 0))) : (w.cannon.reloading > 0 ? IC_RELOAD : w.cannon.ammo + '/' + Math.floor(w.cannon.reserve));
   if (lastUI.f !== ft){ lastUI.f = ft; elSF.innerHTML = ft; }
   const fl = (w.blocked ? 'x' : '') + (sub ? 'sub' : mg ? iconKey('mg') : 'main');
   if (lastUI.fl !== fl){ lastUI.fl = fl; document.getElementById('lFire').innerHTML = iconSVG(w.active); elFire.classList.toggle('none', !!w.blocked); }
@@ -4664,6 +4733,9 @@ function frame(now){
       case 'meleeStart': sfx('slash'); buzz(15); break;
       case 'block': sfx('clang'); for (let k = 0; k < 4; k++) spawnSparks(ev.at, null); if (ev.victim === local.pid){ crossPulse = 1; toast(ev.parry ? '格擋！刀被彈開' : '擋下！', 700); buzz(25); } else if (ev.parry) toast('被格擋！', 700); break;
       case 'melee': slashSparks(mech, ev.side, ev.hit); if (ev.hit){ sfx('slashHit'); spawnBoom(ev.at, null); hitMarkT = 0.25; flashT = 0.12; if (opts.shake){ shakeT = CONFIG.camera.shakeDur; shakeAmp = 0.5 * CONFIG.camera.shakeScale; } buzz(60); } else sfx('miss'); break;
+      case 'glance': sfx('clang', 0.6); for (let k = 0; k < 2; k++) spawnSparks(ev.at, null); toast('刀太鈍，砍不進去！', 900); buzz(20); break;   // v4.8
+      case 'bladeBroken': toast(ev.spare > 0 ? '斷刃！按 R 換上備用刃' : '斷刃！到補給平台補備用刃', ev.again ? 900 : 1600); if (!ev.again){ sfx('clang', 1); buzz(40); } break;
+      case 'reload': if (ev.blade) sfx('clank', 0.3); break;
       case 'bottomFling': sfx('clank', 0.4); buzz(15); flashT = 0.06; break;
       case 'apex': crossPulse = 0.4; break;
       case 'hookMiss': sfx('miss'); break;
@@ -4965,7 +5037,7 @@ $('optPaint').addEventListener('change', () => menuPaints());
 $('optPaint').addEventListener('change', () => profThumb());   // v4.5 換塗裝 → 大廳機體縮圖跟著換
 $('mHangar').addEventListener('click', () => menuGo('hangar'));
 // v3.9 機庫選裝：02 欄＝螳螂鐮／14.5mm 機槍（存在本機，下一場開始生效；練習中換也立刻生效）
-const S2_INFO = { blade: ['螳螂鐮', '近身一刀擊破（冷卻 3 秒）；拿著刀時正面 ±60° 的子彈、砲彈、刀都擋得掉'], mg: ['14.5mm 機槍', '每分鐘 600 發、射程 500m；不能格擋'] };
+const S2_INFO = { blade: ['螳螂鐮', '近身一刀擊破（冷卻 6 秒）；架刀待命時正面 ±60° 的子彈、砲彈、刀自動格擋，最多 1 秒，之後和揮刀共用冷卻；刀刃耐久 100＋1 把備用刃（R 換刃、補給平台補），越鈍越砍不進去'], mg: ['14.5mm 機槍', '每分鐘 600 發、射程 500m；不能格擋'] };
 function menuS2(){ $('mS2').textContent = _T(S2_INFO[LOADOUT.s2][0]); $('mS2Note').textContent = _T(S2_INFO[LOADOUT.s2][1]);
   for (const im of document.querySelectorAll('img.m-thumb[data-part]')) if (PART_IMG[im.dataset.part]) im.src = PART_IMG[im.dataset.part];
   if (PART_IMG[LOADOUT.s2]) $('mS2Img').src = PART_IMG[LOADOUT.s2];   // 選裝的零件圖
@@ -5250,7 +5322,7 @@ addEventListener('wfm:lang', () => { try {
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
 window.__game = { hudDbg, setView, feedAv, dmgAs, netOnMsg, sun, renderer, scene, MAP_ID, tutorial, tutSig, match, actors, local, get bot(){ return bot; }, ensureBot, withActor, buildNav, get NAV(){ return NAV; }, navPath, practiceTargets, mech, tpCam, buildCommand, castRay, rocks, islands, get targets(){ return targets; }, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
-Object.assign(window.__game, { actorDamage, damageTarget, netQuick, netHostCode, netJoinCode, netCancel, NET, netDiag }); Object.defineProperty(window.__game, 'running', { get: () => running });   // v3.8 連線測試用
+Object.assign(window.__game, { weaponTick, isGuarding, guardBlocks, bladeDmg, bladeReady, newBlade, netFx, netSnap, actorEnvTick, supplyPads, events, actorDamage, damageTarget, netQuick, netHostCode, netJoinCode, netCancel, NET, netDiag }); Object.defineProperty(window.__game, 'running', { get: () => running });   // v3.8 連線測試用
 </script>
 </body>
 </html>
