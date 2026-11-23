@@ -23,7 +23,8 @@
   #flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; }
   #hurt { position:fixed; inset:0; pointer-events:none; opacity:0; background:radial-gradient(ellipse at center, rgba(255,0,0,0) 45%, rgba(255,30,30,.55) 100%); }
   #result { position:fixed; inset:0; z-index:7; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:rgba(4,8,14,.82); color:#e8f6ff; text-align:center; }
-  #result h2 { margin:0; font-size:clamp(28px, 9vmin, 54px); letter-spacing:.2em; } #result .sc { font-size:clamp(18px, 6vmin, 30px); color:#9fe4ff; }
+  #result h2 { margin:0; font-size:clamp(28px, 9vmin, 54px); letter-spacing:.2em; } #result .sc { font-size:clamp(18px, 6vmin, 30px); color:#9fe4ff; max-width:92vw; overflow-wrap:anywhere; }
+  #result .sc .rn { display:inline-block; max-width:min(60vw, 100%); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom; }   /* v4.5 對手名稱最多 32 寬：放得下就全顯示，太長才省略號 */
   #result button { min-width:180px; min-height:48px; border-radius:12px; border:1px solid rgba(140,220,255,.5); background:rgba(60,170,230,.18); color:#eaf8ff; font-size:17px; }
   .go2 { background:linear-gradient(180deg,#ff9a50,#e0602a) !important; }
   .go3 { background:linear-gradient(180deg,#c78bff,#7a3fe0) !important; }
@@ -298,7 +299,7 @@
   @media (pointer:coarse) { #start .kb { display:none; } }
   #start .go { margin-top:10px; font-size:18px; padding:12px 40px; border-radius:12px; background:#1e6fa8; color:#fff; border:none; }
   #toast { position:fixed; left:50%; top:calc(46px + var(--st)); transform:translateX(-50%); background:rgba(8,16,24,.9); border:1px solid rgba(255,176,112,.6);
-    color:#ffd0a0; padding:6px 12px; border-radius:10px; font-size:13px; z-index:7; display:none; max-width:86vw; text-align:center; pointer-events:none; }
+    color:#ffd0a0; padding:6px 12px; border-radius:10px; font-size:13px; z-index:7; display:none; max-width:86vw; overflow-wrap:anywhere; text-align:center; pointer-events:none; }
   #status { margin-top:8px; color:#ffb070; font-size:13px; min-height:16px; }
   #rotate { display:none; z-index:11; background:#05090f; }
   #rotate .ph { font-size:44px; display:inline-block; animation:rot 1.6s ease-in-out infinite; }
@@ -4397,13 +4398,14 @@ function drawHUD(dt){
   const acc = wst.fired ? Math.round(wst.hits / wst.fired * 100) : 0;
   c.textAlign = 'center'; c.font = `600 ${Math.round(15*fs)}px sans-serif`;
   if (match.mode === 'ai' || match.mode === 'net'){   // v3.0 對戰：比分、時間、雙方血條、擊破訊息
-    const tl = Math.ceil(match.timeLeft), line = `${_T('你')} ${match.score[local.team]}  :  ${match.score[1 - local.team]} ${bot ? _TN(bot.name) : 'AI'}      ${Math.floor(tl / 60)}:${String(tl % 60).padStart(2, '0')}`;
+    const tl = Math.ceil(match.timeLeft), pre = `${_T('你')} ${match.score[local.team]}  :  ${match.score[1 - local.team]} `, post = `      ${Math.floor(tl / 60)}:${String(tl % 60).padStart(2, '0')}`;
+    const line = pre + clipPx(c, bot ? _TN(bot.name) : 'AI', clamp(w - 350 - c.measureText(pre + post).width, 60, 260 * fs)) + post;   // v4.5 對手名稱（最多 32 寬）：比分列別蓋到左上按鈕，放不下才加「…」
     const tw = c.measureText(line).width, bw = Math.max(tw + 40, 260 * fs), by = 8 + 24 * fs + 8;
     c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(cx - bw/2, 6, bw, 24*fs + 22);
     c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs);
     const hb = (x, k, col, right) => { const w = bw/2 - 14; c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(x, by, w, 6); c.fillStyle = col; c.fillRect(right ? x + w * (1 - k) : x, by, w * k, 6); };
     hb(cx - bw/2 + 8, local.hp / CONFIG.pvp.hp, '#5fe0ff', false); if (bot) hb(cx + 6, bot.hp / CONFIG.pvp.hp, '#ffa040', true);
-    c.font = `600 ${Math.round(13*fs)}px sans-serif`; match.feed.forEach((f2, i) => { c.fillStyle = `rgba(255,220,180,${Math.min(1, f2.t)})`; c.fillText(_T(f2.msg), cx, by + 24*fs + i * 18*fs); });
+    c.font = `600 ${Math.round(13*fs)}px sans-serif`; match.feed.forEach((f2, i) => { c.fillStyle = `rgba(255,220,180,${Math.min(1, f2.t)})`; c.fillText(clipPx(c, _T(f2.msg), Math.min(w - 24, 560 * fs)), cx, by + 24*fs + i * 18*fs); });   // v4.5 長名字：放不下才截斷加「…」
   } else if (!tutorial.on) {   // 教學進行中：上方讓給教學進度列
   c.fillStyle = 'rgba(0,0,0,.35)'; const line = `${sp.toFixed(0)} m/s   ${_T('命中')} ${acc}%   ${_T('墜落')} ${P.falls || 0}`;
   const tw = c.measureText(line).width; c.fillRect(cx - tw/2 - 10, 8, tw + 20, 24*fs + 4);
@@ -4693,6 +4695,9 @@ function fitName(el, min = .6, lines = 1){ if (!el) return; el.style.fontSize = 
   const f0 = parseFloat(getComputedStyle(el).fontSize); let f = f0;
   const over = () => el.scrollWidth > el.clientWidth + 1 || (lines > 1 && el.scrollHeight > f * 1.2 * lines + 2);
   while (over() && f > f0 * min){ f = Math.max(f0 * min, f - 1); el.style.fontSize = f + 'px'; } }
+// v4.5 畫布文字（比分列、擊破訊息）：超過 max 像素才從尾巴照字碼點砍掉並補「…」（用目前 c.font 量）
+function clipPx(c, s, max){ s = String(s); if (c.measureText(s).width <= max) return s; const a = Array.from(s);
+  while (a.length > 1 && c.measureText(a.join('') + '…').width > max) a.pop(); return a.join('').trimEnd() + '…'; }
 function fitNames(){ fitName($('mName'), .7); if ($('mModal').classList.contains('on')) fitName($('pfName'), .62, 2); }
 addEventListener('resize', () => { if (menuOn()) fitNames(); });
 function profName(){ try { return nameClamp((localStorage.getItem('wfm.name') || '').trim()).trim() || 'PILOT'; } catch (_){ return 'PILOT'; } }
@@ -4921,7 +4926,8 @@ function showResult(msg){ const me = match.score[local.team], op = match.score[1
   if (!msg) recordResult(match.mode, win ? 'w' : draw ? 'd' : 'l');
   document.getElementById('resTitle').textContent = _T(draw ? '平手' : win ? '勝利' : '敗北');
   document.getElementById('resTitle').style.color = draw ? '#e8f6ff' : win ? '#63e6ff' : '#ff8a6a';
-  document.getElementById('resScore').textContent = `${_T('你')} ${me} ： ${op} ${bot ? _TN(bot.name) : 'AI'}` + (msg ? _T('（{m}）', { m: _T(msg) }) : '');
+  const sc = document.getElementById('resScore'), rn = document.createElement('span'); rn.className = 'rn'; rn.textContent = bot ? _TN(bot.name) : 'AI'; rn.title = rn.textContent;   // v4.5 對手名稱單獨一段：太長就省略號，不擠壞比分
+  sc.replaceChildren(`${_T('你')} ${me} ： ${op} `, rn, msg ? _T('（{m}）', { m: _T(msg) }) : '');
   document.getElementById('resAgain').textContent = _T(match.mode === 'net' ? (NET.state === 'match' ? '再來一場' : '再找一場') : '再來一場');
   document.getElementById('result').style.display = 'flex'; }
 function hudMatch(){ if (match.state !== 'over') document.getElementById('result').style.display = 'none'; }
