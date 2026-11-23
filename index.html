@@ -478,7 +478,7 @@
   <div class="vs-count"><span>開打倒數</span><b id="vsCount">3</b></div></div>
 <div id="start" class="loading">
   <div id="mProfile" class="m-profile" role="button" aria-label="個人資料"><div class="m-av">◆</div><div class="m-pt"><b id="mName">PILOT</b><small id="mRec">對戰紀錄</small></div></div>
-  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v4.1（測試版：螳螂鐮＋連線＋電腦操作）</span></div>
+  <div class="m-title"><b>WIREFRAMECH</b><span>鋼弦機兵 v4.5（螳螂鐮＋線上對戰＋電腦操作）</span></div>
   <button id="mSet" class="m-icon" aria-label="設定">⚙</button>
   <div class="m-scr on" data-scr="home">
     <div class="m-left">
@@ -594,7 +594,7 @@ const norm = s => String(s).replace(/\s+/g, ' ').trim();
 const D = {
   // 視窗標題、首頁
   "WIREFRAMECH 鋼弦機兵": ["WIREFRAMECH 鋼弦機兵", "WIREFRAMECH", "WIREFRAMECH"],
-  "鋼弦機兵 v4.1（測試版：螳螂鐮＋連線＋電腦操作）": ["v4.1 テスト版：マンティス＋オンライン＋PC操作", "v4.1 (테스트 버전: 맨티스 블레이드 + 온라인 + PC 조작)", "v4.1 (Test build: Mantis Blade + Online + PC controls)"],
+  "鋼弦機兵 v4.5（螳螂鐮＋線上對戰＋電腦操作）": ["v4.5（マンティス＋オンライン対戦＋PC操作）", "v4.5 (맨티스 블레이드 + 온라인 대전 + PC 조작)", "v4.5 (Mantis Blade + Online PvP + PC controls)"],
   "個人資料": ["プロフィール", "프로필", "Profile"],
   "對戰紀錄": ["戦績", "전적", "Record"],
   "單機遊玩": ["ひとりで遊ぶ", "싱글 플레이", "Single player"],
@@ -4670,7 +4670,7 @@ function menuGo(scr){
   menuNetMsg(); menuProfile();
 }
 // v3.9d 還沒開放的功能先上鎖：正式版鎖線上大廳（v4.4 個人資料已開放；UNLOCK_ALL 先留著給之後的新功能測試用）
-const BUILD_ONLINE = true;   // 正式版（main）＝false
+const BUILD_ONLINE = true;   // v4.5 正式版起線上大廳開放（vercel.app 與 itch.io 都能連線）
 const UNLOCK_ALL = new URLSearchParams(location.search).get('unlock') === '1';
 const LOCKS = { mToLobby: !BUILD_ONLINE, mHangar: false, mProfile: false };   // v4.4 個人資料開放（直立名片）   // v3.9 有了螳螂鐮選裝 → 機庫開放   // 線上只看版本開關：正式版不能用網址參數打開
 function menuLocks(){
