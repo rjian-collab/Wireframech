@@ -579,7 +579,7 @@
       <ul class="m-load"><li><img class="m-thumb" data-part="cannon" alt=""><b>01</b> 主武　57mm 滑膛炮</li><li><img class="m-thumb" id="mS2Img" alt=""><b>02</b> 副武　<span id="mS2"></span></li><li><img class="m-thumb" data-part="nail" alt=""><b>03</b> 腿部　釘槍</li><li><img class="m-thumb" data-part="dish" alt=""><b>＋</b> 雙鋼索（固定配備）</li></ul>
       <div class="m-h">02 副武選裝</div><div id="mS2Pick" class="m-paints m-pick"><button data-s2="blade"><img class="m-thumb" data-part="blade" alt="">螳螂鐮</button><button data-s2="mg"><img class="m-thumb" data-part="mg" alt="">14.5mm 機槍</button></div>
       <div class="m-note" id="mS2Note"></div>
-      <div class="m-note">03 釘槍：每根 400；打中敵機＝禁錮 1.5 秒（不能移動，可以轉向、開火）；硬推移動掙脫＝破甲 5 秒（受到的傷害 +30%）；禁錮結束後 3 秒內不會再被禁錮</div>
+      <div class="m-note">03 釘槍：每根 400；打中敵機＝禁錮 1.5 秒（不能移動，可以轉向、開火）；硬推移動掙脫＝破甲 5 秒（受到的傷害 +30%）；禁錮結束後 5 秒內不會再被禁錮</div>
       <div class="m-note">在左邊空白處拖曳可以轉動機體</div>
     </div>
     <button class="m-exit" data-back="BACKTO" id="mHangarBack">BACK <span>⇥</span></button>
@@ -603,7 +603,7 @@
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
     <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">外圈的上／右／左有三個小武器標記（目前的武器會亮），按住朝標記方向一甩就切換：上＝01 主武 57mm、右＝02 螳螂鐮（近身按射擊交叉斬，一擊打到殘血（4500 傷害），再用其他武器收尾，冷卻 6 秒；架刀待命時正面來的攻擊自動格擋最多 1 秒，之後同樣進冷卻；刀刃有耐久，越鈍越砍不進去，R 換上備用刃）、左＝03 腿部釘槍</b></li>
     <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、欄位（01 主武／02 副武／03 腿部）、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
-    <li><b>腿部釘槍</b>（不佔手臂，共 24 根）：釘在牆上時用搖桿可以沿牆爬行，每 2.5m 用掉一根，用完就掉下來；身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器：每根 400，打中敵機＝<b style="color:#ffd25a">禁錮 1.5 秒</b>（不能移動，但可以轉向、開火）；被禁錮時硬推移動＝立刻掙脫，但<b style="color:#ff6a58">破甲 5 秒</b>（受到的傷害 +30%）；禁錮結束後 3 秒內不會再被禁錮。</li>
+    <li><b>腿部釘槍</b>（不佔手臂，共 24 根）：釘在牆上時用搖桿可以沿牆爬行，每 2.5m 用掉一根，用完就掉下來；身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器：每根 400，打中敵機＝<b style="color:#ffd25a">禁錮 1.5 秒</b>（不能移動，但可以轉向、開火）；被禁錮時硬推移動＝立刻掙脫，但<b style="color:#ff6a58">破甲 5 秒</b>（受到的傷害 +30%）；禁錮結束後 5 秒內不會再被禁錮。</li>
     <li><b>57mm 滑膛炮</b>：每 0.8 秒一發、6 發一匣，砲彈有飛行時間與下墜，落點 4m 內有爆炸傷害；空中開砲會被後座力往後推</li>
     <li>兩邊基地有<b style="color:#40ffb0">出生保護區</b>：不會受傷，也不能開火；設定裡可選「跟手準星」</li>
     <li>擺盪時鏡頭會<b>鎖住準星下的地形</b>，不會亂晃；放手時準星附近有敵人，就<b>一直看著那個敵人</b>；一轉視角就解除</li>
@@ -960,7 +960,7 @@ const D = {
   "敵機被禁錮！": ["敵機を拘束！", "적 기체 구속!", "Enemy PINNED!"],
   "強行掙脫：破甲！受到的傷害 +30%": ["無理やり脱出：アーマーブレイク！被ダメージ+30%", "강제 탈출: 아머 브레이크! 받는 피해 +30%", "Broke free: ARMOR BREAK! +30% damage taken"],
   "敵機強行掙脫：破甲！": ["敵機が無理やり脱出：アーマーブレイク！", "적 기체 강제 탈출: 아머 브레이크!", "Enemy broke free: ARMOR BREAK!"],
-  "03 釘槍：每根 400；打中敵機＝禁錮 1.5 秒（不能移動，可以轉向、開火）；硬推移動掙脫＝破甲 5 秒（受到的傷害 +30%）；禁錮結束後 3 秒內不會再被禁錮": ["03 ネイルガン：1本400。敵機に当てると拘束1.5秒（移動不可、旋回・射撃は可）。無理に動いて脱出＝アーマーブレイク5秒（被ダメージ+30%）。拘束解除後3秒間は再拘束されない", "03 네일건: 1발 400. 적 기체에 맞히면 구속 1.5초 (이동 불가, 회전·사격 가능). 억지로 움직여 탈출 = 아머 브레이크 5초 (받는 피해 +30%). 구속이 끝난 뒤 3초 동안은 다시 구속되지 않음", "03 Nail Gun: 400 per nail; a hit PINS the enemy for 1.5 s (no moving, can still turn and fire); forcing free = ARMOR BREAK for 5 s (+30% damage taken); no re-pin for 3 s after a pin ends"],
+  "03 釘槍：每根 400；打中敵機＝禁錮 1.5 秒（不能移動，可以轉向、開火）；硬推移動掙脫＝破甲 5 秒（受到的傷害 +30%）；禁錮結束後 5 秒內不會再被禁錮": ["03 ネイルガン：1本400。敵機に当てると拘束1.5秒（移動不可、旋回・射撃は可）。無理に動いて脱出＝アーマーブレイク5秒（被ダメージ+30%）。拘束解除後5秒間は再拘束されない", "03 네일건: 1발 400. 적 기체에 맞히면 구속 1.5초 (이동 불가, 회전·사격 가능). 억지로 움직여 탈출 = 아머 브레이크 5초 (받는 피해 +30%). 구속이 끝난 뒤 5초 동안은 다시 구속되지 않음", "03 Nail Gun: 400 per nail; a hit PINS the enemy for 1.5 s (no moving, can still turn and fire); forcing free = ARMOR BREAK for 5 s (+30% damage taken); no re-pin for 5 s after a pin ends"],
   "釘子用完了！": ["ネイル切れ！", "네일 소진!", "Out of nails!"],
   "墜入虛空！已傳送回基地 A": ["虚空に落下！基地Aへ転送", "허공으로 추락! 기지 A로 전송", "Fell into the void! Sent back to Base A"],
   "墜入虛空！已傳送回基地 B": ["虚空に落下！基地Bへ転送", "허공으로 추락! 기지 B로 전송", "Fell into the void! Sent back to Base B"],
@@ -1016,7 +1016,7 @@ const H = {
 <li><b style="color:#63e6ff">左／右ワイヤー</b>（どちらも小さなスティック）：押す＝ワイヤー発射。円内ドラッグ＝上で巻き取り・下で繰り出し・左右でスイング。<b style="color:#ffb040">外周まで引き出す＝ブースト</b>（フック先がなくても使える）</li>
 <li><b style="color:#ff7a5c">射撃</b>：押し続けて連射、押したままドラッグ＝撃ちながら照準。射撃ボタンを<b style="color:#ffc94a">外周の上・右・左に小さな武器マーク（現在の武器が点灯）。押してマークの方向へ弾くと切替：上＝01 メイン 57mm、右＝02 マンティスブレード（接近して射撃でクロス斬り、1撃で瀕死（4500ダメージ）、他の武器でとどめ、クールダウン6秒。構え中は正面からの攻撃を自動で最大1秒ガードし、その後もクールダウン。刃には耐久があり、鈍るほど斬れなくなる。R で予備の刃に交換）、左＝03 脚部ネイルガン</b></li>
 <li>照準：中央の小円が黄＝ワイヤーが届く、青＝フック中。大きな弧の赤いひし形＝敵の方向（中抜き＝背後）。下＝残弾・スロット（01 メイン／02 サブ／03 脚部）・弾種。左右の数値＝高度／速度。両側の目盛り：左＝ブースト燃料、右＝残弾</li>
-<li><b>脚部ネイルガン</b>（腕を使わない、全24本）：壁に固定中はスティックで壁を這える（2.5mごとに1本消費、尽きると落下）。6m以内に壁があるときに撃つ＝最寄りの壁に固定、どの角度でもOK（ワイヤーは自動回収。ブースト・フック・飛びかかりで解除）。武器としても使える：1本400、敵機に当てると<b style="color:#ffd25a">拘束1.5秒</b>（移動不可、旋回・射撃は可）。拘束中に無理に動くと即脱出できるが<b style="color:#ff6a58">アーマーブレイク5秒</b>（被ダメージ+30%）。拘束解除後3秒間は再拘束されない</li>
+<li><b>脚部ネイルガン</b>（腕を使わない、全24本）：壁に固定中はスティックで壁を這える（2.5mごとに1本消費、尽きると落下）。6m以内に壁があるときに撃つ＝最寄りの壁に固定、どの角度でもOK（ワイヤーは自動回収。ブースト・フック・飛びかかりで解除）。武器としても使える：1本400、敵機に当てると<b style="color:#ffd25a">拘束1.5秒</b>（移動不可、旋回・射撃は可）。拘束中に無理に動くと即脱出できるが<b style="color:#ff6a58">アーマーブレイク5秒</b>（被ダメージ+30%）。拘束解除後5秒間は再拘束されない</li>
 <li><b>57mm滑腔砲</b>：0.8秒に1発・1マガジン6発。砲弾には飛翔時間と落下があり、着弾点4m以内に爆発ダメージ。空中で撃つと反動で後ろへ押される</li>
 <li>両基地には<b style="color:#40ffb0">スポーン保護エリア</b>：ダメージを受けず、射撃もできない。設定で「指追従照準」を選べる</li>
 <li>スイング中のカメラは<b>照準下の地形にロック</b>されブレない。離した時に照準付近に敵がいれば<b>その敵をずっと注視</b>。視点を動かすと解除</li>
@@ -1030,7 +1030,7 @@ const H = {
 <li><b style="color:#63e6ff">왼쪽/오른쪽 와이어</b> (둘 다 작은 스틱): 누르기 = 와이어 발사. 원 안에서 드래그 = 위로 감기, 아래로 풀기, 좌우 스윙. <b style="color:#ffb040">바깥 원까지 끌기 = 부스트</b> (고정점이 없어도 가능)</li>
 <li><b style="color:#ff7a5c">사격</b>: 누르고 있으면 연사, 누른 채 드래그 = 쏘면서 조준. 사격 버튼을 <b style="color:#ffc94a">테두리 위·오른쪽·왼쪽에 작은 무기 마크 (현재 무기가 켜짐). 누른 채 마크 방향으로 튕기면 교체: 위 = 01 주무기 57mm, 오른쪽 = 02 맨티스 블레이드 (근접해서 사격으로 교차 베기, 한 방에 빈사 (4500 피해), 다른 무기로 마무리, 쿨다운 6초. 대기 자세에서는 정면 공격을 자동으로 최대 1초 막고, 그 뒤에도 쿨다운. 칼날에 내구도가 있어 무뎌질수록 안 베임. R로 예비 칼날 교체), 왼쪽 = 03 다리 네일건</b></li>
 <li>조준점: 중앙 작은 원이 노랑 = 와이어가 닿음, 청록 = 연결됨. 큰 호 위의 빨간 마름모 = 적 방향 (속이 빈 것 = 뒤쪽). 아래 = 탄약·슬롯 (01 주무기/02 보조/03 다리)·탄종. 좌우 수치 = 고도/속도. 양옆 눈금: 왼쪽 = 부스트 연료, 오른쪽 = 탄약</li>
-<li><b>다리 네일건</b> (팔을 쓰지 않음, 총 24발): 벽에 고정된 동안 스틱으로 벽을 타고 이동 (2.5m마다 1발 소모, 다 쓰면 떨어짐). 6m 안에 벽이 있을 때 쏘면 = 가장 가까운 벽에 고정, 어떤 각도든 가능 (와이어 자동 회수. 부스트·와이어·도약으로 해제). 무기로도 사용: 1발 400, 적 기체에 맞히면 <b style="color:#ffd25a">구속 1.5초</b> (이동 불가, 회전·사격은 가능). 구속 중 억지로 움직이면 바로 풀리지만 <b style="color:#ff6a58">아머 브레이크 5초</b> (받는 피해 +30%). 구속이 끝난 뒤 3초 동안은 다시 구속되지 않음</li>
+<li><b>다리 네일건</b> (팔을 쓰지 않음, 총 24발): 벽에 고정된 동안 스틱으로 벽을 타고 이동 (2.5m마다 1발 소모, 다 쓰면 떨어짐). 6m 안에 벽이 있을 때 쏘면 = 가장 가까운 벽에 고정, 어떤 각도든 가능 (와이어 자동 회수. 부스트·와이어·도약으로 해제). 무기로도 사용: 1발 400, 적 기체에 맞히면 <b style="color:#ffd25a">구속 1.5초</b> (이동 불가, 회전·사격은 가능). 구속 중 억지로 움직이면 바로 풀리지만 <b style="color:#ff6a58">아머 브레이크 5초</b> (받는 피해 +30%). 구속이 끝난 뒤 5초 동안은 다시 구속되지 않음</li>
 <li><b>57mm 활강포</b>: 0.8초에 1발, 탄창당 6발. 포탄은 비행 시간과 낙하가 있고 착탄점 4m 안에 폭발 피해. 공중에서 쏘면 반동으로 뒤로 밀림</li>
 <li>양쪽 기지에는 <b style="color:#40ffb0">스폰 보호 구역</b>: 피해를 받지 않고 사격도 불가. 설정에서 ‘손가락 따라가는 조준점’ 선택 가능</li>
 <li>스윙 중 카메라는 <b>조준점 아래 지형에 고정</b>되어 흔들리지 않음. 놓을 때 조준점 근처에 적이 있으면 <b>그 적을 계속 바라봄</b>. 시점을 돌리면 해제</li>
@@ -1044,7 +1044,7 @@ const H = {
 <li><b style="color:#63e6ff">Left / right wire</b> (both are mini sticks): hold = fire a wire; drag inside the circle = up reels in, down lets out, left/right swings; <b style="color:#ffb040">drag past the outer ring = boost</b> (works with no anchor too)</li>
 <li><b style="color:#ff7a5c">Fire</b>: hold to shoot, drag while holding = aim while firing. <b style="color:#ffc94a">Small weapon marks sit on the fire button's rim at top, right and left (the current one lights up); press and flick toward a mark to switch: up = 01 Main 57mm, right = 02 Mantis Blade (fire up close to cross-slash — one hit leaves them nearly dead (4500 dmg), finish with another weapon; 6 s cooldown; in the ready stance it auto-guards frontal attacks for up to 1 s, then also goes on cooldown; the blade wears down and a dull blade can't cut — R swaps in the spare), left = 03 Leg Nail Gun</b></li>
 <li>Reticle: small center circle yellow = a wire will hook, cyan = hooked. Red diamonds on the big arc = enemy direction (hollow = behind you). Below = ammo, slot (01 Main / 02 Sub / 03 Leg), ammo type. Left/right readouts = altitude / speed. Side gauges: left = boost fuel, right = ammo</li>
-<li><b>Leg Nail Gun</b> (doesn't use your arms, 24 nails): while pinned, use the stick to crawl along the wall — one nail per 2.5 m, you drop when they run out. Fire with a wall within 6 m = pin to the nearest wall at any angle (wires retract; boost, hook or pounce to detach). Also a weapon: 400 per nail, and a hit <b style="color:#ffd25a">PINS</b> the enemy mech for 1.5 s (can't move, can still turn and fire). Moving while pinned breaks free at once but causes <b style="color:#ff6a58">ARMOR BREAK</b> for 5 s (+30% damage taken); no re-pin for 3 s after a pin ends</li>
+<li><b>Leg Nail Gun</b> (doesn't use your arms, 24 nails): while pinned, use the stick to crawl along the wall — one nail per 2.5 m, you drop when they run out. Fire with a wall within 6 m = pin to the nearest wall at any angle (wires retract; boost, hook or pounce to detach). Also a weapon: 400 per nail, and a hit <b style="color:#ffd25a">PINS</b> the enemy mech for 1.5 s (can't move, can still turn and fire). Moving while pinned breaks free at once but causes <b style="color:#ff6a58">ARMOR BREAK</b> for 5 s (+30% damage taken); no re-pin for 5 s after a pin ends</li>
 <li><b>57mm Smoothbore</b>: one shot per 0.8 s, 6 per mag. Shells have travel time and drop, with blast damage within 4 m of impact. Firing in mid-air pushes you back with recoil</li>
 <li>Both bases have a <b style="color:#40ffb0">spawn zone</b>: you can't be hurt and can't fire. “Follow-finger reticle” is in Settings</li>
 <li>While swinging, the camera <b>locks onto the terrain under the reticle</b> so it doesn't wobble. If an enemy is near the reticle when you release, it <b>keeps facing that enemy</b>; turning the view cancels it</li>
@@ -1154,7 +1154,7 @@ const CONFIG = Object.freeze({
   nail: { crawlSpeed: 5, crawlPerNail: 6, damage: 400, mag: 6, reserve: 18, reload: 1.5, cooldown: 0.35, range: 60, pinRange: 15, nearWall: 6, brake: 0.3,   // 副武：釘槍（5×2 發）
     // v4.9 禁錮：釘子打中敵機＝對方原地禁錮 pinDur 秒（不能移動，可以轉向、開火）；對方硬推搖桿／推進／跳／勾索＝立刻掙脫但「破甲」breakDur 秒（受到所有傷害 ×breakMul）
     //   禁錮結束後 pinImmune 秒內不會再被禁錮（釘子照樣有傷害）；破甲不疊加，再中一次只重設時間；breakStick＝搖桿推多少才算「想移動」（要先放開一次搖桿才算數）
-    pinDur: 1.5, pinImmune: 3, breakDur: 5, breakMul: 1.3, breakStick: 0.3 },   // v4.9 每根 1000→400
+    pinDur: 1.5, pinImmune: 5, breakDur: 5, breakMul: 1.3, breakStick: 0.3 },   // v4.9 每根 1000→400
   safeZone: { radius: 18 },
   melee: { dmg: 4500, promoDmg: 6000, range: 7.5, vReach: 5, arcDeg: 60, guardDeg: 60, parryPush: 12, windup: 0.25, recoverHit: 0.25, recoverMiss: 0.6, cooldown: 6, lunge: 6,
     // v4.8 刀刃耐久：一把 100、身上 1 把備用刃（R／換彈鈕換上，補給平台補回）；格擋一次最多 1 秒，結束後和揮刀共用 6 秒冷卻
