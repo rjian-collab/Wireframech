@@ -6,10 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>WIREFRAMECH 鋼弦機兵</title>
 <style>
-  :root { --pad: max(3vmin, 10px); --F: clamp(62px, 21vmin, 92px); --H: clamp(54px, 17vmin, 80px); --J: clamp(44px, 13vmin, 64px);
+  :root { --pad: max(3vmin, 10px); --bs:.82; --F: calc(clamp(62px, 21vmin, 92px) * var(--bs)); --H: calc(clamp(54px, 17vmin, 80px) * var(--bs)); --J: calc(clamp(44px, 13vmin, 64px) * var(--bs));
     --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px); --sb: env(safe-area-inset-bottom, 0px); --st: env(safe-area-inset-top, 0px);
     --k:1; --Fk:calc(var(--F)*var(--k)); --Hk:calc(var(--H)*var(--k)); --Jk:calc(var(--J)*var(--k));
     --rowY: calc(var(--pad) + var(--sb) + var(--Fk) + 3vmin); }
+  /* v4.7 觸控按鈕外觀縮小約 15～18%（--bs）；判定範圍在 JS 裡除以 --bs，維持原本大小 */
+  @media (max-height:340px) { :root { --bs:.85; } }
+  @media (min-height:700px) and (min-width:1000px) { :root { --bs:.84; } }
   html, body { margin:0; padding:0; height:100dvh; width:100vw; overflow:hidden; background:#0b0f14;
     touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;
     font-family: -apple-system, "PingFang TC", "Noto Sans TC", sans-serif; color:#e6f1ff; }
@@ -115,20 +118,19 @@
     background:radial-gradient(circle, rgba(8,24,38,.35) 0%, rgba(4,14,24,.72) 70%);
     box-shadow:0 0 14px color-mix(in srgb, var(--c) 55%, transparent), inset 0 0 18px color-mix(in srgb, var(--c) 35%, transparent);
     color:#eafcff; text-shadow:0 0 6px var(--c), 0 0 2px #000; }
-  .btn::before { content:''; position:absolute; inset:-9px; border-radius:50%; pointer-events:none; opacity:.85;
+  .btn::before { content:''; position:absolute; inset:calc(-9px * var(--bs)); border-radius:50%; pointer-events:none; opacity:.85;
     background:repeating-conic-gradient(var(--c) 0deg 22deg, transparent 22deg 30deg);
     -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
             mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px)); }
   .btn::after { content:''; position:absolute; inset:18%; border-radius:50%; border:1px solid color-mix(in srgb, var(--c) 45%, transparent); pointer-events:none; }
-  .btn b { font-size:clamp(13px, 3.9vmin, 18px); letter-spacing:3px; font-weight:800; }
-  .btn small { font-size:clamp(10px, 2.9vmin, 13px); letter-spacing:1px; font-family:ui-monospace, Menlo, monospace; opacity:.95; }
+  .btn b { font-size:clamp(12px, 3.4vmin, 16px); letter-spacing:3px; font-weight:800; }
+  .btn small { font-size:clamp(9px, 2.5vmin, 12px); letter-spacing:1px; font-family:ui-monospace, Menlo, monospace; opacity:.95; }
   .btn.fire { --c:#ff5a40; }
   .btn.fire.none { --c:#6b7a88; color:#b9c4cf; }
   .btn.rope { --c:#3de0ff; }
   .ropeic { display:flex; align-items:center; gap:1px; letter-spacing:0 !important; } .ropeic .side { font-style:normal; font-size:.55em; opacity:.75; }
-  .ic { width:clamp(22px, 6.4vmin, 30px); height:clamp(22px, 6.4vmin, 30px); fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; display:block; }
+  .ic { width:clamp(19px, 5.4vmin, 25px); height:clamp(19px, 5.4vmin, 25px); fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; display:block; }
   .ic.s { width:1.15em; height:1.15em; display:inline-block; vertical-align:-0.2em; stroke-width:2.4; }
-  #bView svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   .btn.rope.hooked { background:radial-gradient(circle, rgba(61,224,255,.35) 0%, rgba(4,30,44,.75) 70%); }
   .btn.rope.hooked::before { animation:spin 2.4s linear infinite; opacity:1; }
   .btn.rope.none { --c:#6b7a88; color:#b9c4cf; }
@@ -141,15 +143,15 @@
     width:calc(var(--Fk)*1.6); white-space:nowrap; text-align:right; pointer-events:none; font-size:12px; font-weight:700; letter-spacing:1px; color:#ffc94a;
     text-shadow:0 0 6px rgba(255,201,74,.8), 0 0 2px #000; }
   #swapHint.pulse { animation:pulse .5s ease-out; }
-  /* v2.5 武器圖示與「按住拉出三個位置」的切換提示 */
-  .wslot { position:fixed; width:44px; height:44px; margin:-22px 0 0 -22px; border-radius:50%; pointer-events:none; display:flex; align-items:center; justify-content:center;
-    background:rgba(10,22,32,.55); border:1.5px solid rgba(255,201,74,.45); opacity:.55; transform:scale(.72); transition:transform .12s, opacity .12s, background .12s; z-index:6; }
-  .wslot svg { width:30px; height:16px; fill:#ffd770; }
-  .wslot.cur { border-color:#ffd770; box-shadow:0 0 8px rgba(255,215,112,.6); }
-  .wslot.open { opacity:.95; transform:scale(1); }
-  .wslot.hot { background:rgba(255,201,74,.45); transform:scale(1.18); opacity:1; }
-  .wslot .dir { position:absolute; bottom:-2px; right:2px; font-size:10px; color:#ffd770; opacity:.8; }
-  #lFire svg { width:46px; height:24px; fill:currentColor; display:block; }
+  /* v4.7 武器切換標記：直接貼在射擊鈕外圈的「上／右／左」，位置＝實際甩的方向（上 01 主砲、右 02、左 03）；目前武器亮起，按住時放大，甩向的那個反白 */
+  .wslot { --ws:clamp(17px, calc(var(--Fk) * .26), 24px); position:fixed; width:var(--ws); height:var(--ws); margin:calc(var(--ws) / -2) 0 0 calc(var(--ws) / -2); pointer-events:none;
+    display:flex; align-items:center; justify-content:center; box-sizing:border-box; background:rgba(8,18,26,.78); border:1px solid rgba(255,201,74,.45); color:rgba(255,215,112,.7);
+    opacity:.8; transition:transform .12s, opacity .12s, background .12s; z-index:6; }
+  .wslot svg { width:78%; height:78%; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; overflow:visible; }
+  .wslot.cur { border-color:#ffd770; color:#ffe39a; opacity:1; box-shadow:0 0 6px rgba(255,215,112,.55); }
+  .wslot.open { opacity:1; transform:scale(1.3); }
+  .wslot.hot { background:#ffc94a; color:#1a1406; border-color:#ffe39a; transform:scale(1.55); }
+  #lFire svg { width:calc(46px * var(--bs)); height:calc(24px * var(--bs)); fill:currentColor; display:block; }
   #bFire.none #lFire { position:relative; } #bFire.none #lFire::after { content:''; position:absolute; left:-4px; right:-4px; top:50%; height:3px; background:#ff5050; transform:rotate(-20deg); }
   #swapHint span { opacity:.45; } #swapHint span.cur { opacity:1; text-decoration:underline; text-underline-offset:3px; }
   @keyframes pulse { 0% { transform:translateY(-8px) scale(1.25); color:#fff; } 100% { transform:none; } }
@@ -164,7 +166,14 @@
   .stick.idle { opacity:.75; } .knob.idle { opacity:.8; }
   .stick.thrust { border-color:#ffb040; background:rgba(255,176,64,.15); box-shadow:0 0 14px rgba(255,176,64,.6); }
   .stick.rope { border-color:#40e0ff; background:rgba(64,224,255,.10); }
-  #topbar { position:fixed; top:calc(8px + var(--st)); right:calc(var(--pad) + var(--sr)); display:flex; gap:8px; z-index:5; }
+  #topbar { position:fixed; top:calc(6px + var(--st)); right:calc(var(--pad) + var(--sr) - 2px); display:flex; gap:2px; z-index:5; }
+  /* v4.7 右上只留設定鈕：Defenspace 細線圖示（直線段組成的六角齒輪），外觀約 32px，觸控範圍維持 44px */
+  #topbar .small { --tb:32px; width:44px; height:44px; border:0; border-radius:0; background:none; display:flex; align-items:center; justify-content:center; color:rgb(var(--mint)); cursor:pointer; }
+  #topbar .small svg { width:var(--tb); height:var(--tb); fill:rgba(6,20,22,.45); stroke:currentColor; stroke-width:1.25; stroke-linejoin:miter; stroke-linecap:square; overflow:visible;
+    filter:drop-shadow(0 0 3px rgba(var(--mint),.45)); transition:transform .15s; }
+  #topbar .small:active svg { transform:scale(.9); } #bSet:active svg { transform:rotate(30deg) scale(.92); }
+  @media (max-height:340px) { #topbar .small { --tb:28px; } }
+  @media (min-height:700px) and (min-width:1000px) { #topbar .small { --tb:36px; } }
   /* v4.6 左上：自機資訊視窗（同 Defenspace 細線視窗：1px 框、極淡底、直角、左上實色標籤＝駕駛員名稱）；下面是擊破卡片 */
   #mInfo { --c:var(--mint); --u:1; position:fixed; z-index:4; left:calc(var(--pad) + var(--sl)); top:calc(26px + var(--st)); display:none; align-items:center; gap:calc(6px * var(--u));
     padding:calc(5px * var(--u)) calc(8px * var(--u)) calc(5px * var(--u)) calc(4px * var(--u)); width:calc(196px * var(--u)); box-sizing:border-box; pointer-events:none;
@@ -453,10 +462,8 @@
 <div id="layBar"><b>拖曳按鈕到想要的位置</b><span class="lsel" id="laySel">先點一顆按鈕</span>
   <label id="layShowL"><input type="checkbox" id="layShow"> 顯示</label><label>大小 <input type="range" id="laySize" min="0.6" max="1.6" step="0.05" value="1"></label><button id="layReset">全部重設</button><button id="layDone">完成</button></div>
 <div id="topbar">
-  <button class="small" id="bReset" aria-label="重生">↺</button>
-  <button class="small" id="bView" aria-label="切換視角"></button>
-  <button class="small" id="bSet" aria-label="設定">⚙</button>
-  <button class="small" id="bFS" aria-label="回到全螢幕" style="display:none">⛶</button>
+  <button class="small" id="bSet" aria-label="設定"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.97 4.49L9.8 1.63H14.2L15.03 4.49L16.99 5.62L19.88 4.91L22.08 8.72L20.02 10.87V13.13L22.08 15.28L19.88 19.09L16.99 18.38L15.03 19.51L14.2 22.37H9.8L8.97 19.51L7.01 18.38L4.12 19.09L1.92 15.28L3.98 13.13V10.87L1.92 8.72L4.12 4.91L7.01 5.62Z"/><path d="M12 8.4L15.12 10.2V13.8L12 15.6L8.88 13.8V10.2Z"/></svg></button>
+  <button class="small" id="bFS" aria-label="回到全螢幕" style="display:none"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 8V2.5H8M16 2.5h5.5V8M21.5 16v5.5H16M8 21.5H2.5V16"/><path d="M12 7.5l3.9 2.25v4.5L12 16.5l-3.9-2.25v-4.5z"/></svg></button>
 </div>
 <div id="mInfo" aria-hidden="true"><svg id="miMech" viewBox="0 0 48 48" aria-hidden="true"><path class="lg" d="M18.5 19 9 11.5 4.5 19.5M29.5 19 39 11.5 43.5 19.5M18.5 29 9 36.5 4.5 28.5M29.5 29 39 36.5 43.5 28.5"/><path class="cr gl" d="M19 15.5h10l3.5 8.5-3.5 9.5H19l-3.5-9.5z"/><path class="ck" d="M21.5 18h5l1.2 3h-7.4z"/><path class="gn" d="M24 15.5V3.5M22.4 6h3.2"/><circle class="ds" cx="16" cy="24" r="1.6"/><circle class="ds" cx="32" cy="24" r="1.6"/></svg><div class="mi-rows">
   <div class="mi-row" id="miHpRow"><span>HP</span><i class="mi-bar"><s id="miHp"></s></i><b id="miHpV"></b></div>
@@ -480,12 +487,13 @@
       <label class="row"><span class="tx"><b>跟手準星</b><i>按住按鈕拖曳時，準星跟著手指走</i></span><select id="optFollow"><option value="none">關（畫面中央）</option><option value="weapon">武器</option><option value="rope">鋼索</option></select></label>
       <label class="row"><span class="tx"><b>自動開火</b><i>準星對到敵人就射（57mm）</i></span><input type="checkbox" class="sw" id="optAutoFire"></label>
       <label class="row"><span class="tx"><b>視角靈敏度</b><i id="optSensTx">滑動畫面轉視角的速度</i></span><span class="ctl"><input type="range" id="optSens" min="0.04" max="0.6" step="0.01" value="0.25"><span id="optSensV" class="val"></span></span></label>
+      <div class="row" id="respawnRow"><span class="tx"><b>卡住了</b><i>傳送回基地 A（原本右上的 ↺）</i></span><button id="setRespawn" class="lay">↺ 重生</button></div>
       <div class="row"><span class="tx"><b>設定教學</b><i>一步步帶你調速度、按鈕大小和位置</i></span><button id="optTutSet" class="lay">開始</button></div>
       <div class="row"><span class="tx"><b>自訂按鈕位置</b><i>拖曳射擊鈕、左右鋼索鈕到順手的地方，也能個別調大小</i></span><button id="optLayout" class="lay">編輯</button></div>
       <label class="row"><span class="tx"><b>按鈕大小</b><i>手大或平板可以調大</i></span><span class="ctl"><input type="range" id="optSize" min="0.8" max="1.3" step="0.05" value="1"></span></label>
     </section>
     <section data-page="cam">
-      <label class="row"><span class="tx"><b>第三人稱</b><i>看得到機體；右上 3P／1P 也能切換</i></span><input type="checkbox" class="sw" id="optView3P" checked></label>
+      <label class="row"><span class="tx"><b>第三人稱</b><i>關掉＝第一人稱；電腦也能按 V 切換</i></span><input type="checkbox" class="sw" id="optView3P" checked></label>
       <label class="row"><span class="tx"><b>鏡頭鎖定地形</b><i>擺盪時自動補正，準星穩定</i></span><input type="checkbox" class="sw" id="optStab" checked></label>
       <label class="row"><span class="tx"><b>鏡頭側傾</b><i>轉彎時畫面跟著傾斜</i></span><input type="checkbox" class="sw" id="optRoll"></label>
       <label class="row"><span class="tx"><b>陰影</b><i>陽光投影；iPad 太卡可以關掉</i></span><input type="checkbox" class="sw" id="optShadows" checked></label>
@@ -579,10 +587,10 @@
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
     <li><b style="color:#c99bff">線上對戰</b>（1v1，真人）：首頁按「MAIN LOBBY」進大廳。「QUICK MATCH」自動找人，20 秒沒找到就改打 AI；「ROOM」建立房間，把房間代碼告訴朋友，對方在「JOIN」輸入代碼加入，房主按「BATTLE」開打。房主從基地 A、加入者從基地 B 出發，規則和對戰 AI 相同</li>
     <li><b style="color:#ffb070">對戰 AI</b>：你從基地 A、AI 從基地 B 出發；先擊破 5 次或 5 分鐘內分數高的贏；掉下虛空算對方得分；橘色機體與橘色鋼索是 AI</li>
-    <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），右上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
+    <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），在<b>設定→鏡頭</b>可改成第一人稱（電腦按 <b>V</b>）；卡住時<b>設定→操作→重生</b>回到基地 A，掉進虛空也會回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>輕點＝原地跳；快速往任一方向滑出並放開＝往那邊跳</b>；推得越遠走越快（在地上、坡上、貼牆或釘在牆上時都能跳）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
-    <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">按住會在旁邊彈出三個武器圖示，往圖示方向一甩就切換：上＝01 主武 57mm、右＝02 螳螂鐮（近身按射擊揮刀，一刀擊破，冷卻 3 秒）、左＝03 腿部釘槍</b></li>
+    <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">外圈的上／右／左有三個小武器標記（目前的武器會亮），按住朝標記方向一甩就切換：上＝01 主武 57mm、右＝02 螳螂鐮（近身按射擊揮刀，一刀擊破，冷卻 3 秒）、左＝03 腿部釘槍</b></li>
     <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、欄位（01 主武／02 副武／03 腿部）、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
     <li><b>腿部釘槍</b>（不佔手臂，共 24 根）：釘在牆上時用搖桿可以沿牆爬行，每 2.5m 用掉一根，用完就掉下來；身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器打敵人。</li>
     <li><b>57mm 滑膛炮</b>：每 0.8 秒一發、6 發一匣，砲彈有飛行時間與下墜，落點 4m 內有爆炸傷害；空中開砲會被後座力往後推</li>
@@ -754,6 +762,7 @@ const D = {
   "推": ["ブースト", "부스트", "BOOST"],
   "換彈": ["リロード", "재장전", "Reload"],
   "重生": ["リスポーン", "리스폰", "Respawn"],
+  "↺ 重生": ["↺ リスポーン", "↺ 리스폰", "↺ Respawn"],
   "切換視角": ["視点切替", "시점 전환", "Toggle view"],
   "回到全螢幕": ["全画面に戻る", "전체 화면으로", "Back to fullscreen"],
   "跳過這步": ["このステップをスキップ", "이 단계 건너뛰기", "Skip this step"],
@@ -816,7 +825,9 @@ const D = {
   "手大或平板可以調大": ["手が大きい人やタブレットは大きめに", "손이 크거나 태블릿이면 크게", "Go bigger for large hands or tablets"],
   // 設定：鏡頭
   "第三人稱": ["三人称視点", "3인칭", "Third person"],
-  "看得到機體；右上 3P／1P 也能切換": ["機体が見える。右上の 3P／1P でも切替", "기체가 보여요. 오른쪽 위 3P/1P로도 전환", "See your mech; also toggle with 3P/1P at top right"],
+  "關掉＝第一人稱；電腦也能按 V 切換": ["オフ＝一人称。PC は V キーでも切替", "끄면 1인칭. PC는 V 키로도 전환", "Off = first person; on PC, press V to toggle"],
+  "卡住了": ["スタックした時", "끼었을 때", "Stuck?"],
+  "傳送回基地 A（原本右上的 ↺）": ["基地Aへ戻る（旧・右上の ↺）", "기지 A로 복귀 (예전 오른쪽 위 ↺)", "Teleport back to Base A (was the ↺ at top right)"],
   "鏡頭鎖定地形": ["地形ロックカメラ", "지형 고정 카메라", "Terrain-lock camera"],
   "擺盪時自動補正，準星穩定": ["スイング中に自動補正、照準が安定", "스윙 중 자동 보정, 조준 안정", "Auto-corrects while swinging for a steady reticle"],
   "鏡頭側傾": ["カメラロール", "카메라 기울기", "Camera roll"],
@@ -982,10 +993,10 @@ const H = {
 `<li>リング状の空島戦場：両チームの基地は両端。<b>外周</b>は内側へ傾き段々に高くなる空島（機動力は高いが狙いにくい）。<b>中央プラットフォーム</b>は最も低く落下の危険はないが、上から撃たれる。最下層は虚空。光る台で燃料と弾薬を補給</li>
 <li><b style="color:#c99bff">オンライン対戦</b>（1v1・対人）：ホームの「MAIN LOBBY」でロビーへ。「QUICK MATCH」は自動マッチング、20秒で見つからなければAI戦に。「ROOM」でルームを作り、コードをフレンドに伝え、相手が「JOIN」で入力して参加、ホストが「BATTLE」で開戦。ホストは基地A、参加者は基地Bから出撃。ルールはAI対戦と同じ</li>
 <li><b style="color:#ffb070">AI対戦</b>：あなたは基地A、AIは基地Bから出撃。先に5回撃破するか、5分経過時にスコアが高い方の勝ち。虚空に落ちると相手に得点。オレンジの機体とワイヤーがAI</li>
-<li>標準は<b>三人称視点</b>（自分のスパイダーメカが見える）。右上の 3P／1P で切替。虚空落下やリスポーンでは基地Aに戻る</li>
+<li>標準は<b>三人称視点</b>（自分のスパイダーメカが見える）。<b>設定→カメラ</b>で一人称に切替（PC は <b>V</b>）。スタックしたら<b>設定→操作→リスポーン</b>で基地Aへ。虚空落下でも基地Aに戻る</li>
 <li><b>青いスティック</b>：移動。<b>軽くタップ＝その場ジャンプ、任意の方向へ素早く弾いて離す＝その方向へジャンプ</b>。倒すほど速く走る（地面・斜面・壁際・壁に固定中でもジャンプ可）。脚は70°までの斜面に立て、高速でも地面に張り付く</li>
 <li><b style="color:#63e6ff">左／右ワイヤー</b>（どちらも小さなスティック）：押す＝ワイヤー発射。円内ドラッグ＝上で巻き取り・下で繰り出し・左右でスイング。<b style="color:#ffb040">外周まで引き出す＝ブースト</b>（フック先がなくても使える）</li>
-<li><b style="color:#ff7a5c">射撃</b>：押し続けて連射、押したままドラッグ＝撃ちながら照準。射撃ボタンを<b style="color:#ffc94a">長押しすると横に武器アイコンが3つ出る。アイコンの方向へ弾くと切替：上＝01 メイン 57mm、右＝02 マンティスブレード（接近して射撃で斬撃、一撃撃破、クールダウン3秒）、左＝03 脚部ネイルガン</b></li>
+<li><b style="color:#ff7a5c">射撃</b>：押し続けて連射、押したままドラッグ＝撃ちながら照準。射撃ボタンを<b style="color:#ffc94a">外周の上・右・左に小さな武器マーク（現在の武器が点灯）。押してマークの方向へ弾くと切替：上＝01 メイン 57mm、右＝02 マンティスブレード（接近して射撃で斬撃、一撃撃破、クールダウン3秒）、左＝03 脚部ネイルガン</b></li>
 <li>照準：中央の小円が黄＝ワイヤーが届く、青＝フック中。大きな弧の赤いひし形＝敵の方向（中抜き＝背後）。下＝残弾・スロット（01 メイン／02 サブ／03 脚部）・弾種。左右の数値＝高度／速度。両側の目盛り：左＝ブースト燃料、右＝残弾</li>
 <li><b>脚部ネイルガン</b>（腕を使わない、全24本）：壁に固定中はスティックで壁を這える（2.5mごとに1本消費、尽きると落下）。6m以内に壁があるときに撃つ＝最寄りの壁に固定、どの角度でもOK（ワイヤーは自動回収。ブースト・フック・飛びかかりで解除）。敵への武器にもなる</li>
 <li><b>57mm滑腔砲</b>：0.8秒に1発・1マガジン6発。砲弾には飛翔時間と落下があり、着弾点4m以内に爆発ダメージ。空中で撃つと反動で後ろへ押される</li>
@@ -996,10 +1007,10 @@ const H = {
 `<li>링 모양 공중섬 전장: 양 팀 기지는 양 끝. <b>외곽</b>은 안쪽으로 기울어 계단식으로 올라가는 공중섬 (기동성 높음, 조준 어려움). <b>중앙 플랫폼</b>은 가장 낮아 추락 위험은 없지만 위에서 공격당함. 맨 아래는 허공. 빛나는 발판에서 연료와 탄약 보충</li>
 <li><b style="color:#c99bff">온라인 대전</b> (1v1, 실제 플레이어): 홈에서 ‘MAIN LOBBY’로 로비 입장. ‘QUICK MATCH’는 자동 매칭, 20초 안에 못 찾으면 AI전. ‘ROOM’으로 방을 만들고 코드를 친구에게 알려 주면 상대가 ‘JOIN’에 입력해 참가, 방장이 ‘BATTLE’로 시작. 방장은 기지 A, 참가자는 기지 B에서 출발. 규칙은 AI 대전과 같음</li>
 <li><b style="color:#ffb070">AI 대전</b>: 당신은 기지 A, AI는 기지 B에서 출발. 먼저 5번 격파하거나 5분 후 점수가 높은 쪽이 승리. 허공에 떨어지면 상대 득점. 주황색 기체와 와이어가 AI</li>
-<li>기본은 <b>3인칭</b> (내 거미 메카가 보임). 오른쪽 위 3P/1P로 전환. 허공 추락이나 리스폰 시 기지 A로 복귀</li>
+<li>기본은 <b>3인칭</b> (내 거미 메카가 보임). <b>설정→카메라</b>에서 1인칭으로 전환 (PC는 <b>V</b>). 끼었을 때는 <b>설정→조작→리스폰</b>으로 기지 A 복귀. 허공 추락 시에도 기지 A로 복귀</li>
 <li><b>파란 스틱</b>: 이동. <b>가볍게 탭 = 제자리 점프, 원하는 방향으로 빠르게 튕기고 놓기 = 그 방향으로 점프</b>. 많이 밀수록 빨리 달림 (지면·경사·벽 옆·벽 고정 중에도 점프 가능). 다리는 70° 이내 경사에 설 수 있고 고속에서도 지면에 붙음</li>
 <li><b style="color:#63e6ff">왼쪽/오른쪽 와이어</b> (둘 다 작은 스틱): 누르기 = 와이어 발사. 원 안에서 드래그 = 위로 감기, 아래로 풀기, 좌우 스윙. <b style="color:#ffb040">바깥 원까지 끌기 = 부스트</b> (고정점이 없어도 가능)</li>
-<li><b style="color:#ff7a5c">사격</b>: 누르고 있으면 연사, 누른 채 드래그 = 쏘면서 조준. 사격 버튼을 <b style="color:#ffc94a">길게 누르면 옆에 무기 아이콘 3개가 나옴. 아이콘 방향으로 튕기면 교체: 위 = 01 주무기 57mm, 오른쪽 = 02 맨티스 블레이드 (근접해서 사격으로 베기, 일격 격파, 쿨다운 3초), 왼쪽 = 03 다리 네일건</b></li>
+<li><b style="color:#ff7a5c">사격</b>: 누르고 있으면 연사, 누른 채 드래그 = 쏘면서 조준. 사격 버튼을 <b style="color:#ffc94a">테두리 위·오른쪽·왼쪽에 작은 무기 마크 (현재 무기가 켜짐). 누른 채 마크 방향으로 튕기면 교체: 위 = 01 주무기 57mm, 오른쪽 = 02 맨티스 블레이드 (근접해서 사격으로 베기, 일격 격파, 쿨다운 3초), 왼쪽 = 03 다리 네일건</b></li>
 <li>조준점: 중앙 작은 원이 노랑 = 와이어가 닿음, 청록 = 연결됨. 큰 호 위의 빨간 마름모 = 적 방향 (속이 빈 것 = 뒤쪽). 아래 = 탄약·슬롯 (01 주무기/02 보조/03 다리)·탄종. 좌우 수치 = 고도/속도. 양옆 눈금: 왼쪽 = 부스트 연료, 오른쪽 = 탄약</li>
 <li><b>다리 네일건</b> (팔을 쓰지 않음, 총 24발): 벽에 고정된 동안 스틱으로 벽을 타고 이동 (2.5m마다 1발 소모, 다 쓰면 떨어짐). 6m 안에 벽이 있을 때 쏘면 = 가장 가까운 벽에 고정, 어떤 각도든 가능 (와이어 자동 회수. 부스트·와이어·도약으로 해제). 적을 공격하는 무기로도 사용</li>
 <li><b>57mm 활강포</b>: 0.8초에 1발, 탄창당 6발. 포탄은 비행 시간과 낙하가 있고 착탄점 4m 안에 폭발 피해. 공중에서 쏘면 반동으로 뒤로 밀림</li>
@@ -1010,10 +1021,10 @@ const H = {
 `<li>Ring of sky islands: each team's base sits at one end. The <b>outer ring</b> is islands tilted inward and stepping upward (high mobility, hard to aim). The <b>central platform</b> is lowest — no fall risk, but you get shot from above. Below everything is the void; glowing pads refill fuel and ammo</li>
 <li><b style="color:#c99bff">Online</b> (1v1, real players): tap “MAIN LOBBY” on the home screen. “QUICK MATCH” finds someone automatically and falls back to AI after 20 s. “ROOM” creates a room — give your friend the code, they enter it under “JOIN”, and the host presses “BATTLE”. The host starts at Base A, the guest at Base B; rules are the same as vs AI</li>
 <li><b style="color:#ffb070">vs AI</b>: you start at Base A, the AI at Base B. First to 5 kills, or the higher score after 5 minutes, wins. Falling into the void scores for the other side. The orange mech and orange wires are the AI</li>
-<li><b>Third person</b> by default (you can see your spider mech); toggle with 3P / 1P at top right. Falling into the void or respawning returns you to Base A</li>
+<li><b>Third person</b> by default (you can see your spider mech); switch to first person in <b>Settings → Camera</b> (PC: <b>V</b>). If you get stuck, <b>Settings → Controls → Respawn</b> returns you to Base A; falling into the void does too</li>
 <li><b>Blue stick</b>: move. <b>Tap = jump in place; flick quickly in any direction and release = jump that way</b>. Push further to run faster (you can jump on the ground, slopes, against walls or while pinned). The spider legs stand on slopes up to 70° and stick to the ground at speed</li>
 <li><b style="color:#63e6ff">Left / right wire</b> (both are mini sticks): hold = fire a wire; drag inside the circle = up reels in, down lets out, left/right swings; <b style="color:#ffb040">drag past the outer ring = boost</b> (works with no anchor too)</li>
-<li><b style="color:#ff7a5c">Fire</b>: hold to shoot, drag while holding = aim while firing. <b style="color:#ffc94a">Hold the fire button and three weapon icons pop out; flick toward one to switch: up = 01 Main 57mm, right = 02 Mantis Blade (fire up close to slash — one-hit KO, 3 s cooldown), left = 03 Leg Nail Gun</b></li>
+<li><b style="color:#ff7a5c">Fire</b>: hold to shoot, drag while holding = aim while firing. <b style="color:#ffc94a">Small weapon marks sit on the fire button's rim at top, right and left (the current one lights up); press and flick toward a mark to switch: up = 01 Main 57mm, right = 02 Mantis Blade (fire up close to slash — one-hit KO, 3 s cooldown), left = 03 Leg Nail Gun</b></li>
 <li>Reticle: small center circle yellow = a wire will hook, cyan = hooked. Red diamonds on the big arc = enemy direction (hollow = behind you). Below = ammo, slot (01 Main / 02 Sub / 03 Leg), ammo type. Left/right readouts = altitude / speed. Side gauges: left = boost fuel, right = ammo</li>
 <li><b>Leg Nail Gun</b> (doesn't use your arms, 24 nails): while pinned, use the stick to crawl along the wall — one nail per 2.5 m, you drop when they run out. Fire with a wall within 6 m = pin to the nearest wall at any angle (wires retract; boost, hook or pounce to detach). Also works as a weapon</li>
 <li><b>57mm Smoothbore</b>: one shot per 0.8 s, 6 per mag. Shells have travel time and drop, with blast damage within 4 m of impact. Firing in mid-air pushes you back with recoil</li>
@@ -3935,20 +3946,21 @@ const WICON = {
 const IC_THRUST = '<svg class="ic s" viewBox="0 0 24 24"><path d="M12 3v11M7.5 7.5L12 3l4.5 4.5"/><path d="M9 17c0 2.2 1.4 3.6 3 4.5 1.6-.9 3-2.3 3-4.5"/></svg>';   // 推進（往上的箭頭＋火焰）
 const IC_REEL = '<svg class="ic s" viewBox="0 0 24 24"><path d="M12 20V6M7 10l5-5 5 5"/><path d="M5 21h14"/></svg>';   // 收索
 const IC_RELOAD = '<svg class="ic s" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>';   // 裝填
-const IC_3P = '<svg viewBox="0 0 24 24"><circle cx="15" cy="7" r="2.6"/><path d="M10.5 20l1.5-5.5 3-2 3 2 1.5 5.5"/><path d="M3 12h5M5.5 9.5v5"/></svg>';   // 第三人稱（看得到自己）
-const IC_1P = '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';   // 第一人稱（眼睛）
 const iconKey = k => k === 'mg' && !bladeOn(local && local.weapon) ? 'mgun' : k;   // 02 欄圖示依選裝
 const iconSVG = k => `<svg viewBox="0 0 30 16" aria-hidden="true"><path d="${WICON[iconKey(k)]}"/></svg>`;
 const WICON2D = {}; for (const k in WICON) WICON2D[k] = new Path2D(WICON[k]);
-const SLOT_ANG = { main: 90, mg: 0, sub: 180 };   // v3.9 上／右／左（右邊靠螢幕邊緣，圖示會往內收、往上抬一點）
+const SLOT_ANG = { main: 90, mg: 0, sub: 180 };   // v3.9 上／右／左；v4.7 標記貼在射擊鈕外圈的這三個方向，不再往上抬（以前右邊的 02 被推到右上，看起來像「往右上甩」）
+// v4.7 射擊鈕外圈的極簡單線圖示（viewBox 0 0 16 16，描邊）：01 砲管、02 鐮刃（或機槍）、03 釘
+const WGLYPH = { main: 'M1.5 6.5h4.5v4H1.5z M6 8.5h8.5 M14.5 7v3', mgun: 'M1.5 7h6.5v3H1.5z M8 8.5h6.5 M4 10v3', mg: 'M2.5 13.5l4.5-4.5 M7 9C9 4.5 11.5 3 14.5 2.5 12.5 4 11 6 10.2 8.8', sub: 'M2 5.5v6 M2 8.5h8 M10 6.5l4.5 2-4.5 2z' };
+const glyphSVG = k => `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="${WGLYPH[iconKey(k)]}"/></svg>`;
 const SLOT_DIR = {}; for (const k in SLOT_ANG){ const a = SLOT_ANG[k] * DEG; SLOT_DIR[k] = [Math.cos(a) + 1e-6, -Math.sin(a), k === 'main' ? '01' : k === 'mg' ? '02' : '03']; }
-function refreshWIcons(){ for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k); el.innerHTML = iconSVG(k) + `<span class="dir">${SLOT_DIR[k][2]}</span>`; }
+function refreshWIcons(){ for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k); el.innerHTML = glyphSVG(k); el.title = SLOT_DIR[k][2]; }
   for (const [id, k] of [['bW1', 'main'], ['bW2', 'mg'], ['bW3', 'sub']]){ const el = document.getElementById(id); if (el) el.innerHTML = iconSVG(k) + `<small>${id.slice(-1).padStart(2, '0')}</small>`; }
   try { lastUI.fl = lastUI.sw = lastUI.f = null; } catch(_){} }   // 初始化時 lastUI 還沒宣告
 refreshWIcons();
-function layoutSlots(){ const r = document.getElementById('bFire').getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width * 1.3;
-  for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k), [dx, dy] = SLOT_DIR[k], l = Math.hypot(dx, dy);
-    let x = cx + dx / l * R, y = cy + dy / l * R; const over = x - (innerWidth - 28); if (over > 0){ x -= over; y -= over * 0.8; }   // 超出螢幕右邊就往內、往上收
+function layoutSlots(){ const r = document.getElementById('bFire').getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width / 2;   // 標記中心就在外圈上
+  for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k), [dx, dy] = SLOT_DIR[k], l = Math.hypot(dx, dy), m = (el.offsetWidth || 20) * 0.8;
+    const x = clamp(cx + dx / l * R, m, innerWidth - m), y = clamp(cy + dy / l * R, m, innerHeight - m);   // 只夾在螢幕內，方向不變
     el.style.left = x + 'px'; el.style.top = y + 'px'; } }
 addEventListener('resize', () => setTimeout(layoutSlots, 50)); setTimeout(layoutSlots, 300);
 function slotsOpen(on, hot){ for (const k of ['main', 'mg', 'sub']){ const el = document.getElementById('ws_' + k); el.classList.toggle('open', !!on); el.classList.toggle('hot', on && hot === k); } }
@@ -3983,9 +3995,9 @@ touchEl.addEventListener('pointerdown', e => {
   //  改成「優先區」：落點在某顆按鈕的 2 倍半徑內，而且比起搖桿待機中心更靠近這顆按鈕 → 一律判定為該按鈕
   if (!bEl || !btnRoles[bEl.id]){ let best = null, bd = 1e9;
     const sb = stickBase.getBoundingClientRect(), sdx = e.clientX - (sb.left + sb.width/2), sdy = e.clientY - (sb.top + sb.height/2);
-    const dStick = Math.hypot(sdx, sdy);
+    const dStick = Math.hypot(sdx, sdy), bs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bs')) || 1;   // v4.7 按鈕外觀縮小（--bs），判定半徑還原成原本大小
     for (const id of Object.keys(btnRoles)){ const el = document.getElementById(id); if (!el || el.offsetParent === null) continue;
-      const r = el.getBoundingClientRect(), dpx = Math.hypot(e.clientX - (r.left + r.width/2), e.clientY - (r.top + r.height/2)), d = dpx / (r.width/2);
+      const r = el.getBoundingClientRect(), dpx = Math.hypot(e.clientX - (r.left + r.width/2), e.clientY - (r.top + r.height/2)), d = dpx / (r.width / 2 / bs);
       if (d < CONFIG.touch.btnPriorityScale && d < bd && (id !== 'bRopeL' || dpx < dStick)){ bd = d; best = el; } }
     if (best) bEl = best; }
   const btnId = bEl && btnRoles[bEl.id] ? bEl.id : null;
@@ -4138,7 +4150,7 @@ document.getElementById('bSet').addEventListener('click', ()=> setEl.classList.t
 document.getElementById('setClose').addEventListener('click', ()=> setEl.classList.remove('open'));
 // 回到首頁：只在練習、對戰 AI 時可用（線上對戰中隱藏，避免對手那邊卡住）
 const homeBtn = document.getElementById('setHome');
-function updateHomeBtn(){ homeBtn.style.display = running && match.mode !== 'net' ? '' : 'none'; setEl.classList.toggle('inMenu', !running);
+function updateHomeBtn(){ homeBtn.style.display = running && match.mode !== 'net' ? '' : 'none'; document.getElementById('respawnRow').style.display = running ? '' : 'none'; setEl.classList.toggle('inMenu', !running);
   const pz = document.getElementById('setPause'), net = running && match.mode === 'net'; pz.textContent = !running ? '' : _T(net ? '連線對戰中・不會暫停' : '‖ 已暫停'); pz.classList.toggle('net', net); }   // v4.1 暫停提示
 document.getElementById('bSet').addEventListener('click', updateHomeBtn);
 homeBtn.addEventListener('click', e => { e.stopPropagation(); goHome(); });
@@ -4162,7 +4174,7 @@ function goHome(){   // 設定裡的按鈕在線上對戰中會隱藏；結果�
 setEl.addEventListener('click', e => { if (e.target === setEl) setEl.classList.remove('open'); });   // 點面板外的暗處也能關
 for (const t of setEl.querySelectorAll('.tabs button')) t.addEventListener('click', ()=>{
   for (const o of setEl.querySelectorAll('.tabs button, section')) o.classList.toggle('on', o.dataset.tab === t.dataset.tab || o.dataset.page === t.dataset.tab); });
-document.getElementById('bReset').addEventListener('click', respawn);
+document.getElementById('setRespawn').addEventListener('click', e => { e.stopPropagation(); respawn(); setEl.classList.remove('open'); if (paused) togglePause(false); });   // v4.7 原本右上的 ↺ 移到設定裡（卡住時傳回基地）
 document.getElementById('optShake').addEventListener('change', e => opts.shake = e.target.checked);
 document.getElementById('optShadows').addEventListener('change', e => opts.shadows = e.target.checked);
 document.getElementById('optAA').value = aaMode; document.getElementById('optAA').addEventListener('change', e => setAA(e.target.value));
@@ -4180,10 +4192,8 @@ document.getElementById('optSpeed').addEventListener('change', e => setSpeedK(e.
 document.getElementById('optSpeedK').addEventListener('input', e => setSpeedK(e.target.value));
 { let k0 = 1; try { k0 = +(localStorage.getItem('wfm.speedK') || 1); } catch(_){} setSpeedK(k0); }
 document.getElementById('optPaint').addEventListener('change', e => { opts.paint = e.target.value; mech.applyPaint(opts.paint); });
-function setView(on){ opts.view3P = on; document.getElementById('optView3P').checked = on; document.getElementById('bView').innerHTML = on ? IC_3P : IC_1P; }
+function setView(on){ opts.view3P = on; document.getElementById('optView3P').checked = on; }   // v4.7 右上的 3P／1P 鈕移除：設定→鏡頭「第三人稱」或電腦 V 鍵
 document.getElementById('optView3P').addEventListener('change', e => setView(e.target.checked));
-document.getElementById('bView').addEventListener('click', e => { e.stopPropagation(); setView(!opts.view3P); });
-document.getElementById('bView').innerHTML = opts.view3P ? IC_3P : IC_1P;
 document.getElementById('optLockEnemy').addEventListener('change', e => opts.lockEnemy = e.target.checked);
 document.getElementById('optRopeBuffer').addEventListener('change', e => opts.ropeBuffer = e.target.checked);
 document.getElementById('optFcs').checked = opts.fcs;   // v4.3 射控預判：記在 localStorage（wfm.fcs）
@@ -5004,7 +5014,7 @@ let startMode = 'practice';
 const canFS = () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
 const isFS = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
 function goFS(){ const el = document.documentElement; try { (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el)?.catch?.(()=>{}); } catch(_){} }
-function updateFSBtn(){ document.getElementById('bFS').style.display = (running && canFS() && !isFS() && matchMedia('(pointer:coarse)').matches) ? 'inline-block' : 'none'; }
+function updateFSBtn(){ document.getElementById('bFS').style.display = (running && canFS() && !isFS() && matchMedia('(pointer:coarse)').matches) ? 'flex' : 'none'; }
 document.getElementById('bFS').addEventListener('click', e => { e.stopPropagation(); goFS(); });
 for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => { setTimeout(() => { resize(); calcStick(); idleStick(); updateFSBtn(); }, 50); });
 addEventListener('resize', updateFSBtn);
@@ -5126,7 +5136,7 @@ const tutorial = (() => {
     { title: '推進器', g: 'thrust', text: '把鋼索鈕<b>拖出外圈</b>＝開推進往上飛（準星左邊的 BST 是燃料，站在地上會回復）。', hl: 'bRopeL',
       init(){ acc = 0; }, done(){ if (P().thrusting) acc += 1 / 60; return acc > 0.6; } },
     { title: '射擊', g: 'hold', text: '<b>按住射擊鈕</b>開火，打掉一個靶（紅白圓靶）。準星對到靶時射控會幫你補正。', hl: 'bFire', init(){}, done(){ return seen('kill'); } },
-    { title: '換武器', g: 'swap', text: '在射擊鈕上<b>按住</b>，旁邊會出現三個武器圖示，<b>往圖示方向一甩</b>就換過去。', hl: 'bFire', init(){}, done(){ return seen('swap'); } },
+    { title: '換武器', g: 'swap', text: '射擊鈕外圈的上／右／左有三個武器標記，<b>按住往標記方向一甩</b>就換過去。', hl: 'bFire', init(){}, done(){ return seen('swap'); } },
     { title: '腿部釘槍', g: 'nail', text: '換到 03 釘槍：<b>靠牆開槍</b>＝釘在牆上（推搖桿可以沿牆爬）；<b>在空中開槍</b>＝急煞車。', hl: 'bFire', init(){}, done(){ return seen('pin') || seen('nailBrake') || events.some(e => !e.by && e.type === 'shot' && e.nail); } },   // v3.6b 在平地開一發釘槍也算過關（原本只認釘牆／空中煞車，大島上沒牆會卡住）
   ];
   // v3.9 設定教學：開設定 → 速度 → 按鈕大小 → 自訂按鈕位置（拖曳、大小、三指用的選用按鈕、完成）→ 其他分頁
@@ -5147,7 +5157,7 @@ const tutorial = (() => {
   // v3.4 用動畫示範手勢（半透明指尖在要操作的按鈕上做一次動作，一直重播），不用文字
   const hand = $('tutHand'), aim = $('tutAim'), trail = $('tutTrail'), rip = hand.querySelector('s'); let anim = null, anim2 = null;
   // 手勢關鍵影格 [dx, dy, 按下?, 時間比例]，座標相對於目標中心（px）。每輪重播時依目前的搖桿半徑／射擊鈕大小重算（轉向、縮放都不會跑掉）
-  const slotVec = (k, F) => { const a = SLOT_ANG[k] * DEG, R = F * 1.3; return [Math.cos(a) * R, -Math.sin(a) * R]; };   // 與 layoutSlots 同一套幾何
+  const slotVec = (k, F) => { const a = SLOT_ANG[k] * DEG, R = Math.max(F * 0.6, 50); return [Math.cos(a) * R, -Math.sin(a) * R]; };   // v4.7 往外圈標記的方向甩（超過 40px 門檻）
   const GEST = {
     move:   R => [[0, 0, 0, 0], [0, 0, 1, .12], [0, -R * .85, 1, .45], [0, -R * .85, 1, .8], [0, -R * .85, 0, .9], [0, 0, 0, 1]],
     look:   () => { const a = innerWidth * .07, b = -innerWidth * .1; return [[a, 0, 0, 0], [a, 0, 1, .12], [b, 8, 1, .6], [b, 8, 0, .7], [a, 0, 0, 1]]; },
