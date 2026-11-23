@@ -238,7 +238,7 @@
   .m-exit span { font-size:20px; margin-left:6px; }
   .m-slot { position:absolute; width:clamp(48px, 8vh, 60px); height:clamp(48px, 8vh, 60px); border-radius:12px; border:2px dashed rgba(140,220,255,.6); background:rgba(8,22,34,.55); color:#9fe8ff; font-size:26px; }
   .m-opp { left:auto; right:calc(var(--redge) + 6px); top:auto; bottom:calc(50% + 38px); width:clamp(120px, 18vw, 170px); height:auto; min-height:clamp(70px, 14vh, 96px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:8px; }
-  .m-opp small { font-size:12px; color:#b9d8e8; } .m-opp.full { border-style:solid; border-color:#ff9a6a; color:#ffb48a; background:rgba(40,16,8,.6); } .m-opp.full small { color:#ffe2cf; font-size:14px; }
+  .m-opp small { font-size:12px; color:#b9d8e8; } #mOppTxt { max-width:100%; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .m-opp.full #mOppSt { font-size:12px; opacity:.85; } .m-opp.full { border-style:solid; border-color:#ff9a6a; color:#ffb48a; background:rgba(40,16,8,.6); } .m-opp.full small { color:#ffe2cf; font-size:14px; }
   .m-roomno { position:absolute; left:50%; top:calc(58px + var(--st)); transform:translateX(-50%); display:flex; gap:10px; align-items:center; padding:6px 8px 6px 16px; border-radius:12px;
     background:rgba(8,22,34,.8); border:1px solid rgba(140,220,255,.5); font-size:14px; letter-spacing:.14em; color:#9fd8ee; }
   .m-roomno b { font-size:22px; color:#fff; letter-spacing:.24em; } .m-roomno button { min-height:38px; padding:0 12px; border-radius:9px; border:1px solid rgba(140,220,255,.5); background:rgba(99,230,255,.12); color:#e6fbff; font-size:13px; letter-spacing:0; }
@@ -499,7 +499,7 @@
   </div>
   <div class="m-scr" data-scr="room">
     <div class="m-roomno">ROOM <b id="mCode">·····</b><button id="mCopy">分享代碼</button></div>
-    <button class="m-slot m-opp" id="mOpp"><span id="mOppIcon">＋</span><small id="mOppTxt">等待對手</small></button>
+    <button class="m-slot m-opp" id="mOpp"><span id="mOppIcon">＋</span><small id="mOppTxt" hidden></small><small id="mOppSt">等待對手</small></button>
     <div class="m-left">
       <div class="m-msg" id="mRoomMsg"></div>
       <div id="mJoinRow" class="m-sub" data-tag="輸入房間代碼"><input id="mCodeIn" maxlength="6" placeholder="輸入代碼" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="mJoinGo">加入</button></div>
@@ -4276,9 +4276,16 @@ function drawHUD(dt){
   if (opts.follow === 'weapon' && !mouseMode && (aimOff.x || aimOff.y)) drawReticle(aimOff.x, aimOff.y, '#ff6a50', state.weapon.active === 'main' ? '57mm' : state.weapon.active === 'mg' ? (bladeOn(state.weapon) ? '螳螂鐮' : '14.5mm') : '釘槍');
   if (ropeAiming) drawReticle(ropeOff.x, ropeOff.y, '#3de0ff', '放開＝射出右索');
   // 狀態橫幅：無敵區／釘在牆上
+  let feedMaxY = Infinity;   // v4.5 上方擊破訊息最低能畫到哪（別壓到狀態橫幅）
   { const msgs = []; if (P.safe) msgs.push(['出生保護區：不會受傷，也不能開火', '#40ffb0']); if (P.pinned) msgs.push(['釘在牆上：勾索、推進或撲擊就會脫離', '#ffc94a']);
+    let top0 = cy - 96;
+    if (msgs.length && (match.mode === 'ai' || match.mode === 'net') && match.feed.length){   // 對戰中有擊破訊息：橫幅往下讓（最多讓到準星大弧上方），還不夠才少畫舊訊息
+      const fsF = clamp(h / 700, 0.75, 1), feedBot = by0 => 8 + 24*fsF + 8 + 24*fsF + by0 * 18*fsF + 5*fsF, stack = (msgs.length - 1) * 26;
+      const lowest = cy - 46 * clamp(Math.min(w, h) / 420, 0.75, 1.25) - 44;   // 橫幅底緣留在大弧（含索距讀數）上方
+      top0 = Math.max(top0, Math.min(feedBot(match.feed.length - 1) + 4 + stack, lowest));
+      feedMaxY = top0 - stack - 4; }
     msgs.forEach(([m0, col], i) => { const m = _T(m0); c.font = '700 14px sans-serif'; c.textAlign = 'center'; const tw2 = c.measureText(m).width;
-      c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(cx - tw2/2 - 10, cy - 96 - i*26, tw2 + 20, 22); c.fillStyle = col; c.fillText(m, cx, cy - 80 - i*26); }); }
+      c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(cx - tw2/2 - 10, top0 - i*26, tw2 + 20, 22); c.fillStyle = col; c.fillText(m, cx, top0 + 16 - i*26); }); }
   // ===== v1.3 準星介面（參考 86 機甲 HUD）=====
   //  上半圓大弧＋兩個菱形＝左／右索狀態；內圈括弧＝射擊散布；中央虛線十字＋小圓；
   //  水平線＋尖峰（隨速度跳動）＋高度／速度讀數；兩側梯狀刻度：左＝推進燃料、右＝彈量；準星附近＝彈種／彈量／武器欄位
@@ -4405,7 +4412,7 @@ function drawHUD(dt){
     c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs);
     const hb = (x, k, col, right) => { const w = bw/2 - 14; c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(x, by, w, 6); c.fillStyle = col; c.fillRect(right ? x + w * (1 - k) : x, by, w * k, 6); };
     hb(cx - bw/2 + 8, local.hp / CONFIG.pvp.hp, '#5fe0ff', false); if (bot) hb(cx + 6, bot.hp / CONFIG.pvp.hp, '#ffa040', true);
-    c.font = `600 ${Math.round(13*fs)}px sans-serif`; match.feed.forEach((f2, i) => { c.fillStyle = `rgba(255,220,180,${Math.min(1, f2.t)})`; c.fillText(clipPx(c, _T(f2.msg), Math.min(w - 24, 560 * fs)), cx, by + 24*fs + i * 18*fs); });   // v4.5 長名字：放不下才截斷加「…」
+    c.font = `600 ${Math.round(13*fs)}px sans-serif`; match.feed.forEach((f2, i) => { if (by + 24*fs + i * 18*fs + 5*fs > feedMaxY) return; c.fillStyle = `rgba(255,220,180,${Math.min(1, f2.t)})`; c.fillText(clipPx(c, _T(f2.msg), Math.min(w - 24, 560 * fs)), cx, by + 24*fs + i * 18*fs); });   // v4.5 長名字：放不下才截斷加「…」
   } else if (!tutorial.on) {   // 教學進行中：上方讓給教學進度列
   c.fillStyle = 'rgba(0,0,0,.35)'; const line = `${sp.toFixed(0)} m/s   ${_T('命中')} ${acc}%   ${_T('墜落')} ${P.falls || 0}`;
   const tw = c.measureText(line).width; c.fillRect(cx - tw/2 - 10, 8, tw + 20, 24*fs + 4);
@@ -4774,7 +4781,9 @@ function menuNetMsg(msg){
   $('mCode').textContent = inRoom && NET.code ? NET.code : '·····';
   $('mOpp').classList.toggle('full', peer); $('mOppIcon').textContent = peer ? '◆' : '＋';
   const rd = NET.ready || {}, opReady = peer && rd.op, meReady = peer && rd.me;
-  $('mOppTxt').textContent = peer ? _TN(NET.peerName || '對手') + '　' + _T(opReady ? '✓ 準備好了' : '準備中…') : _T(inRoom && !host ? '連線中…' : '等待對手（點這裡分享代碼）');
+  const oppName = peer ? _TN(NET.peerName || '對手') : '';   // v4.5 長名字：名字單行、放不下加「…」（滑過看全名），狀態另起一行
+  $('mOppTxt').textContent = oppName; $('mOppTxt').title = oppName; $('mOppTxt').hidden = !peer;
+  $('mOppSt').textContent = peer ? _T(opReady ? '✓ 準備好了' : '準備中…') : _T(inRoom && !host ? '連線中…' : '等待對手（點這裡分享代碼）');
   $('mOpp').classList.toggle('ready', !!opReady);
   $('mBattle').disabled = !peer; $('mBattle').classList.toggle('on', !!meReady);
   $('mBattleT').textContent = meReady ? 'READY ✓' : 'BATTLE';
