@@ -1,0 +1,23 @@
+// Promo helper H (copied from promo-assets promo/v45/gen.py INIT) + FP additions
+module.exports = String.raw`()=>{ window.H = (()=>{ const g=__game, L=g.local, I=g.input, B=g.ensureBot(), M=g.mech;
+const H = { g, L, I, B, M, f:0, log:'', bc:{}, dt:33.333 };
+H.place=(a,x,y,z,yaw)=>{ a.body.setTranslation({x,y,z},true); a.body.setLinvel({x:0,y:0,z:0},true); a.P.prevPos.set(x,y,z); a.P.currPos.set(x,y,z); a.P.vel.set(0,0,0); if(yaw!=null) a.P.yaw=yaw; a.P.pitch=0; a.P.pinned=null; for(const r of a.ropes){ r.hooked=false; r.wasHeld=false; } if(a.tgt) a.tgt.mesh.position.set(x,y,z); };
+H.vel=(a,x,y,z)=>{ a.body.setLinvel({x,y,z},true); a.P.vel.set(x,y,z); };
+H.aim=(tx,ty,tz,turn=true)=>{ const p=L.P.currPos, dx=tx-p.x, dy=ty-(p.y+1.1), dz=tz-p.z, y=Math.atan2(-dx,-dz), pt=Math.atan2(dy,Math.hypot(dx,dz)); window.__aimOverride=[y,pt]; if(turn){ L.P.yaw=y; L.P.pitch=Math.max(-0.3,Math.min(0.5,pt)); } };
+H.aimBot=(lead=false)=>{ const q=B.P.currPos; let x=q.x,y=q.y+0.3,z=q.z; if(lead){ const d=Math.hypot(x-L.P.currPos.x,z-L.P.currPos.z), t=d/700; x+=B.P.vel.x*t; z+=B.P.vel.z*t; } H.aim(x,y,z); };
+H.botAim=(tx,ty,tz)=>{ const p=B.P.currPos, dx=tx-p.x, dy=ty-(p.y+1.1), dz=tz-p.z, y=Math.atan2(-dx,-dz), pt=Math.atan2(dy,Math.hypot(dx,dz)); Object.assign(H.bc,{yaw:y,pitch:pt,gunYaw:y,gunPitch:pt,aimYaw:y,aimPitch:pt}); };
+H.botAimL=(ox=0,oz=0)=>{ const p=L.P.currPos; H.botAim(p.x+ox,p.y+0.3,p.z+oz); };
+window.__botCmd=(dt,b)=>{ const c={ seq:0, tick:0, moveX:0, moveZ:0, yaw:b.P.yaw, pitch:b.P.pitch, fire:false, hookL:false, hookR:false, hookMain:false, smart:false, autoFire:false, swap:false, swapTo:null, gunYaw:null, gunPitch:null, jump:false, jumpPow:1, jumpX:0, jumpZ:0, boost:false, thrust:false, reload:false };
+  Object.assign(c,H.bc); H.bc.jump=false; H.bc.swapTo=null; return c; };
+H.cam=(x,y,z,lx,ly,lz,fov)=>{ window.__camOverride={x,y,z,lx,ly,lz,fov}; };
+H.free=()=>{ window.__camOverride=null; };
+H.lerp=(a,b,t)=>a+(b-a)*t; H.cl=t=>Math.max(0,Math.min(1,t)); H.eo=t=>1-Math.pow(1-H.cl(t),3); H.eio=t=>{t=H.cl(t); return t*t*(3-2*t);};
+H.p=()=>L.P.currPos; H.q=()=>B.P.currPos;
+H.edge=k=>{ const e=M.paintMats&&M.paintMats.edge&&M.paintMats.edge[0]; if(!e) return; if(!H.e0) H.e0=e.color.clone(); e.color.copy(H.e0).multiplyScalar(k); };
+H.wreset=a=>{ const w=a.weapon; w.active='main'; w.s2='blade'; w.cannon.ammo=6; w.cannon.reserve=99; w.cannon.reloading=0; w.cannon.cool=0; w.shells.length=0; w.melee={cd:0,t:0,ph:0,prev:false,vis:null}; w.prevFire=false; w.ammo=999; w.reloading=0; w.cooldown=0; a.hp=1e9; a.P.fuel=999; };
+H.reset=()=>{ Object.assign(I,{fire:false,hookR:false,hookL:false,hookMain:false,stickX:0,stickZ:0,jumpQueued:false,jumpX:0,jumpZ:0,ropeLatch:false,swapTo:null}); window.__aimOverride=null; H.wreset(L); H.wreset(B); H.bc={}; g.match.state='live'; g.match.timeLeft=999; B.active=true; B.body.setEnabled(true); B.kind='bot'; B.name='Kestrel_09'; if(window.__promoSeverReset) __promoSeverReset(); H.edge(1); H.cut=null; H.post=null; window.__promoBoomK=0.35; window.__promoSparkS=1; window.__promoCutSparks=1; };
+H.melee=a=>{ const ml=a.weapon.melee; ml.ph=0; ml.cd=0; ml.prev=false; };
+H.hook=(x,y,z)=>{ const r=L.ropes[1]; const o=L.P.currPos.clone(); o.y+=1.2; const d=new o.constructor(x,y,z).sub(o).normalize(); const h=g.castRay(o,d,120); r.hooked=true; r.wasHeld=true; r.smart=true; r.bufT=0; if(h) r.anchor.copy(h.point); else r.anchor.set(x,y,z); r.L=Math.min(60, L.P.currPos.distanceTo(r.anchor)); I.hookR=true; };
+H.pos=a=>a.P.currPos.toArray().map(v=>v.toFixed(1)).join('/');
+H.hpKeep=()=>{ L.hp=1e9; B.hp=1e9; g.match.timeLeft=999; };
+return H; })(); }`;
