@@ -4322,7 +4322,7 @@ const feedAv = {};   // pid → 機體縮圖 dataURL（開場對戰畫面時各�
 const KF_SHOT = { fit: true, dir: [0.3, 0.2, -1], zoom: 1.7, aimX: 0, aimY: 0.12, hi: true };
 const kfM = document.createElement('canvas').getContext('2d');
 const kfList = []; let kfDirty = false;
-let kfPW = 64, kfU = 1; const hudSide = { l: 0, r: innerWidth };   // 比分列左右可用範圍（左上視窗右緣、右上按鈕左緣）
+let kfPW = 64, kfU = 1; const hudSide = { l: 0, r: innerWidth, b: 0 };   // 比分列左右可用範圍（左上視窗右緣、右上按鈕左緣）
 function kfName(pid){ return pid === local.pid ? profName() : bot ? _TN(bot.name) : 'AI'; }
 function kfLayout(){   // 卡片放在自機視窗正下方；觸控時別蓋到左鋼索鈕和搖桿（只看預設／自訂後的實際位置）
   const r = miEl.classList.contains('on') ? { bottom: miEl.offsetTop + miEl.offsetHeight, right: miEl.offsetLeft + miEl.offsetWidth } : null, left = parseFloat(getComputedStyle(kfEl).left) || 10;   // 用版面尺寸（開啟動畫的縮放不算）
@@ -4335,7 +4335,7 @@ function kfLayout(){   // 卡片放在自機視窗正下方；觸控時別蓋到
       if (b.width && b.bottom > top && b.top < bottom){ if (b.left - 6 - left >= 104 * kfU) maxW = Math.min(maxW, b.left - 6 - left); else bottom = Math.min(bottom, b.top - 6); } } }
   maxW = Math.max(maxW, 104 * kfU);
   kfPW = Math.max(36, Math.min(96 * kfU, Math.floor((maxW - 12 * kfU - 8 * kfU - 33 * kfU - 2) / 2)));
-  const tb = document.getElementById('topbar').getBoundingClientRect(); hudSide.l = r ? r.right : 0; hudSide.r = tb.width ? tb.left : innerWidth;
+  const tb = document.getElementById('topbar').getBoundingClientRect(); hudSide.l = r ? r.right : 0; hudSide.b = r ? r.bottom : 0; hudSide.r = tb.width ? tb.left : innerWidth;
   kfEl.style.top = top + 'px'; kfEl.style.maxHeight = Math.max(0, bottom - top) + 'px'; kfEl.style.setProperty('--kw', maxW + 'px'); kfEl.style.setProperty('--pw', kfPW + 'px');
 }
 addEventListener('resize', () => setTimeout(kfLayout, 50));
@@ -4422,7 +4422,9 @@ function drawHUD(dt){
   if (ropeAiming) drawReticle(ropeOff.x, ropeOff.y, '#3de0ff', '放開＝射出右索');
   // 狀態橫幅：無敵區／釘在牆上
   { const msgs = []; if (P.safe) msgs.push(['出生保護區：不會受傷，也不能開火', '#40ffb0']); if (P.pinned) msgs.push(['釘在牆上：勾索、推進或撲擊就會脫離', '#ffc94a']);
-    const top0 = cy - 96;   // v4.6 擊破訊息改成左側卡片，上方不再跟橫幅搶位置
+    let top0 = cy - 96;   // v4.6 擊破訊息改成左側卡片，上方不再跟橫幅搶位置
+    if (msgs.length){ c.font = '700 14px sans-serif'; const mw = Math.max(...msgs.map(([m0]) => c.measureText(_T(m0)).width));   // 小螢幕＋長翻譯：橫幅別壓到左上自機視窗
+      if (cx - mw / 2 - 10 < hudSide.l) top0 = Math.max(top0, hudSide.b + 4 + (msgs.length - 1) * 26); }
     msgs.forEach(([m0, col], i) => { const m = _T(m0); c.font = '700 14px sans-serif'; c.textAlign = 'center'; const tw2 = c.measureText(m).width;
       c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(cx - tw2/2 - 10, top0 - i*26, tw2 + 20, 22); c.fillStyle = col; c.fillText(m, cx, top0 + 16 - i*26); }); }
   // ===== v1.3 準星介面（參考 86 機甲 HUD）=====
@@ -4553,7 +4555,7 @@ function drawHUD(dt){
         c.fillStyle = fr > 0.3 ? '#ffa040' : '#ff5a48'; c.fillRect(x - bw/2, y, bw * fr, bh);
         c.strokeStyle = 'rgba(255,168,96,.9)'; c.lineWidth = 1; c.strokeRect(x - bw/2 - 0.5, y - 0.5, bw + 1, bh + 1);
         c.font = `700 ${Math.max(10, Math.round(11 * k))}px sans-serif`; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,18,26,.8)';
-        const nm = clipPx(c, _TN(E.name), Math.max(bw + 24, 90 * k)); c.strokeText(nm, x, y - 4); c.fillStyle = '#ffd2b0'; c.fillText(nm, x, y - 4);
+        const nm = clipPx(c, _TN(E.name), Math.max(bw + 50, 130 * k)); c.strokeText(nm, x, y - 4); c.fillStyle = '#ffd2b0'; c.fillText(nm, x, y - 4);
         c.restore(); D.vis = true; D.x = x; D.y = y; D.d = Math.round(d); D.k = +k.toFixed(2); D.a = +al.toFixed(2); } } }
   if (levelT > 0){ levelT -= dt; P.pitch *= Math.max(0, 1 - dt / Math.max(levelT, dt)); }
   // 上方精簡資訊（彈量、速度、命中率、推進）— 字級依螢幕高度縮放
