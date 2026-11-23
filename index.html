@@ -69,7 +69,7 @@
   /* 開場對戰畫面：背景是繞圈運鏡的戰場，雙方名片直接浮在戰場上（沒有底下的深色帶子） */
   #vs { position:fixed; inset:0; z-index:9; display:none; pointer-events:none; overflow:hidden; font-family:var(--f-disp); }
   #vs.on { display:block; } #vs.out { opacity:0; transition:opacity .35s; }
-  body.vsOn #touch, body.vsOn #topbar, body.vsOn .wslot { display:none !important; }
+  body.vsOn #touch, body.vsOn #topbar, body.vsOn .wslot, body.vsOn #mInfo, body.vsOn #kFeed { display:none !important; }
   .vs-dim { position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(4,10,16,0) 40%, rgba(4,10,16,.42)); }
   .vs-band { position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); display:flex; align-items:center; justify-content:center; gap:min(3vw, 30px); }
   .vs-card { --c:var(--mint); position:relative; width:min(37vw, 430px); border:1px solid rgba(var(--c),.75); background:rgba(6,20,22,.22); box-shadow:0 0 5px rgba(var(--c),.22); }
@@ -164,7 +164,46 @@
   .stick.idle { opacity:.75; } .knob.idle { opacity:.8; }
   .stick.thrust { border-color:#ffb040; background:rgba(255,176,64,.15); box-shadow:0 0 14px rgba(255,176,64,.6); }
   .stick.rope { border-color:#40e0ff; background:rgba(64,224,255,.10); }
-  #topbar { position:fixed; top:calc(8px + var(--st)); left:calc(var(--pad) + var(--sl)); display:flex; gap:8px; z-index:5; }
+  #topbar { position:fixed; top:calc(8px + var(--st)); right:calc(var(--pad) + var(--sr)); display:flex; gap:8px; z-index:5; }
+  /* v4.6 左上：自機資訊視窗（同 Defenspace 細線視窗：1px 框、極淡底、直角、左上實色標籤＝駕駛員名稱）；下面是擊破卡片 */
+  #mInfo { --c:var(--mint); --u:1; position:fixed; z-index:4; left:calc(var(--pad) + var(--sl)); top:calc(26px + var(--st)); display:none; align-items:center; gap:calc(6px * var(--u));
+    padding:calc(5px * var(--u)) calc(8px * var(--u)) calc(5px * var(--u)) calc(4px * var(--u)); width:calc(196px * var(--u)); box-sizing:border-box; pointer-events:none;
+    border:1px solid rgba(var(--c),.7); background:rgba(6,20,22,.42); box-shadow:0 0 5px rgba(var(--c),.2); color:#eafff8; font:700 calc(11px * var(--u))/1.15 ui-monospace, Menlo, monospace; }
+  #mInfo.on { display:flex; } #mInfo.on.wo { animation:woOpen .45s both, woFlk .6s steps(1, end) both; }
+  #mInfo::before { content:attr(data-name); position:absolute; top:calc(-16px * var(--u)); left:-1px; height:calc(16px * var(--u)); line-height:calc(16px * var(--u)); padding:0 8px; max-width:calc(100% - 14px);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:rgb(var(--c)); color:var(--ink); font:700 calc(11px * var(--u)) var(--f-disp); letter-spacing:.1em; }
+  #miMech { flex:0 0 auto; width:calc(42px * var(--u)); height:calc(42px * var(--u)); overflow:visible; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+  #miMech * { stroke:var(--mc, rgb(var(--mint))); transition:stroke .2s; } #miMech .gl { fill:var(--mc, rgb(var(--mint))); fill-opacity:.18; }
+  #miMech.hit * { stroke:#fff; }
+  .mi-rows { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:calc(3px * var(--u)); }
+  .mi-row { display:flex; align-items:center; gap:calc(5px * var(--u)); min-width:0; white-space:nowrap; }
+  .mi-row > span { flex:0 0 auto; min-width:2.4em; color:rgba(var(--mint),.75); font-size:.9em; } .mi-row > b { flex:0 0 auto; min-width:3.1em; text-align:right; font-variant-numeric:tabular-nums; }
+  .mi-bar { flex:1 1 auto; position:relative; height:calc(5px * var(--u)); background:rgba(var(--mint),.12); border:1px solid rgba(var(--mint),.3); }
+  .mi-bar s { position:absolute; left:0; top:0; bottom:0; width:var(--f, 100%); background:var(--bc, rgb(var(--mint))); }
+  .mi-bar.bst s { --bc:#ffb040; } .mi-bar.thin { height:calc(3px * var(--u)); border-color:rgba(var(--mint),.2); }
+  .mi-w { color:var(--wc, rgb(var(--mint))); } .mi-w > i { flex:1 1 auto; min-width:0; font-style:normal; overflow:hidden; text-overflow:ellipsis; }
+  .mi-w > b.blink { animation:miBlink .5s steps(1, end) infinite; } @keyframes miBlink { 50% { opacity:.35; } }
+  #mInfo.nohp #miHpRow { display:none; }
+  /* 擊破卡片：[擊破者 縮圖／名字] [死因圖示] [被擊破者]；最新的在最上面，約 4 秒後淡出 */
+  #kFeed { position:fixed; z-index:4; left:calc(var(--pad) + var(--sl)); top:calc(110px + var(--st)); display:flex; flex-direction:column; gap:4px; pointer-events:none; overflow:hidden; --u:1; }
+  .kf { --c:var(--mint); position:relative; display:flex; align-items:center; gap:calc(4px * var(--u)); padding:calc(3px * var(--u)) calc(6px * var(--u)); width:max-content; max-width:var(--kw, 240px); box-sizing:border-box;
+    border:1px solid rgba(var(--c),.45); background:rgba(6,20,22,.55); color:#eafff8; transition:opacity .35s, transform .35s; animation:woOpen .4s both, woFlk .55s steps(1, end) both; }
+  .kf.me { border-color:rgba(var(--mint),.95); box-shadow:0 0 6px rgba(var(--mint),.35); } .kf.dn { --c:var(--alert); border-color:rgba(255,150,80,.95); box-shadow:0 0 6px rgba(255,150,80,.35); }
+  .kf.out { animation:kfOut .35s both; } @keyframes kfOut { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(-14px); } }
+  .kf::after { content:''; position:absolute; inset:0; pointer-events:none; background-image:var(--wo-noise, none), repeating-linear-gradient(0deg, rgba(0,0,0,.4) 0 1px, transparent 1px 3px);
+    background-size:256px 256px, 100% 3px; animation:woNoise .6s ease-out both, woJit .6s steps(1, end) both; --c:var(--mint); }
+  .kf-p { display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; width:var(--pw, 64px); }
+  .kf-av { width:calc(40px * var(--u)); height:calc(26px * var(--u)); background:var(--av, none) center / cover no-repeat, rgba(var(--pc, var(--mint)),.08); filter:brightness(1.35) saturate(1.15); border:1px solid rgba(var(--pc, var(--mint)),.5); box-sizing:border-box; }
+  .kf-av.na { background:none; display:flex; align-items:center; justify-content:center; } .kf-av svg { width:80%; height:90%; fill:none; stroke:rgb(var(--pc, var(--mint))); stroke-width:1.6; }
+  .kf-p b { max-width:100%; overflow:hidden; white-space:nowrap; font:700 calc(10px * var(--u))/1.1 var(--f-disp); color:rgb(var(--pc, var(--mint))); }
+  .kf-p.op { --pc:255,168,96; }
+  .kf-ic { flex:0 0 auto; width:calc(33px * var(--u)); height:calc(22px * var(--u)); } .kf-ic svg { width:100%; height:100%; fill:none; stroke:#eafff8; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; overflow:visible; }
+  .kf-ic svg .f { fill:#eafff8; stroke:none; }
+  .kf em { font:700 calc(10px * var(--u)) var(--f-disp); font-style:normal; color:rgb(var(--mint)); white-space:nowrap; } .kf em.op { color:#ffa860; }
+  .kf-txt { font:700 calc(11px * var(--u)) var(--f-disp); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  @media (min-height:700px) and (min-width:1000px) { #mInfo { --u:1.15; top:calc(30px + var(--st)); } #kFeed { --u:1.15; } }
+  @media (max-height:430px) { #mInfo { --u:.86; top:calc(22px + var(--st)); } #kFeed { --u:.86; } }
+  @media (max-height:340px) { #mInfo { --u:.76; top:calc(19px + var(--st)); } #kFeed { --u:.76; gap:3px; } }
   .small { pointer-events:auto; width:40px; height:40px; border-radius:50%; background:rgba(15,30,45,.6); border:1px solid rgba(140,220,255,.5);
     color:#cfefff; font-size:18px; padding:0; }
   /* v2.9 設定面板：置中視窗＋左側分頁＋開關樣式 */
@@ -198,7 +237,7 @@
   #start { position:fixed; inset:0; z-index:10; color:#e8f6ff; font-family:inherit; overflow:hidden; touch-action:none;
     background:radial-gradient(ellipse 70% 75% at 52% 55%, rgba(5,12,20,0) 40%, rgba(5,12,20,.55) 100%), linear-gradient(90deg, rgba(4,10,18,.78) 0%, rgba(4,10,18,.15) 38%, rgba(4,10,18,0) 60%, rgba(4,10,18,.35) 100%);
     --mh:clamp(52px, 11vh, 68px); --mw:clamp(220px, 30vw, 320px); --edge:calc(14px + var(--sl)); --redge:calc(14px + var(--sr)); }
-  body.inMenu #touch, body.inMenu #topbar, body.inMenu #hud, body.inMenu #netBar { visibility:hidden; }
+  body.inMenu #touch, body.inMenu #topbar, body.inMenu #hud, body.inMenu #netBar, body.inMenu #mInfo, body.inMenu #kFeed { visibility:hidden; }
   #start.loading { background:#050b12; } #start.loading .m-btn, #start.loading .m-hangar-btn, #start.loading .m-sub button { opacity:.4; pointer-events:none; }
   #start button { font-family:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .m-profile { position:absolute; left:0; top:0; display:flex; gap:12px; align-items:center; padding:calc(10px + var(--st)) 34px 12px calc(14px + var(--sl)); min-width:min(300px, 44vw); box-sizing:border-box;
@@ -419,6 +458,12 @@
   <button class="small" id="bSet" aria-label="設定">⚙</button>
   <button class="small" id="bFS" aria-label="回到全螢幕" style="display:none">⛶</button>
 </div>
+<div id="mInfo" aria-hidden="true"><svg id="miMech" viewBox="0 0 48 48" aria-hidden="true"><path class="lg" d="M18.5 19 9 11.5 4.5 19.5M29.5 19 39 11.5 43.5 19.5M18.5 29 9 36.5 4.5 28.5M29.5 29 39 36.5 43.5 28.5"/><path class="cr gl" d="M19 15.5h10l3.5 8.5-3.5 9.5H19l-3.5-9.5z"/><path class="ck" d="M21.5 18h5l1.2 3h-7.4z"/><path class="gn" d="M24 15.5V3.5M22.4 6h3.2"/><circle class="ds" cx="16" cy="24" r="1.6"/><circle class="ds" cx="32" cy="24" r="1.6"/></svg><div class="mi-rows">
+  <div class="mi-row" id="miHpRow"><span>HP</span><i class="mi-bar"><s id="miHp"></s></i><b id="miHpV"></b></div>
+  <div class="mi-row"><span>BST</span><i class="mi-bar bst"><s id="miBst"></s></i><b id="miBstV"></b></div>
+  <div class="mi-row mi-w"><span id="miSlot">01</span><i id="miWName" data-i18n-skip></i><b id="miAmmo"></b></div>
+  <div class="mi-row"><i class="mi-bar thin"><s id="miWBar"></s></i></div></div></div>
+<div id="kFeed" data-i18n-skip></div>
 <div id="pause"><div class="pz-win"><p>按 <b>P</b> 或「繼續」回到戰鬥</p><div class="pz-b"><button id="pzGo">繼續</button><button id="pzSet">設定</button><button id="pzHome">回到首頁</button></div></div></div>
 <div id="lockHint">點一下畫面鎖定滑鼠（Esc 放開＝暫停）</div>
 <div id="settings">
@@ -440,7 +485,7 @@
       <label class="row"><span class="tx"><b>按鈕大小</b><i>手大或平板可以調大</i></span><span class="ctl"><input type="range" id="optSize" min="0.8" max="1.3" step="0.05" value="1"></span></label>
     </section>
     <section data-page="cam">
-      <label class="row"><span class="tx"><b>第三人稱</b><i>看得到機體；左上 3P／1P 也能切換</i></span><input type="checkbox" class="sw" id="optView3P" checked></label>
+      <label class="row"><span class="tx"><b>第三人稱</b><i>看得到機體；右上 3P／1P 也能切換</i></span><input type="checkbox" class="sw" id="optView3P" checked></label>
       <label class="row"><span class="tx"><b>鏡頭鎖定地形</b><i>擺盪時自動補正，準星穩定</i></span><input type="checkbox" class="sw" id="optStab" checked></label>
       <label class="row"><span class="tx"><b>鏡頭側傾</b><i>轉彎時畫面跟著傾斜</i></span><input type="checkbox" class="sw" id="optRoll"></label>
       <label class="row"><span class="tx"><b>陰影</b><i>陽光投影；iPad 太卡可以關掉</i></span><input type="checkbox" class="sw" id="optShadows" checked></label>
@@ -534,7 +579,7 @@
     <li>環形空島戰場：兩隊基地在兩端；<b>外圈</b>是往內傾、一階階往上的空島（高機動、難瞄準）；<b>中央平台</b>最低、沒有墜落風險但會被俯射。掉到最下面是虛空；發光平台可補燃料和彈藥</li>
     <li><b style="color:#c99bff">線上對戰</b>（1v1，真人）：首頁按「MAIN LOBBY」進大廳。「QUICK MATCH」自動找人，20 秒沒找到就改打 AI；「ROOM」建立房間，把房間代碼告訴朋友，對方在「JOIN」輸入代碼加入，房主按「BATTLE」開打。房主從基地 A、加入者從基地 B 出發，規則和對戰 AI 相同</li>
     <li><b style="color:#ffb070">對戰 AI</b>：你從基地 A、AI 從基地 B 出發；先擊破 5 次或 5 分鐘內分數高的贏；掉下虛空算對方得分；橘色機體與橘色鋼索是 AI</li>
-    <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），左上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
+    <li>預設<b>第三人稱</b>（看得到自己的蜘蛛機甲），右上角 3P／1P 可切換；掉進虛空或重生都回到基地 A</li>
     <li><b>藍色搖桿</b>：移動；<b>輕點＝原地跳；快速往任一方向滑出並放開＝往那邊跳</b>；推得越遠走越快（在地上、坡上、貼牆或釘在牆上時都能跳）。蜘蛛腳可以站在 70° 以內的坡面，高速時也會貼著地面</li>
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
     <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">按住會在旁邊彈出三個武器圖示，往圖示方向一甩就切換：上＝01 主武 57mm、右＝02 螳螂鐮（近身按射擊揮刀，一刀擊破，冷卻 3 秒）、左＝03 腿部釘槍</b></li>
@@ -622,6 +667,7 @@ const D = {
   "主武 57mm 滑膛炮": ["メイン 57mm滑腔砲", "주무기 57mm 활강포", "Main 57mm Smoothbore"],
   "副武": ["サブ", "보조", "Sub"],
   "主武": ["メイン", "주무기", "Main"],
+  "腿部": ["脚部", "다리", "Leg"],
   "腿部 釘槍": ["脚部 ネイルガン", "다리 네일건", "Leg Nail Gun"],
   "雙鋼索（固定配備）": ["ツインワイヤー（固定装備）", "트윈 와이어 (고정 장비)", "Twin wires (fixed)"],
   "02 副武選裝": ["02 サブ武器選択", "02 보조무기 선택", "02 Sub weapon"],
@@ -770,7 +816,7 @@ const D = {
   "手大或平板可以調大": ["手が大きい人やタブレットは大きめに", "손이 크거나 태블릿이면 크게", "Go bigger for large hands or tablets"],
   // 設定：鏡頭
   "第三人稱": ["三人称視点", "3인칭", "Third person"],
-  "看得到機體；左上 3P／1P 也能切換": ["機体が見える。左上の 3P／1P でも切替", "기체가 보여요. 왼쪽 위 3P/1P로도 전환", "See your mech; also toggle with 3P/1P at top left"],
+  "看得到機體；右上 3P／1P 也能切換": ["機体が見える。右上の 3P／1P でも切替", "기체가 보여요. 오른쪽 위 3P/1P로도 전환", "See your mech; also toggle with 3P/1P at top right"],
   "鏡頭鎖定地形": ["地形ロックカメラ", "지형 고정 카메라", "Terrain-lock camera"],
   "擺盪時自動補正，準星穩定": ["スイング中に自動補正、照準が安定", "스윙 중 자동 보정, 조준 안정", "Auto-corrects while swinging for a steady reticle"],
   "鏡頭側傾": ["カメラロール", "카메라 기울기", "Camera roll"],
@@ -936,7 +982,7 @@ const H = {
 `<li>リング状の空島戦場：両チームの基地は両端。<b>外周</b>は内側へ傾き段々に高くなる空島（機動力は高いが狙いにくい）。<b>中央プラットフォーム</b>は最も低く落下の危険はないが、上から撃たれる。最下層は虚空。光る台で燃料と弾薬を補給</li>
 <li><b style="color:#c99bff">オンライン対戦</b>（1v1・対人）：ホームの「MAIN LOBBY」でロビーへ。「QUICK MATCH」は自動マッチング、20秒で見つからなければAI戦に。「ROOM」でルームを作り、コードをフレンドに伝え、相手が「JOIN」で入力して参加、ホストが「BATTLE」で開戦。ホストは基地A、参加者は基地Bから出撃。ルールはAI対戦と同じ</li>
 <li><b style="color:#ffb070">AI対戦</b>：あなたは基地A、AIは基地Bから出撃。先に5回撃破するか、5分経過時にスコアが高い方の勝ち。虚空に落ちると相手に得点。オレンジの機体とワイヤーがAI</li>
-<li>標準は<b>三人称視点</b>（自分のスパイダーメカが見える）。左上の 3P／1P で切替。虚空落下やリスポーンでは基地Aに戻る</li>
+<li>標準は<b>三人称視点</b>（自分のスパイダーメカが見える）。右上の 3P／1P で切替。虚空落下やリスポーンでは基地Aに戻る</li>
 <li><b>青いスティック</b>：移動。<b>軽くタップ＝その場ジャンプ、任意の方向へ素早く弾いて離す＝その方向へジャンプ</b>。倒すほど速く走る（地面・斜面・壁際・壁に固定中でもジャンプ可）。脚は70°までの斜面に立て、高速でも地面に張り付く</li>
 <li><b style="color:#63e6ff">左／右ワイヤー</b>（どちらも小さなスティック）：押す＝ワイヤー発射。円内ドラッグ＝上で巻き取り・下で繰り出し・左右でスイング。<b style="color:#ffb040">外周まで引き出す＝ブースト</b>（フック先がなくても使える）</li>
 <li><b style="color:#ff7a5c">射撃</b>：押し続けて連射、押したままドラッグ＝撃ちながら照準。射撃ボタンを<b style="color:#ffc94a">長押しすると横に武器アイコンが3つ出る。アイコンの方向へ弾くと切替：上＝01 メイン 57mm、右＝02 マンティスブレード（接近して射撃で斬撃、一撃撃破、クールダウン3秒）、左＝03 脚部ネイルガン</b></li>
@@ -950,7 +996,7 @@ const H = {
 `<li>링 모양 공중섬 전장: 양 팀 기지는 양 끝. <b>외곽</b>은 안쪽으로 기울어 계단식으로 올라가는 공중섬 (기동성 높음, 조준 어려움). <b>중앙 플랫폼</b>은 가장 낮아 추락 위험은 없지만 위에서 공격당함. 맨 아래는 허공. 빛나는 발판에서 연료와 탄약 보충</li>
 <li><b style="color:#c99bff">온라인 대전</b> (1v1, 실제 플레이어): 홈에서 ‘MAIN LOBBY’로 로비 입장. ‘QUICK MATCH’는 자동 매칭, 20초 안에 못 찾으면 AI전. ‘ROOM’으로 방을 만들고 코드를 친구에게 알려 주면 상대가 ‘JOIN’에 입력해 참가, 방장이 ‘BATTLE’로 시작. 방장은 기지 A, 참가자는 기지 B에서 출발. 규칙은 AI 대전과 같음</li>
 <li><b style="color:#ffb070">AI 대전</b>: 당신은 기지 A, AI는 기지 B에서 출발. 먼저 5번 격파하거나 5분 후 점수가 높은 쪽이 승리. 허공에 떨어지면 상대 득점. 주황색 기체와 와이어가 AI</li>
-<li>기본은 <b>3인칭</b> (내 거미 메카가 보임). 왼쪽 위 3P/1P로 전환. 허공 추락이나 리스폰 시 기지 A로 복귀</li>
+<li>기본은 <b>3인칭</b> (내 거미 메카가 보임). 오른쪽 위 3P/1P로 전환. 허공 추락이나 리스폰 시 기지 A로 복귀</li>
 <li><b>파란 스틱</b>: 이동. <b>가볍게 탭 = 제자리 점프, 원하는 방향으로 빠르게 튕기고 놓기 = 그 방향으로 점프</b>. 많이 밀수록 빨리 달림 (지면·경사·벽 옆·벽 고정 중에도 점프 가능). 다리는 70° 이내 경사에 설 수 있고 고속에서도 지면에 붙음</li>
 <li><b style="color:#63e6ff">왼쪽/오른쪽 와이어</b> (둘 다 작은 스틱): 누르기 = 와이어 발사. 원 안에서 드래그 = 위로 감기, 아래로 풀기, 좌우 스윙. <b style="color:#ffb040">바깥 원까지 끌기 = 부스트</b> (고정점이 없어도 가능)</li>
 <li><b style="color:#ff7a5c">사격</b>: 누르고 있으면 연사, 누른 채 드래그 = 쏘면서 조준. 사격 버튼을 <b style="color:#ffc94a">길게 누르면 옆에 무기 아이콘 3개가 나옴. 아이콘 방향으로 튕기면 교체: 위 = 01 주무기 57mm, 오른쪽 = 02 맨티스 블레이드 (근접해서 사격으로 베기, 일격 격파, 쿨다운 3초), 왼쪽 = 03 다리 네일건</b></li>
@@ -964,7 +1010,7 @@ const H = {
 `<li>Ring of sky islands: each team's base sits at one end. The <b>outer ring</b> is islands tilted inward and stepping upward (high mobility, hard to aim). The <b>central platform</b> is lowest — no fall risk, but you get shot from above. Below everything is the void; glowing pads refill fuel and ammo</li>
 <li><b style="color:#c99bff">Online</b> (1v1, real players): tap “MAIN LOBBY” on the home screen. “QUICK MATCH” finds someone automatically and falls back to AI after 20 s. “ROOM” creates a room — give your friend the code, they enter it under “JOIN”, and the host presses “BATTLE”. The host starts at Base A, the guest at Base B; rules are the same as vs AI</li>
 <li><b style="color:#ffb070">vs AI</b>: you start at Base A, the AI at Base B. First to 5 kills, or the higher score after 5 minutes, wins. Falling into the void scores for the other side. The orange mech and orange wires are the AI</li>
-<li><b>Third person</b> by default (you can see your spider mech); toggle with 3P / 1P at top left. Falling into the void or respawning returns you to Base A</li>
+<li><b>Third person</b> by default (you can see your spider mech); toggle with 3P / 1P at top right. Falling into the void or respawning returns you to Base A</li>
 <li><b>Blue stick</b>: move. <b>Tap = jump in place; flick quickly in any direction and release = jump that way</b>. Push further to run faster (you can jump on the ground, slopes, against walls or while pinned). The spider legs stand on slopes up to 70° and stick to the ground at speed</li>
 <li><b style="color:#63e6ff">Left / right wire</b> (both are mini sticks): hold = fire a wire; drag inside the circle = up reels in, down lets out, left/right swings; <b style="color:#ffb040">drag past the outer ring = boost</b> (works with no anchor too)</li>
 <li><b style="color:#ff7a5c">Fire</b>: hold to shoot, drag while holding = aim while firing. <b style="color:#ffc94a">Hold the fire button and three weapon icons pop out; flick toward one to switch: up = 01 Main 57mm, right = 02 Mantis Blade (fire up close to slash — one-hit KO, 3 s cooldown), left = 03 Leg Nail Gun</b></li>
@@ -1691,7 +1737,8 @@ function placeActor(a, p, yaw){
   for (const r of a.ropes){ r.hooked = false; r.wasHeld = false; } a.tgt.mesh.position.set(p.x, p.y, p.z);
 }
 // v3.9 高周波刀（螳螂鐮）架刀：拿著刀、沒在揮的時候，正面 ±60° 來的子彈、砲彈、刀全部擋掉；刀對刀＝兩台都被彈開
-let dmgKind = null;
+let dmgKind = null;   // v4.6 目前這發傷害的來源：cannon／mg／melee／nail（擊破卡片的圖示、連線時一起傳給對方）
+function dmgAs(kind, t, dmg){ const k0 = dmgKind; dmgKind = kind; try { return damageTarget(t, dmg); } finally { dmgKind = k0; } }
 function isGuarding(v){ const w = v.weapon, ml = w && w.melee; return !!w && w.active === 'mg' && bladeOn(w) && !(ml && (ml.ph || ml.vis != null)); }
 function guardBlocks(v, from){ if (!from || !isGuarding(v)) return false;
   const dx = from.x - v.P.currPos.x, dz = from.z - v.P.currPos.z, d = Math.hypot(dx, dz); if (d < 0.5) return true;
@@ -1706,9 +1753,9 @@ function actorDamage(v, dmg){
       if (v.kind !== 'net'){ const lb = v.body.linvel(); v.body.setLinvel({ x: lb.x + dx / d * MC.parryPush * 0.5, y: lb.y + 2, z: lb.z + dz / d * MC.parryPush * 0.5 }, true); } }
     events.push({ type: 'block', victim: v.pid, at, parry: dmgKind === 'melee' });
     return false; }
-  if (match.mode === 'net'){ if (v.kind !== 'net') return false; NET.send('hit', { dmg: Math.round(dmg) }); events.push({ type: 'actorHit', victim: v.pid, dmg }); return true; }   // v3.8 連線：開槍方判定，傷害交給對方自己扣
+  if (match.mode === 'net'){ if (v.kind !== 'net') return false; v.lastCauseSent = dmgKind || 'other'; NET.send('hit', { dmg: Math.round(dmg), c: dmgKind || 'other' }); events.push({ type: 'actorHit', victim: v.pid, dmg }); return true; }   // v3.8 連線：開槍方判定，傷害交給對方自己扣
   v.hp = Math.max(0, v.hp - dmg); v.lastHitBy = curActor; events.push({ type: 'actorHit', victim: v.pid, dmg });
-  if (v.hp <= 0) match.died(v, curActor);
+  if (v.hp <= 0) match.died(v, curActor, dmgKind || 'other');
   return true;
 }
 // ---- 裁判（match authority）：比分、計時、重生、勝負只在這裡決定；1v1 打 AI 時就是本機 ----
@@ -1730,21 +1777,21 @@ const match = {
     hudMatch();
     if (mode === 'ai' || mode === 'net'){ const tok = this.tok = (this.tok || 0) + 1; showVersus(mode, () => { if (this.tok === tok && this.state === 'intro') this.state = 'live'; }); }
   },
-  died(v, killer){
+  died(v, killer, cause){   // cause：擊破的死因（沒有擊破者＝掉進虛空）
     if (this.state !== 'live') return;
     if (this.mode === 'net'){   // v3.8 連線：只有本機會在這裡死亡（受傷方宣告），比分由房主算
       if (v !== local) return;
       const k = !!(killer && killer !== v);
-      this.feed.unshift({ msg: k ? `${killer.name} 擊破 ${v.name}` : `${v.name} 墜落`, t: 4 });
+      this.feed.unshift({ msg: k ? `${killer.name} 擊破 ${v.name}` : `${v.name} 墜落`, t: 4, k: k ? killer.pid : null, v: v.pid, c: k ? cause || 'other' : 'void', sc: k ? null : v !== local });
       events.push({ type: 'died', victim: v.pid, killer: k ? killer.pid : null, by: k ? 'net' : undefined });
       v.hp = CONFIG.pvp.hp; placeActor(v, v.spawn, v.spawnYaw);
-      NET.send('died', { k: k ? 1 : 0 });
+      NET.send('died', { k: k ? 1 : 0, c: k ? cause || 'other' : 'void' });   // c＝死因（v4.6 新增；舊版收到會忽略）
       if (NET.host) this.score_(v);
       hudMatch(); return;
     }
     const other = v.team === 0 ? 1 : 0; this.score[other]++;
     const msg = killer && killer !== v ? `${killer.name} 擊破 ${v.name}` : `${v.name} 墜落（${other === 0 ? '你' : 'AI'} +1）`;
-    this.feed.unshift({ msg, t: 4 }); events.push({ type: 'died', victim: v.pid, killer: killer ? killer.pid : null });
+    const k = !!(killer && killer !== v); this.feed.unshift({ msg, t: 4, k: k ? killer.pid : null, v: v.pid, c: k ? cause || 'other' : 'void', sc: k ? null : other === local.team }); events.push({ type: 'died', victim: v.pid, killer: killer ? killer.pid : null });
     v.hp = CONFIG.pvp.hp; placeActor(v, v.spawn, v.spawnYaw);
     if (this.score[other] >= CONFIG.pvp.killLimit) this.end();
     hudMatch();
@@ -2319,9 +2366,9 @@ function netOnMsg(t, d){
   if (t === 'hit'){   // 對方判定打中我：我自己扣血（保護區內不受傷）
     if (match.state !== 'live' || local.P.safe) return;
     local.hp = Math.max(0, local.hp - d.dmg); local.lastHitBy = bot; events.push({ type: 'actorHit', victim: local.pid, dmg: d.dmg, by: 'net' });
-    if (local.hp <= 0) match.died(local, bot); return; }
+    if (local.hp <= 0) match.died(local, bot, typeof d.c === 'string' ? d.c : 'other'); return; }   // 舊版對手沒帶死因 → 一般圖示
   if (t === 'died'){   // 對方宣告自己死亡（被我擊破或墜落）
-    match.feed.unshift({ msg: d.k ? `${local.name} 擊破 ${bot.name}` : `${bot.name} 墜落`, t: 4 });
+    match.feed.unshift({ msg: d.k ? `${local.name} 擊破 ${bot.name}` : `${bot.name} 墜落`, t: 4, k: d.k ? local.pid : null, v: bot.pid, c: d.k ? (typeof d.c === 'string' ? d.c : bot.lastCauseSent || 'other') : 'void', sc: d.k ? null : true });
     events.push({ type: 'died', victim: bot.pid, killer: d.k ? local.pid : null, by: 'net' });
     if (NET.host) match.score_(bot, d.k); return; }
   if (t === 'ms' && !NET.host){   // 裁判（host）廣播的比賽狀態
@@ -2895,7 +2942,7 @@ function weaponTick(cmd, dt){
   let hitTarget = false;
   if (hit){
     const t = targetsByCollider.get(hit.handle);
-    if (t && !t.dead && damageTarget(t, W.damage)){ hitTarget = true; w.hits++; }
+    if (t && !t.dead && dmgAs('mg', t, W.damage)){ hitTarget = true; w.hits++; }
   }
   events.push({ type: 'shot', from: origin, to: end, hit: !!hit, hitTarget, normal: hit ? hit.normal : null, tracer: w.shots % W.tracerEvery === 0 });
 }
@@ -3008,8 +3055,8 @@ function shellsTick(dt){
     const hit = castRay(sh.p, dir, step);
     if (hit || sh.life <= 0){
       const at = hit ? hit.point.clone() : sh.p.clone(); let direct = null, hitT = false;
-      if (hit){ direct = targetsByCollider.get(hit.handle); if (damageTarget(direct, CN.damage)) hitT = true; }
-      for (const t of targets){ if (t === direct || t.dead) continue; const d = t.mesh.position.distanceTo(at); if (d < CN.splashR){ if (damageTarget(t, CN.splash * (1 - d / CN.splashR * 0.5))) hitT = true; } }
+      if (hit){ direct = targetsByCollider.get(hit.handle); if (dmgAs('cannon', direct, CN.damage)) hitT = true; }
+      for (const t of targets){ if (t === direct || t.dead) continue; const d = t.mesh.position.distanceTo(at); if (d < CN.splashR){ if (dmgAs('cannon', t, CN.splash * (1 - d / CN.splashR * 0.5))) hitT = true; } }
       if (hitT) w.hits++;
       if (hit) events.push({ type: 'boom', at, normal: hit.normal, hitTarget: hitT });
       w.shells.splice(i, 1); continue;
@@ -3037,7 +3084,7 @@ function nailTick(cmd, dt, fireEdge){
   let hitTarget = false;
   if (hit){
     const t = targetsByCollider.get(hit.handle);
-    if (t && !t.dead && damageTarget(t, N.damage)){ hitTarget = true; w.hits++; }
+    if (t && !t.dead && dmgAs('nail', t, N.damage)){ hitTarget = true; w.hits++; }
     else if (false){
       // 釘在牆上：機體貼著牆面停住，可以站在垂直壁面射擊；勾索或推進就會脫離
       const pos = V(hit.point.x + hit.normal.x * (CONFIG.body.radius + 0.25), hit.point.y - CONFIG.camera.eye, hit.point.z + hit.normal.z * (CONFIG.body.radius + 0.25));
@@ -4217,11 +4264,109 @@ let flashT = 0, shakeT = 0, shakeAmp = 0, hitMarkT = 0, crossPulse = 0, fovNow =
 const hookPreview = [null, null];
 const _proj = V();
 function toScreen(p){ _proj.copy(p).project(camera); if (_proj.z > 1) return null; return [(_proj.x*0.5+0.5)*innerWidth, (-_proj.y*0.5+0.5)*innerHeight]; }
+const _ebp = V(), ebarLag = { pid: null, v: 1 }, hudDbg = { ebar: { vis: false } };
 const speedLines = []; for (let i=0;i<CONFIG.camera.speedLinesMax;i++) speedLines.push({ a: Math.random()*Math.PI*2, r: Math.random(), s: 0.6+Math.random()*0.8 });
 
+// ===== v4.6 左上自機資訊視窗＋左側擊破卡片（DOM；每格只在數值變了才寫）=====
+const miEl = document.getElementById('mInfo'), kfEl = document.getElementById('kFeed'), miSvg = document.getElementById('miMech');
+const MI = { shown: false, hp: -1, hitT: 0 }, miLast = {};
+function miSet(k, el, prop, v){ if (miLast[k] === v) return; miLast[k] = v; if (prop === 'text') el.textContent = v; else if (prop === 'class') el.setAttribute('class', v); else el.style.setProperty(prop, v); }
+const miQ = id => document.getElementById(id);
+const miE = { hp: miQ('miHp'), hpV: miQ('miHpV'), bst: miQ('miBst'), bstV: miQ('miBstV'), slot: miQ('miSlot'), wn: miQ('miWName'), am: miQ('miAmmo'), wb: miQ('miWBar') };
+miE.kind = miE.wb.parentElement.parentElement.insertBefore(document.createElement('span'), miE.wb.parentElement);
+// 機體剪影的顏色：遊戲沒有部位傷害，所以依整體 HP 分段（>60% 青綠、>30% 黃、以下紅色閃爍），被打中閃白 0.12 秒
+function hpCol(fr){ return fr > 0.6 ? 'rgb(127,245,224)' : fr > 0.3 ? '#ffc94a' : (Math.floor(performance.now() / 260) % 2 ? '#ff5a48' : '#ff9a80'); }
+function miUpdate(dt){
+  const want = running && match.state !== 'intro' && !document.body.classList.contains('inMenu') && hud.style.display !== 'none';   // 宣傳片錄影把 HUD 畫布藏起來時一起藏
+  if (want !== MI.shown){ MI.shown = want; miEl.classList.toggle('on', want); kfEl.style.display = want ? '' : 'none'; if (want){ miEl.classList.remove('wo'); void miEl.offsetWidth; miEl.classList.add('wo'); kfLayout(); } }
+  if (!want) return;
+  const P = state.player, w = local.weapon, pvp = match.mode === 'ai' || match.mode === 'net';
+  const nm = profName(); if (miLast.nm !== nm){ miLast.nm = nm; miEl.dataset.name = nm; }
+  if (miLast.pvp !== pvp){ miLast.pvp = pvp; miEl.classList.toggle('nohp', !pvp); }
+  const fr = clamp(local.hp / CONFIG.pvp.hp, 0, 1);
+  if (local.hp < MI.hp) MI.hitT = 0.12; MI.hp = local.hp; MI.hitT = Math.max(0, MI.hitT - dt);
+  const col = pvp ? hpCol(fr) : 'rgb(127,245,224)';
+  miSet('mc', miSvg, '--mc', col); miSet('hit', miSvg, 'class', MI.hitT > 0 ? 'hit' : '');
+  miSet('hpf', miE.hp, '--f', (fr * 100).toFixed(1) + '%'); miSet('hpc', miE.hp, '--bc', col); miSet('hpv', miE.hpV, 'text', String(Math.ceil(local.hp)));
+  const ff = clamp(P.fuel / CONFIG.boost.fuel, 0, 1), low = ff < 0.25;
+  miSet('bf', miE.bst, '--f', (ff * 100).toFixed(1) + '%'); miSet('bc', miE.bst, '--bc', low ? '#ff6050' : P.thrusting ? '#ffd060' : '#ffb040');
+  miSet('bv', miE.bstV, 'text', P.onPad ? 'SUP' : Math.round(ff * 100) + '%');
+  const sub = w.active === 'sub', isB = w.active === 'mg' && bladeOn(w), isG = w.active === 'mg' && !isB, ml = w.melee || {};
+  let am, bar, blink = false;
+  if (sub){ const N = w.nail; blink = N.reloading > 0; am = blink ? 'RLD' : N.ammo + '/' + N.reserve; bar = blink ? 1 - N.reloading / CONFIG.nail.reload : N.ammo / CONFIG.nail.mag; }
+  else if (isB){ am = ml.cd > 0 ? ml.cd.toFixed(1) + 's' : 'READY'; bar = 1 - (ml.cd || 0) / CONFIG.melee.cooldown; }
+  else if (isG){ blink = w.reloading > 0; am = blink ? 'RLD' : Math.floor(w.ammo) + '/' + Math.floor(w.reserve ?? 0); bar = blink ? 1 - w.reloading / W.reload : w.ammo / W.ammo; }
+  else { const C = w.cannon; blink = C.reloading > 0; am = blink ? 'RLD' : C.ammo + '/' + Math.floor(C.reserve); bar = blink ? 1 - C.reloading / CN.reload : C.ammo / CONFIG.cannon.mag; }
+  if (w.blocked){ am = 'SAFE'; blink = false; }   // 保護區不能開火
+  const wc = w.blocked ? '#9aa6b2' : sub ? '#ffd770' : isB || isG ? '#ffc890' : 'rgb(127,245,224)';
+  miSet('slot', miE.slot, 'text', sub ? '03' : w.active === 'mg' ? '02' : '01');
+  miSet('kind', miE.kind, 'text', _T(sub ? '腿部' : w.active === 'mg' ? '副武' : '主武'));
+  miSet('wn', miE.wn, 'text', sub ? _T('釘槍') : isB ? _T('螳螂鐮') : isG ? '14.5mm MG' : '57mm');
+  miSet('am', miE.am, 'text', am); miSet('amb', miE.am, 'class', blink ? 'blink' : '');
+  miSet('wc', miE.am.parentElement, '--wc', wc); miSet('wbf', miE.wb, '--f', (clamp(bar, 0, 1) * 100).toFixed(1) + '%');
+  miSet('wbc', miE.wb, '--bc', blink ? '#9fe8ff' : isB && !(ml.cd > 0) ? 'rgb(225,255,250)' : wc);
+}
+// ---- 擊破卡片 ----
+// 死因（實際存在的傷害來源）：cannon＝57mm 直擊／爆風、mg＝14.5mm 機槍、melee＝螳螂鐮、nail＝腿部釘槍、void＝掉進虛空（沒有擊破者）、other＝其他／舊版連線沒帶死因
+// 格擋（刀對刀、架刀擋子彈）不會造成傷害，所以沒有對應的擊破圖示
+const KF_IC = {
+  cannon: '<path d="M2 10.4h13.5v3.2H2z"/><path d="M15.5 8.6h3.6v6.8h-3.6z"/><path d="M4.5 10.4v3.2M7.5 10.4v3.2"/><path d="M22 12h5.5M21.5 8l3.2-2.6M21.5 16l3.2 2.6"/>',
+  mg: '<path d="M2 10h15M2 12.6h15M17 9v4.6"/><path d="M5 12.6 3.8 17h3.4l1.2-4.4"/><path d="M10 12.6v3.2h3v-3.2"/><path class="f" d="M19.5 10.6h2.6v1.4h-2.6zM24 10.6h2.6v1.4H24zM28.4 10.6h1.6v1.4h-1.6z"/>',
+  melee: '<path d="M4.5 18C7.5 9.5 16 3.6 28 3.2 20.5 6.2 13.5 11 8.6 18.2z"/><path d="M4.5 18 2.4 19.6M8.6 18.2 9.6 19.7"/><path d="M11 13.4 16 9.6"/>',
+  nail: '<path d="M6 7.5v9"/><path d="M6 12h15.5l5 0"/><path d="M21.5 10.3 26.5 12l-5 1.7"/><path d="M3 4.5l5.5 4M3 19.5l5.5-4"/>',
+  void: '<path d="M15 1.5v10"/><path d="M10.8 7.6 15 11.8l4.2-4.2"/><path stroke-dasharray="2 2.2" d="M3 16.5c3.5-2.4 20.5-2.4 24 0-3.5 2.4-20.5 2.4-24 0z"/>',
+  other: '<circle cx="15" cy="10" r="5.6"/><path d="M15 1v4M15 15v4M6 10h4M20 10h4"/><circle class="f" cx="15" cy="10" r="1.3"/>'
+};
+const KF_MECH = '<svg viewBox="0 0 48 48"><path d="M18.5 19 9 11.5 4.5 19.5M29.5 19 39 11.5 43.5 19.5M18.5 29 9 36.5 4.5 28.5M29.5 29 39 36.5 43.5 28.5M19 15.5h10l3.5 8.5-3.5 9.5H19l-3.5-9.5zM24 15.5V3.5"/></svg>';
+const feedAv = {};   // pid → 機體縮圖 dataURL（開場對戰畫面時各畫一張，照當時塗裝／選裝）
+const KF_SHOT = { fit: true, dir: [0.3, 0.2, -1], zoom: 1.7, aimX: 0, aimY: 0.12, hi: true };
+const kfM = document.createElement('canvas').getContext('2d');
+const kfList = []; let kfDirty = false;
+let kfPW = 64, kfU = 1; const hudSide = { l: 0, r: innerWidth };   // 比分列左右可用範圍（左上視窗右緣、右上按鈕左緣）
+function kfName(pid){ return pid === local.pid ? profName() : bot ? _TN(bot.name) : 'AI'; }
+function kfLayout(){   // 卡片放在自機視窗正下方；觸控時別蓋到左鋼索鈕和搖桿（只看預設／自訂後的實際位置）
+  const r = miEl.classList.contains('on') ? { bottom: miEl.offsetTop + miEl.offsetHeight, right: miEl.offsetLeft + miEl.offsetWidth } : null, left = parseFloat(getComputedStyle(kfEl).left) || 10;   // 用版面尺寸（開啟動畫的縮放不算）
+  kfU = parseFloat(getComputedStyle(kfEl).getPropertyValue('--u')) || 1;
+  const top = r ? r.bottom + 6 : 30; let maxW = Math.min(340 * kfU, innerWidth * 0.3), bottom = innerHeight - 8;
+  if (!mouseMode){
+    const sb = document.getElementById('stickBase'), bl = document.getElementById('bRopeL');
+    if (sb && sb.style.display !== 'none'){ const s = sb.getBoundingClientRect(); if (s.width) bottom = Math.min(bottom, s.top - 6); }
+    if (bl && bl.offsetParent !== null){ const b = bl.getBoundingClientRect();
+      if (b.width && b.bottom > top && b.top < bottom){ if (b.left - 6 - left >= 104 * kfU) maxW = Math.min(maxW, b.left - 6 - left); else bottom = Math.min(bottom, b.top - 6); } } }
+  maxW = Math.max(maxW, 104 * kfU);
+  kfPW = Math.max(36, Math.min(96 * kfU, Math.floor((maxW - 12 * kfU - 8 * kfU - 33 * kfU - 2) / 2)));
+  const tb = document.getElementById('topbar').getBoundingClientRect(); hudSide.l = r ? r.right : 0; hudSide.r = tb.width ? tb.left : innerWidth;
+  kfEl.style.top = top + 'px'; kfEl.style.maxHeight = Math.max(0, bottom - top) + 'px'; kfEl.style.setProperty('--kw', maxW + 'px'); kfEl.style.setProperty('--pw', kfPW + 'px');
+}
+addEventListener('resize', () => setTimeout(kfLayout, 50));
+function kfPlayer(pid){ const d = document.createElement('div'); d.className = 'kf-p' + (pid === local.pid ? '' : ' op');
+  const av = document.createElement('span'); av.className = 'kf-av';
+  if (!feedAv[pid]){ const me = pid === local.pid, M = me ? mech : bot && bot.mech; try { if (M && M.loaded) feedAv[pid] = mechPortrait(M, me ? local.weapon : bot.weapon, me, 68, 44, KF_SHOT); } catch (_){} }   // 開場時模型還沒載完：第一次用到再畫
+  if (feedAv[pid]) av.style.setProperty('--av', `url(${feedAv[pid]})`); else { av.classList.add('na'); av.innerHTML = KF_MECH; }
+  const b = document.createElement('b'), n = kfName(pid);
+  kfM.font = `700 ${(10 * kfU).toFixed(1)}px ${getComputedStyle(document.documentElement).getPropertyValue('--f-disp')}`; b.textContent = clipPx(kfM, n, kfPW - 2); b.title = n;
+  d.append(av, b); return d; }
+function kfCard(e){ const el = document.createElement('div'); el.className = 'kf';
+  if (e.v == null){ const t = document.createElement('span'); t.className = 'kf-txt'; t.textContent = _T(e.msg || ''); el.appendChild(t); return el; }   // 舊格式（只有文字）
+  if (e.k === local.pid) el.classList.add('me'); else if (e.v === local.pid) el.classList.add('dn');
+  const ic = document.createElement('div'); ic.className = 'kf-ic'; ic.innerHTML = `<svg viewBox="0 0 30 20">${Object.hasOwn(KF_IC, String(e.c)) ? KF_IC[e.c] : KF_IC.other}</svg>`;
+  if (e.k != null) el.appendChild(kfPlayer(e.k));
+  el.append(ic, kfPlayer(e.v));
+  if (e.k == null && e.sc != null){ const t = document.createElement('em'); t.className = e.sc ? '' : 'op'; t.textContent = `${_T(e.sc ? '你' : '對手')} +1`; el.appendChild(t); }   // 墜落：誰得分
+  return el; }
+function kfUpdate(){
+  const on = MI.shown && (match.mode === 'ai' || match.mode === 'net');
+  const feed = on ? match.feed : [];
+  for (const e of feed) if (!kfList.some(x => x.e === e)){ if (!kfList.length) kfLayout(); const el = kfCard(e); kfEl.prepend(el); kfList.push({ e, el, out: false }); kfDirty = true; }   // 最新的在最上面
+  for (let i = kfList.length - 1; i >= 0; i--){ const x = kfList[i];
+    if (!x.out && (!feed.includes(x.e) || x.e.t < 0.35)){ x.out = true; x.el.classList.add('out'); setTimeout(() => { x.el.remove(); kfDirty = true; }, 360); }
+    if (x.out && !x.el.isConnected) kfList.splice(i, 1); }
+  if (kfDirty){ kfDirty = false; const H = kfEl.clientHeight; for (const x of kfList) x.el.style.visibility = x.el.offsetTop + x.el.offsetHeight <= H + 1 ? '' : 'hidden'; }   // 放不下整張的舊卡片先藏起來（小螢幕）
+}
 function drawHUD(dt){
   const c = hctx, s = hudScale, w = innerWidth, h = innerHeight, cx = w/2, cy = h/2;
   c.setTransform(s,0,0,s,0,0); c.clearRect(0,0,w,h);
+  miUpdate(dt); kfUpdate();
   if (match.state === 'intro') return;   // v3.9 開場對戰畫面期間不畫準星
   const P = state.player, sp = P.vel.length();
   // 速度線
@@ -4276,14 +4421,8 @@ function drawHUD(dt){
   if (opts.follow === 'weapon' && !mouseMode && (aimOff.x || aimOff.y)) drawReticle(aimOff.x, aimOff.y, '#ff6a50', state.weapon.active === 'main' ? '57mm' : state.weapon.active === 'mg' ? (bladeOn(state.weapon) ? '螳螂鐮' : '14.5mm') : '釘槍');
   if (ropeAiming) drawReticle(ropeOff.x, ropeOff.y, '#3de0ff', '放開＝射出右索');
   // 狀態橫幅：無敵區／釘在牆上
-  let feedMaxY = Infinity;   // v4.5 上方擊破訊息最低能畫到哪（別壓到狀態橫幅）
   { const msgs = []; if (P.safe) msgs.push(['出生保護區：不會受傷，也不能開火', '#40ffb0']); if (P.pinned) msgs.push(['釘在牆上：勾索、推進或撲擊就會脫離', '#ffc94a']);
-    let top0 = cy - 96;
-    if (msgs.length && (match.mode === 'ai' || match.mode === 'net') && match.feed.length){   // 對戰中有擊破訊息：橫幅往下讓（最多讓到準星大弧上方），還不夠才少畫舊訊息
-      const fsF = clamp(h / 700, 0.75, 1), feedBot = by0 => 8 + 24*fsF + 8 + 24*fsF + by0 * 18*fsF + 5*fsF, stack = (msgs.length - 1) * 26;
-      const lowest = cy - 46 * clamp(Math.min(w, h) / 420, 0.75, 1.25) - 44;   // 橫幅底緣留在大弧（含索距讀數）上方
-      top0 = Math.max(top0, Math.min(feedBot(match.feed.length - 1) + 4 + stack, lowest));
-      feedMaxY = top0 - stack - 4; }
+    const top0 = cy - 96;   // v4.6 擊破訊息改成左側卡片，上方不再跟橫幅搶位置
     msgs.forEach(([m0, col], i) => { const m = _T(m0); c.font = '700 14px sans-serif'; c.textAlign = 'center'; const tw2 = c.measureText(m).width;
       c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(cx - tw2/2 - 10, top0 - i*26, tw2 + 20, 22); c.fillStyle = col; c.fillText(m, cx, top0 + 16 - i*26); }); }
   // ===== v1.3 準星介面（參考 86 機甲 HUD）=====
@@ -4399,20 +4538,36 @@ function drawHUD(dt){
     if (opts.autoFire && !mouseMode){ c.fillStyle = wst2.autoOn ? '#ff7060' : DIM; txt('AUTO', cx, yB + 40*sc); }
     c.restore();
   }
+  // v4.6 對手血條＋名字：跟著對手機體（機身上方）投影到畫面；在畫面外、鏡頭背後、太遠、死亡／不在場時隱藏；遠的縮小變淡
+  { const E = bot, D = hudDbg.ebar; D.vis = false;
+    if (E && E.active && (match.mode === 'ai' || match.mode === 'net') && match.state === 'live' && E.hp > 0 && E.mech && E.mech.root.visible){
+      _ebp.copy(E.mech.root.position); _ebp.y += 2.7;
+      const d = camera.position.distanceTo(_ebp), q = d > 2.5 && d < 420 ? toScreen(_ebp) : null;
+      if (q && q[0] > -40 && q[0] < w + 40 && q[1] > 0 && q[1] < h){
+        const fr = clamp(E.hp / CONFIG.pvp.hp, 0, 1); if (!(ebarLag.pid === E.pid) || fr > ebarLag.v) ebarLag.v = fr; ebarLag.pid = E.pid; ebarLag.v += (fr - ebarLag.v) * Math.min(1, dt * 3);
+        const k = clamp(45 / d, 0.85, 1.2) * clamp(Math.min(w, h) / 420, 0.85, 1.25), al = clamp(1 - (d - 140) / 280, 0.4, 1);
+        const bw = Math.round(70 * k), bh = Math.max(3, Math.round(5 * k)), x = Math.round(clamp(q[0], bw / 2 + 4, w - bw / 2 - 4)), y = Math.round(q[1]);
+        c.save(); c.globalAlpha = al; c.shadowBlur = 0;
+        c.fillStyle = 'rgba(6,20,22,.6)'; c.fillRect(x - bw/2 - 1, y - 1, bw + 2, bh + 2);
+        c.fillStyle = 'rgba(255,255,255,.75)'; c.fillRect(x - bw/2, y, bw * ebarLag.v, bh);   // 剛扣掉的那段先留白再縮回去
+        c.fillStyle = fr > 0.3 ? '#ffa040' : '#ff5a48'; c.fillRect(x - bw/2, y, bw * fr, bh);
+        c.strokeStyle = 'rgba(255,168,96,.9)'; c.lineWidth = 1; c.strokeRect(x - bw/2 - 0.5, y - 0.5, bw + 1, bh + 1);
+        c.font = `700 ${Math.max(10, Math.round(11 * k))}px sans-serif`; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,18,26,.8)';
+        const nm = clipPx(c, _TN(E.name), Math.max(bw + 24, 90 * k)); c.strokeText(nm, x, y - 4); c.fillStyle = '#ffd2b0'; c.fillText(nm, x, y - 4);
+        c.restore(); D.vis = true; D.x = x; D.y = y; D.d = Math.round(d); D.k = +k.toFixed(2); D.a = +al.toFixed(2); } } }
   if (levelT > 0){ levelT -= dt; P.pitch *= Math.max(0, 1 - dt / Math.max(levelT, dt)); }
   // 上方精簡資訊（彈量、速度、命中率、推進）— 字級依螢幕高度縮放
   const fs = clamp(h / 700, 0.75, 1), wst = state.weapon;
   const acc = wst.fired ? Math.round(wst.hits / wst.fired * 100) : 0;
   c.textAlign = 'center'; c.font = `600 ${Math.round(15*fs)}px sans-serif`;
-  if (match.mode === 'ai' || match.mode === 'net'){   // v3.0 對戰：比分、時間、雙方血條、擊破訊息
+  if (match.mode === 'ai' || match.mode === 'net'){   // v3.0 對戰：比分、時間（v4.6 自己的血條搬到左上視窗、對手血條跟著機體、擊破訊息改成左側卡片）
     const tl = Math.ceil(match.timeLeft), pre = `${_T('你')} ${match.score[local.team]}  :  ${match.score[1 - local.team]} `, post = `      ${Math.floor(tl / 60)}:${String(tl % 60).padStart(2, '0')}`;
-    const line = pre + clipPx(c, bot ? _TN(bot.name) : 'AI', clamp(w - 350 - c.measureText(pre + post).width, 60, 260 * fs)) + post;   // v4.5 對手名稱（最多 32 寬）：比分列別蓋到左上按鈕，放不下才加「…」
-    const tw = c.measureText(line).width, bw = Math.max(tw + 40, 260 * fs), by = 8 + 24 * fs + 8;
-    c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(cx - bw/2, 6, bw, 24*fs + 22);
+    const half = Math.min(cx - hudSide.l, hudSide.r - cx) - 8, maxBW = Math.max(150, half * 2);   // 左上自機視窗、右上按鈕之間
+    const nmW = Math.min(260 * fs, maxBW - 24 - c.measureText(pre + post).width);
+    const line = pre + (nmW >= 24 ? clipPx(c, bot ? _TN(bot.name) : 'AI', nmW) : '') + post;   // 對手名稱：放不下才加「…」，真的太窄就只留比分和時間
+    const tw = c.measureText(line).width, bw = Math.min(maxBW, Math.max(tw + 24, 200 * fs));
+    c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(cx - bw/2, 6, bw, 24*fs + 4);
     c.fillStyle = '#eaf6ff'; c.fillText(line, cx, 8 + 19*fs);
-    const hb = (x, k, col, right) => { const w = bw/2 - 14; c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(x, by, w, 6); c.fillStyle = col; c.fillRect(right ? x + w * (1 - k) : x, by, w * k, 6); };
-    hb(cx - bw/2 + 8, local.hp / CONFIG.pvp.hp, '#5fe0ff', false); if (bot) hb(cx + 6, bot.hp / CONFIG.pvp.hp, '#ffa040', true);
-    c.font = `600 ${Math.round(13*fs)}px sans-serif`; match.feed.forEach((f2, i) => { if (by + 24*fs + i * 18*fs + 5*fs > feedMaxY) return; c.fillStyle = `rgba(255,220,180,${Math.min(1, f2.t)})`; c.fillText(clipPx(c, _T(f2.msg), Math.min(w - 24, 560 * fs)), cx, by + 24*fs + i * 18*fs); });   // v4.5 長名字：放不下才截斷加「…」
   } else if (!tutorial.on) {   // 教學進行中：上方讓給教學進度列
   c.fillStyle = 'rgba(0,0,0,.35)'; const line = `${sp.toFixed(0)} m/s   ${_T('命中')} ${acc}%   ${_T('墜落')} ${P.falls || 0}`;
   const tw = c.measureText(line).width; c.fillRect(cx - tw/2 - 10, 8, tw + 20, 24*fs + 4);
@@ -4919,12 +5074,12 @@ function vsLoad(el, s2){ el.textContent = '';   // 名字底下：三個武裝�
 function showVersus(mode, onDone){ const vs = document.getElementById('vs'), $v = id => document.getElementById(id); clearTimeout(vsTimer); clearInterval(vsTick);
   $v('vsMode').textContent = _T(mode === 'net' ? '⚔ 線上對戰 1v1' : '⚔ 對戰 AI 1v1');
   $v('vsMeName').textContent = profName(); vsLoad($v('vsMeLoad'), LOADOUT.s2); $v('vsOpName').textContent = mode === 'net' ? _TN(nameClamp(NET.peerName).trim() || '對手') : 'AI';
-  $v('vsMeImg').removeAttribute('src'); $v('vsOpImg').removeAttribute('src');
+  $v('vsMeImg').removeAttribute('src'); $v('vsOpImg').removeAttribute('src'); for (const k in feedAv) delete feedAv[k];
   let gotMe = false, gotOp = false, lastS2 = null;
   const fill = () => { try {
-    if (!gotMe){ const u = mechPortrait(mech, local.weapon, true); if (u){ $v('vsMeImg').src = u; gotMe = true; } }
+    if (!gotMe){ const u = mechPortrait(mech, local.weapon, true); if (u){ $v('vsMeImg').src = u; gotMe = true; feedAv[local.pid] = mechPortrait(mech, local.weapon, true, 68, 44, KF_SHOT); } }   // v4.6 擊破卡片用的小縮圖
     const s2 = bot && bot.weapon ? bot.weapon.s2 : 'blade'; if (s2 !== lastS2){ lastS2 = s2; vsLoad($v('vsOpLoad'), s2); gotOp = false; }
-    if (!gotOp && bot && bot.mech){ const u = mechPortrait(bot.mech, bot.weapon, false); if (u){ $v('vsOpImg').src = u; gotOp = true; } }
+    if (!gotOp && bot && bot.mech){ const u = mechPortrait(bot.mech, bot.weapon, false); if (u){ $v('vsOpImg').src = u; gotOp = true; feedAv[bot.pid] = mechPortrait(bot.mech, bot.weapon, false, 68, 44, KF_SHOT); } }
     $v('vsCount').textContent = Math.max(1, Math.ceil((VS_MS - (performance.now() - vsT0)) / 1000)); } catch (err){ console.warn('對戰畫面', err); } };
   vsT0 = performance.now(); document.body.classList.add('vsOn'); fill();
   vs.classList.remove('on', 'out'); void vs.offsetWidth; vs.classList.add('on'); vsTick = setInterval(fill, 200);
@@ -5083,7 +5238,7 @@ addEventListener('wfm:lang', () => { try {
 
 // 測試用介面（自動化驗收用，不影響遊戲）
 window.__gyroOn = () => { gyro.on = true; };
-window.__game = { sun, renderer, scene, MAP_ID, tutorial, tutSig, match, actors, local, get bot(){ return bot; }, ensureBot, withActor, buildNav, get NAV(){ return NAV; }, navPath, practiceTargets, mech, tpCam, buildCommand, castRay, rocks, islands, get targets(){ return targets; }, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
+window.__game = { hudDbg, setView, feedAv, dmgAs, netOnMsg, sun, renderer, scene, MAP_ID, tutorial, tutSig, match, actors, local, get bot(){ return bot; }, ensureBot, withActor, buildNav, get NAV(){ return NAV; }, navPath, practiceTargets, mech, tpCam, buildCommand, castRay, rocks, islands, get targets(){ return targets; }, get quickTurn(){ return quickTurn; }, state, CONFIG, simTick, buildCommand, input, respawn, playerBody, opts, findHook, findSmartHook, eyePos, start(){ document.getElementById('start').style.display='none'; running = true; last = performance.now(); idleStick(); }, stab, opts };
 Object.assign(window.__game, { actorDamage, damageTarget, netQuick, netHostCode, netJoinCode, netCancel, NET, netDiag }); Object.defineProperty(window.__game, 'running', { get: () => running });   // v3.8 連線測試用
 </script>
 </body>
