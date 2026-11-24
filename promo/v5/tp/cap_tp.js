@@ -58,7 +58,7 @@ function cdnFile(u){ const f = path.join(CDN, u.replace(/^https?:\/\//, '').repl
   const log = [];
   const t0 = Date.now();
   for (let f = -pre; f < N; f++){
-    const shoot = f >= 0 && (f % ev === 0 || keys.has(f));
+    const shoot = f >= +(process.env.MINF || 0) && (f % ev === 0 || keys.has(f));   // MINF: only screenshot from this frame on (lets two processes split one deterministic capture)
     const info = await page.evaluate(`(()=>{ window.__noRender=${!shoot}; const {g,L,I,B,M}=H; const f=${f}; H.f=f; ${cho.per} __step(${STEP}*(H.ts??1)); H.post&&H.post(f); __cssSync(); return H.probe? H.probe(f):null; })()`);
     if (info) log.push(info);
     if (shoot) await page.screenshot({ path: `${OUT}/${String(f).padStart(4, '0')}.png` });
