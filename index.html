@@ -176,7 +176,7 @@
   @media (min-height:700px) and (min-width:1000px) { #topbar .small { --tb:36px; } }
   /* v4.6 左上：自機資訊視窗（同 Defenspace 細線視窗：1px 框、極淡底、直角、左上實色標籤＝駕駛員名稱）；下面是擊破卡片 */
   #mInfo { --c:var(--mint); --u:1; position:fixed; z-index:4; left:calc(var(--pad) + var(--sl)); top:calc(26px + var(--st)); display:none; align-items:center; gap:calc(6px * var(--u));
-    padding:calc(5px * var(--u)) calc(8px * var(--u)) calc(5px * var(--u)) calc(4px * var(--u)); width:calc(196px * var(--u)); box-sizing:border-box; pointer-events:none;
+    padding:calc(5px * var(--u)) calc(8px * var(--u)) calc(5px * var(--u)) calc(4px * var(--u)); width:calc(212px * var(--u)); box-sizing:border-box; pointer-events:none;
     border:1px solid rgba(var(--c),.7); background:rgba(6,20,22,.42); box-shadow:0 0 5px rgba(var(--c),.2); color:#eafff8; font:700 calc(11px * var(--u))/1.15 ui-monospace, Menlo, monospace; }
   #mInfo.on { display:flex; } #mInfo.on.wo { animation:woOpen .45s both, woFlk .6s steps(1, end) both; }
   #mInfo::before { content:attr(data-name); position:absolute; top:calc(-16px * var(--u)); left:-1px; height:calc(16px * var(--u)); line-height:calc(16px * var(--u)); padding:0 8px; max-width:calc(100% - 14px);
@@ -185,7 +185,9 @@
   #miMech * { stroke:var(--mc, rgb(var(--mint))); transition:stroke .2s; } #miMech .gl { fill:var(--mc, rgb(var(--mint))); fill-opacity:.18; }
   #miMech.hit * { stroke:#fff; }
   #miMech3 { display:none; flex:0 0 auto; width:calc(64px * var(--u)); height:calc(54px * var(--u)); }   /* v5.1 戰術輔助器：3D 線框（12 fps、最多 128px） */
-  #mInfo.tac3 #miMech3 { display:block; } #mInfo.tac3 #miMech { display:none; }
+  #mInfo.tac3 { width:calc(242px * var(--u)); border-color:transparent; background:none; box-shadow:none; padding:0; }   /* v5.1 3D 線框直接浮在畫面上（沒有底框），外框只框住右邊的數值欄 */
+  #mInfo.tac3 .mi-rows { border:1px solid rgba(var(--c),.7); background:rgba(6,20,22,.42); box-shadow:0 0 5px rgba(var(--c),.2); padding:calc(5px * var(--u)) calc(8px * var(--u)) calc(5px * var(--u)) calc(5px * var(--u)); }
+  #mInfo.tac3::before { left:calc(64px * var(--u) + 5px); } #mInfo.tac3 #miMech3 { display:block; } #mInfo.tac3 #miMech { display:none; }
   .mi-rows { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:calc(3px * var(--u)); }
   .mi-row { display:flex; align-items:center; gap:calc(5px * var(--u)); min-width:0; white-space:nowrap; }
   .mi-row > span { flex:0 0 auto; min-width:2.4em; color:rgba(var(--mint),.75); font-size:.9em; } .mi-row > b { flex:0 0 auto; min-width:3.1em; text-align:right; font-variant-numeric:tabular-nums; }
@@ -199,7 +201,7 @@
   .mi-st { flex-wrap:wrap; gap:calc(3px * var(--u)); white-space:nowrap; } .mi-tg { font-style:normal; padding:0 calc(4px * var(--u)); border:1px solid; font-size:.92em; letter-spacing:.04em; font-variant-numeric:tabular-nums; } .mi-tg:empty { display:none; }
   .mi-tg.lim { color:#ff9a3c; border-color:rgba(255,154,60,.85); background:rgba(255,140,40,.14); } .mi-tg.pin { color:#ffd25a; border-color:rgba(255,210,90,.85); background:rgba(255,201,74,.16); } .mi-tg.ab { color:#ff6a58; border-color:rgba(255,90,72,.9); background:rgba(255,90,72,.2); box-shadow:0 0 5px rgba(255,90,72,.55); }
   #miMech .crk, #miMech .hld { display:none; } #miMech.ab .crk { display:inline; stroke:#ff5a48; stroke-width:1.2; } #miMech.pin .hld { display:inline; stroke:#ffd25a; stroke-width:2; }
-  .mi-bd > b { min-width:2.4em; } .mi-bd > em { flex:0 0 auto; font-style:normal; font-size:.8em; color:rgba(var(--mint),.85); font-variant-numeric:tabular-nums; } .mi-bd > em.no { color:#ff7a5c; }   /* v4.8 刀刃耐久＋備用刃 */
+  .mi-bd > b { min-width:2.6em; } .mi-bd > em { flex:0 0 auto; margin-left:calc(2px * var(--u)); font-style:normal; font-size:.8em; color:rgba(var(--mint),.85); font-variant-numeric:tabular-nums; } .mi-bd > em.no { color:#ff7a5c; }   /* v4.8 刀刃耐久＋備用刃 */
   .mi-bd.grd .mi-bar { box-shadow:0 0 6px rgba(200,255,250,.8); border-color:rgba(225,255,250,.9); } .mi-bd.brk > b, .mi-bd.rld > b { animation:miBlink .5s steps(1, end) infinite; } .mi-bd.brk > b { color:#ff5a48; }
   /* 擊破卡片（單列）：[擊破者 縮圖 名字] [死因圖示] [名字 縮圖 被擊破者]；一次只有一張（新的 0.1 秒內換掉舊的），約 1.5 秒
      一律在右上角、從右邊滑進來：右上按鈕列左邊的上緣空位，放不下就貼在按鈕列正下方；外框顏色＝得分方在開場對戰畫面名片的顏色（我方青綠、對手紅） */
@@ -582,7 +584,7 @@
       <div class="m-h">塗裝</div><div id="mPaints" class="m-paints"></div>
       <div class="m-h">武裝</div>
       <ul class="m-load"><li><img class="m-thumb" data-part="cannon" alt=""><b>01</b> 主武　57mm 滑膛炮</li><li><img class="m-thumb" id="mS2Img" alt=""><b>02</b> 副武　<span id="mS2"></span></li><li><img class="m-thumb" data-part="nail" alt=""><b>03</b> 腿部　釘槍</li><li><img class="m-thumb" data-part="dish" alt=""><b>＋</b> 雙鋼索（固定配備）</li></ul>
-      <div class="m-h">02 副武選裝</div><div id="mS2Pick" class="m-paints m-pick"><button data-s2="blade"><img class="m-thumb" data-part="blade" alt="">螳螂鐮</button><button data-s2="mg"><img class="m-thumb" data-part="mg" alt="">14.5mm 機槍</button></div>
+      <div class="m-h">02 副武選裝</div><div id="mS2Pick" class="m-paints m-pick"><button data-s2="blade"><img class="m-thumb" data-part="blade" alt="">螳螂鐮</button><button data-s2="mg"><img class="m-thumb" data-part="mg" alt="">雙臂 14.5mm 機槍</button></div>
       <div class="m-note" id="mS2Note"></div>
       <label class="m-lim" id="mLimL"><input type="checkbox" id="mLim"> <b>解除機體運動限制</b></label>
       <div class="m-note">解除機體運動限制：移動速度 +10%（跟選裝相乘），但左右臂、前後腳的部位耗損快 30%，推進時腳會慢慢自己磨損</div>
@@ -610,7 +612,7 @@
     <li><b style="color:#63e6ff">左索／右索</b>（都是小搖桿）：按住＝射出鋼索；圈內拖曳＝上收索、下放索、左右擺盪；<b style="color:#ffb040">拖出外圈＝推進</b>（沒勾點時也能推進）</li>
     <li><b style="color:#ff7a5c">射擊</b>：按住開火、按著拖曳＝邊射邊瞄；在射擊鈕上<b style="color:#ffc94a">外圈的上／右／左有三個小武器標記（目前的武器會亮），按住朝標記方向一甩就切換：上＝01 主武 57mm、右＝02 螳螂鐮（每按一下射擊走一步：<b>格擋</b>（雙刀往前交叉，擋正面 ±30° 的子彈、砲彈、刀，沒有時間限制但每擋一次都磨損刀刃）→ <b>舉刀</b>（再按一下，或擋下東西時自動舉起；擋下的瞬間有短暫<b>硬直</b>，砲彈／拼刀 0.35 秒、子彈／釘子 0.15 秒，期間不能出刀）→ <b>左斬</b> 2250 → 0.7 秒內再按 <b>右斬</b> 2250，兩刀合計 4500＝殘血，再用其他武器收尾；連段結束冷卻 6 秒；舉刀 1.5 秒沒出刀會退回格擋；刀刃越鈍越砍不進去，R 換上備用刃）、左＝03 腿部釘槍</b></li>
     <li>準星：中心小圓黃＝按下鋼索會勾到、青＝已勾住；大弧上的紅菱形＝敵人方向（空心＝在背後）；下方＝彈量、欄位（01 主武／02 副武／03 腿部）、彈種；左右讀數＝高度／速度；兩側刻度：左＝推進燃料、右＝彈量</li>
-    <li><b>部位傷害</b>：機體分成核心、左臂、右臂（機槍臂）、背部艙口鋼索發射器、前腳、後腳六個部位。打中核心傷害 ×1.15、其他部位 ×0.9；部位不會壞，只會變弱：腳受損＝移動／推進最多慢 30%，手臂受損＝那隻手的機槍擴散、換彈、刀的磨損與突進變差，鋼索發射器受損＝鋼索射程 −30%、收索變慢。站在補給平台會慢慢修好，重生全修。擊破照舊看總 HP</li>
+    <li><b>部位傷害</b>：機體分成核心、左臂、右臂、背部艙口鋼索發射器、前腳、後腳六個部位。打中核心傷害 ×1.15、其他部位 ×0.9；部位不會壞，只會變弱：腳受損＝移動／推進最多慢 30%，手臂受損＝那隻手的機槍（機槍選裝＝雙臂各一挺，左右交替）擴散、換彈、刀的磨損與突進變差；螳螂鐮每刀固定 2250，不吃部位倍率，鋼索發射器受損＝鋼索射程 −30%、收索變慢。站在補給平台會慢慢修好，重生全修。擊破照舊看總 HP</li>
     <li><b>戰術輔助器</b>（設定 → 新手輔助，預設開）：左上自機視窗的 3D 線框顯示各部位耗損；敵機受損部位畫成紅色線框；敵機血條上方顯示估計的彈量和狀態（刀的姿勢、冷卻、禁錮、破甲，都是「約」，不會算得很準）；射控預判也歸在這裡</li>
     <li><b>解除機體運動限制</b>（機庫）：移動 +10%，但手腳的部位耗損快 30%、推進時腳會自己磨損。螳螂鐮選裝本身比較輕，移動 +5%</li>
     <li><b>腿部釘槍</b>（不佔手臂，共 24 根）：釘在牆上時用搖桿可以沿牆爬行，每 2.5m 用掉一根，用完就掉下來；身邊 6m 內有牆時開槍＝釘在最近的牆上，任何角度都能固定（自動收回鋼索；推進、勾索或撲擊就脫離）；也能當武器：每根 400，打中敵機＝<b style="color:#ffd25a">禁錮 1.5 秒</b>（不能移動，但可以轉向、開火）；被禁錮時硬推移動＝立刻掙脫，但<b style="color:#ff6a58">破甲 5 秒</b>（受到的傷害 +30%）；禁錮結束後 5 秒內不會再被禁錮。</li>
@@ -704,10 +706,13 @@ const D = {
   "限制解除": ["リミッター解除", "제한 해제", "LIMITER OFF"],
   "02 副武選裝": ["02 サブ武器選択", "02 보조무기 선택", "02 Sub weapon"],
   "螳螂鐮": ["マンティスブレード", "맨티스 블레이드", "Mantis Blade"],
+  "雙臂 14.5mm 機槍": ["両腕 14.5mm機関銃", "양팔 14.5mm 기관총", "Twin 14.5mm MGs"],
   "14.5mm 機槍": ["14.5mm機関銃", "14.5mm 기관총", "14.5mm MG"],
   "釘槍": ["ネイルガン", "네일건", "Nail Gun"],
   "在左邊空白處拖曳可以轉動機體": ["左側の空きエリアをドラッグで機体を回転", "왼쪽 빈 곳을 드래그하면 기체가 회전", "Drag the empty area on the left to rotate the mech"],
   "按射擊：格擋（正面 ±30° 的子彈、砲彈、刀都擋得住，每擋一次磨損刀刃）→ 舉刀（再按，或擋下東西自動舉起，擋下後短暫硬直）→ 左斬 2250 → 0.7 秒內右斬 2250（合計 4500＝殘血，再用其他武器收尾）；連段結束冷卻 6 秒；刀刃耐久 100＋1 把備用刃（R 換刃、補給平台補），越鈍越砍不進去": ["射撃ボタンで：ガード（正面±30°の弾・砲弾・刃を防ぐ、防ぐたびに刃が摩耗）→ 構え（もう一度押す、または防ぐと自動で構える。防いだ直後は短い硬直）→ 左斬り 2250 → 0.7秒以内に右斬り 2250（合計4500で瀕死、他の武器でとどめ）。連段後はクールダウン6秒。刃の耐久100＋予備の刃1本（R で交換、補給台で補充）、鈍るほど斬れない", "사격 버튼: 가드 (정면 ±30°의 총알·포탄·칼날을 막음, 막을 때마다 칼날 마모) → 공격 자세 (한 번 더 누르거나, 막으면 자동으로 들어 올림, 막은 직후 짧은 경직) → 왼베기 2250 → 0.7초 안에 오른베기 2250 (합계 4500으로 빈사, 다른 무기로 마무리). 연속기 후 쿨다운 6초. 칼날 내구도 100 + 예비 칼날 1개 (R로 교체, 보급대에서 보충), 무뎌질수록 안 베임", "Press fire: GUARD (blocks bullets, shells and blades within ±30° ahead; every block wears the blade) → ATTACK (press again, or it raises automatically after a block, with a short stagger) → left slash 2250 → right slash 2250 within 0.7 s (4500 total leaves them nearly dead — finish with another weapon); 6 s cooldown after the combo; blade durability 100 + 1 spare (R to swap, refilled at supply pads) — a dull blade can't cut"],
+  "雙臂 14.5mm 機槍（左右交替射擊）": ["両腕 14.5mm機関銃（左右交互射撃）", "양팔 14.5mm 기관총 (좌우 교대 사격)", "Twin-arm 14.5mm MGs (alternating fire)"],
+  "雙臂 14.5mm 機槍（左右交替射擊）：左右兩挺交替，合計每分鐘 600 發、射程 500m；每挺的擴散看自己那隻手臂的耗損；不能格擋": ["両腕 14.5mm機関銃（左右交互射撃）：左右2挺が交互に射撃、合計毎分600発・射程500m。各銃の拡散はその腕の損耗次第。パリィ不可", "양팔 14.5mm 기관총 (좌우 교대 사격): 좌우 두 정이 교대로 사격, 합계 분당 600발, 사거리 500m. 각 총의 탄퍼짐은 그 팔의 마모에 따름. 막기 불가", "Twin-arm 14.5mm MGs (alternating fire): two guns fire alternately, 600 rounds/min combined, 500 m range; each gun's spread follows its own arm's wear; can't parry"],
   "每分鐘 600 發、射程 500m；不能格擋": ["毎分600発・射程500m。パリィ不可", "분당 600발, 사거리 500m. 막기 불가", "600 rounds/min, 500 m range; can't parry"],
   "機庫": ["格納庫", "격납고", "Hangar"],
   "載入中…": ["読み込み中…", "로딩 중…", "Loading…"],
@@ -980,6 +985,7 @@ const D = {
   "被格擋！": ["パリィされた！", "패링당했다!", "Parried!"],
   "01 主武：57mm 滑膛炮": ["01 メイン：57mm滑腔砲", "01 주무기: 57mm 활강포", "01 Main: 57mm Smoothbore"],
   "02 副武：螳螂鐮（按射擊：格擋 → 舉刀 → 左斬 → 右斬）": ["02 サブ：マンティスブレード（射撃：ガード → 構え → 左斬り → 右斬り）", "02 보조: 맨티스 블레이드 (사격: 가드 → 공격 자세 → 왼베기 → 오른베기)", "02 Sub: Mantis Blade (fire: guard → raise → left slash → right slash)"],
+  "02 副武：雙臂 14.5mm 機槍（左右交替射擊）": ["02 サブ：両腕 14.5mm機関銃（左右交互射撃）", "02 보조: 양팔 14.5mm 기관총 (좌우 교대 사격)", "02 Sub: Twin-arm 14.5mm MGs (alternating fire)"],
   "02 副武：14.5mm 機槍": ["02 サブ：14.5mm機関銃", "02 보조: 14.5mm 기관총", "02 Sub: 14.5mm MG"],
   "03 腿部：釘槍（打中敵機＝禁錮；靠牆開槍＝釘住自己）": ["03 脚部：ネイルガン（敵機に当てると拘束。壁際で撃つと自機を固定）", "03 다리: 네일건 (적 기체에 맞히면 구속, 벽 옆에서 쏘면 자기 고정)", "03 Leg: Nail Gun (hit a mech = PIN it; fire by a wall to anchor yourself)"],
   "禁錮": ["拘束", "구속", "PINNED"],
@@ -1045,7 +1051,7 @@ const H = {
 <li><b style="color:#63e6ff">左／右ワイヤー</b>（どちらも小さなスティック）：押す＝ワイヤー発射。円内ドラッグ＝上で巻き取り・下で繰り出し・左右でスイング。<b style="color:#ffb040">外周まで引き出す＝ブースト</b>（フック先がなくても使える）</li>
 <li><b style="color:#ff7a5c">射撃</b>：押し続けて連射、押したままドラッグ＝撃ちながら照準。射撃ボタンを<b style="color:#ffc94a">外周の上・右・左に小さな武器マーク（現在の武器が点灯）。押してマークの方向へ弾くと切替：上＝01 メイン 57mm、右＝02 マンティスブレード（射撃を押すたびに1段階：<b>ガード</b>（2本の刃を前で交差、正面±30°の弾・砲弾・刃を防ぐ。時間制限なし、ただし防ぐたびに刃が摩耗）→ <b>構え</b>（もう一度押す、または何かを防ぐと自動で構える。防いだ瞬間は短い<b>硬直</b>：砲弾／刃 0.35秒、弾／釘 0.15秒、その間は斬れない）→ <b>左斬り</b> 2250 → 0.7秒以内にもう一度で <b>右斬り</b> 2250、合計4500で瀕死、他の武器でとどめ。連段が終わるとクールダウン6秒。構えて1.5秒斬らないとガードに戻る。鈍るほど斬れない、R で予備の刃に交換）、左＝03 脚部ネイルガン</b></li>
 <li>照準：中央の小円が黄＝ワイヤーが届く、青＝フック中。大きな弧の赤いひし形＝敵の方向（中抜き＝背後）。下＝残弾・スロット（01 メイン／02 サブ／03 脚部）・弾種。左右の数値＝高度／速度。両側の目盛り：左＝ブースト燃料、右＝残弾</li>
-<li><b>部位ダメージ</b>：機体はコア・左腕・右腕（機関銃の腕）・背部ハッチのワイヤー発射器・前脚・後脚の6部位。コアへの命中は ×1.15、その他は ×0.9。部位は壊れず弱るだけ：脚の損傷＝移動／ブーストが最大30%遅く、腕の損傷＝その腕の機関銃の拡散・リロード、刃の摩耗と踏み込みが悪化、ワイヤー発射器の損傷＝射程 −30%・巻き取りが遅くなる。補給台の上で少しずつ修理、リスポーンで全快。撃破は従来どおり総HPで判定</li>
+<li><b>部位ダメージ</b>：機体はコア・左腕・右腕・背部ハッチのワイヤー発射器・前脚・後脚の6部位。コアへの命中は ×1.15、その他は ×0.9。部位は壊れず弱るだけ：脚の損傷＝移動／ブーストが最大30%遅く、腕の損傷＝その腕の機関銃（機関銃装備は両腕に1挺ずつ、左右交互射撃）の拡散・リロード、刃の摩耗と踏み込みが悪化。マンティスブレードは1撃2250固定で部位倍率なし、ワイヤー発射器の損傷＝射程 −30%・巻き取りが遅くなる。補給台の上で少しずつ修理、リスポーンで全快。撃破は従来どおり総HPで判定</li>
 <li><b>戦術支援システム</b>（設定 → アシスト、初期オン）：左上の自機ウィンドウに部位損耗の3Dワイヤー、敵の損傷部位を赤いワイヤーで表示、敵のHPバーの上に推定の残弾と状態（刃の構え・クールダウン・拘束・アーマーブレイク、すべて「約」で正確ではない）。偏差射撃ガイドもここに含まれる</li>
 <li><b>機体運動リミッター解除</b>（格納庫）：移動 +10%、ただし手足の部位損耗が30%速く、ブースト中は脚が自損。マンティスブレード装備は軽いので移動 +5%</li>
 <li><b>脚部ネイルガン</b>（腕を使わない、全24本）：壁に固定中はスティックで壁を這える（2.5mごとに1本消費、尽きると落下）。6m以内に壁があるときに撃つ＝最寄りの壁に固定、どの角度でもOK（ワイヤーは自動回収。ブースト・フック・飛びかかりで解除）。武器としても使える：1本400、敵機に当てると<b style="color:#ffd25a">拘束1.5秒</b>（移動不可、旋回・射撃は可）。拘束中に無理に動くと即脱出できるが<b style="color:#ff6a58">アーマーブレイク5秒</b>（被ダメージ+30%）。拘束解除後5秒間は再拘束されない</li>
@@ -1062,7 +1068,7 @@ const H = {
 <li><b style="color:#63e6ff">왼쪽/오른쪽 와이어</b> (둘 다 작은 스틱): 누르기 = 와이어 발사. 원 안에서 드래그 = 위로 감기, 아래로 풀기, 좌우 스윙. <b style="color:#ffb040">바깥 원까지 끌기 = 부스트</b> (고정점이 없어도 가능)</li>
 <li><b style="color:#ff7a5c">사격</b>: 누르고 있으면 연사, 누른 채 드래그 = 쏘면서 조준. 사격 버튼을 <b style="color:#ffc94a">테두리 위·오른쪽·왼쪽에 작은 무기 마크 (현재 무기가 켜짐). 누른 채 마크 방향으로 튕기면 교체: 위 = 01 주무기 57mm, 오른쪽 = 02 맨티스 블레이드 (사격을 누를 때마다 한 단계: <b>가드</b> (두 칼날을 앞으로 교차, 정면 ±30°의 총알·포탄·칼날을 막음. 시간 제한 없음, 대신 막을 때마다 칼날 마모) → <b>공격 자세</b> (한 번 더 누르거나, 무언가를 막으면 자동으로 들어 올림. 막은 순간 짧은 <b>경직</b>: 포탄/칼날 0.35초, 총알/못 0.15초, 그동안 베기 불가) → <b>왼베기</b> 2250 → 0.7초 안에 한 번 더 <b>오른베기</b> 2250, 합계 4500으로 빈사, 다른 무기로 마무리. 연속기가 끝나면 쿨다운 6초. 공격 자세에서 1.5초 안 베면 가드로 복귀. 무뎌질수록 안 베임, R로 예비 칼날 교체), 왼쪽 = 03 다리 네일건</b></li>
 <li>조준점: 중앙 작은 원이 노랑 = 와이어가 닿음, 청록 = 연결됨. 큰 호 위의 빨간 마름모 = 적 방향 (속이 빈 것 = 뒤쪽). 아래 = 탄약·슬롯 (01 주무기/02 보조/03 다리)·탄종. 좌우 수치 = 고도/속도. 양옆 눈금: 왼쪽 = 부스트 연료, 오른쪽 = 탄약</li>
-<li><b>부위 피해</b>: 기체는 코어·왼팔·오른팔(기관총 팔)·등 해치 와이어 발사기·앞다리·뒷다리 6부위. 코어 명중은 ×1.15, 그 외 부위는 ×0.9. 부위는 부서지지 않고 약해질 뿐: 다리 손상 = 이동/부스트 최대 30% 감소, 팔 손상 = 그 팔의 기관총 탄퍼짐·재장전, 칼날 마모·돌진 악화, 와이어 발사기 손상 = 사거리 −30%·감기 느려짐. 보급대 위에서 서서히 수리, 리스폰 시 전부 수리. 격파는 기존대로 총 HP</li>
+<li><b>부위 피해</b>: 기체는 코어·왼팔·오른팔·등 해치 와이어 발사기·앞다리·뒷다리 6부위. 코어 명중은 ×1.15, 그 외 부위는 ×0.9. 부위는 부서지지 않고 약해질 뿐: 다리 손상 = 이동/부스트 최대 30% 감소, 팔 손상 = 그 팔의 기관총(기관총 장비는 양팔에 한 정씩, 좌우 교대 사격) 탄퍼짐·재장전, 칼날 마모·돌진 악화. 맨티스 블레이드는 한 번에 2250 고정, 부위 배율 없음, 와이어 발사기 손상 = 사거리 −30%·감기 느려짐. 보급대 위에서 서서히 수리, 리스폰 시 전부 수리. 격파는 기존대로 총 HP</li>
 <li><b>전술 보조 장치</b> (설정 → 보조 기능, 기본 켜짐): 왼쪽 위 기체 창에 부위 마모 3D 와이어프레임, 적의 손상 부위를 빨간 와이어로 표시, 적 HP 바 위에 추정 잔탄과 상태(칼날 자세·쿨다운·구속·아머 브레이크, 모두 「약」이며 정확하지 않음). 사격 예측선도 여기에 포함</li>
 <li><b>기체 운동 제한 해제</b> (격납고): 이동 +10%, 대신 팔다리 부위 마모 30% 빠름, 부스트 중 다리 자체 마모. 맨티스 블레이드 장비는 가벼워서 이동 +5%</li>
 <li><b>다리 네일건</b> (팔을 쓰지 않음, 총 24발): 벽에 고정된 동안 스틱으로 벽을 타고 이동 (2.5m마다 1발 소모, 다 쓰면 떨어짐). 6m 안에 벽이 있을 때 쏘면 = 가장 가까운 벽에 고정, 어떤 각도든 가능 (와이어 자동 회수. 부스트·와이어·도약으로 해제). 무기로도 사용: 1발 400, 적 기체에 맞히면 <b style="color:#ffd25a">구속 1.5초</b> (이동 불가, 회전·사격은 가능). 구속 중 억지로 움직이면 바로 풀리지만 <b style="color:#ff6a58">아머 브레이크 5초</b> (받는 피해 +30%). 구속이 끝난 뒤 5초 동안은 다시 구속되지 않음</li>
@@ -1079,7 +1085,7 @@ const H = {
 <li><b style="color:#63e6ff">Left / right wire</b> (both are mini sticks): hold = fire a wire; drag inside the circle = up reels in, down lets out, left/right swings; <b style="color:#ffb040">drag past the outer ring = boost</b> (works with no anchor too)</li>
 <li><b style="color:#ff7a5c">Fire</b>: hold to shoot, drag while holding = aim while firing. <b style="color:#ffc94a">Small weapon marks sit on the fire button's rim at top, right and left (the current one lights up); press and flick toward a mark to switch: up = 01 Main 57mm, right = 02 Mantis Blade (each press of fire is one step: <b>GUARD</b> (blades crossed in front, blocks bullets, shells and blades within ±30° ahead — no time limit, but every block wears the blade) → <b>ATTACK</b> (press again, or it raises automatically when something is blocked; each block causes a short <b>STAGGER</b> — 0.35 s for shells/blade clashes, 0.15 s for bullets/nails — during which you can't strike) → <b>left slash</b> 2250 → press within 0.7 s for the <b>right slash</b> 2250; both = 4500, leaving them nearly dead — finish with another weapon; 6 s cooldown after the combo; ATTACK drops back to GUARD after 1.5 s without a slash; a dull blade can't cut — R swaps in the spare), left = 03 Leg Nail Gun</b></li>
 <li>Reticle: small center circle yellow = a wire will hook, cyan = hooked. Red diamonds on the big arc = enemy direction (hollow = behind you). Below = ammo, slot (01 Main / 02 Sub / 03 Leg), ammo type. Left/right readouts = altitude / speed. Side gauges: left = boost fuel, right = ammo</li>
-<li><b>Part damage</b>: the mech has six parts — core, left arm, right arm (MG arm), back hatch cable launchers, front legs, rear legs. Core hits deal ×1.15, other parts ×0.9. Parts never break, they only weaken: damaged legs = up to 30% slower movement/boost; a damaged arm = worse MG spread/reload on that arm and more blade wear, shorter lunge; damaged launchers = −30% grapple range and slower reeling. Supply pads repair parts slowly; respawning repairs everything. Kills are still decided by total HP</li>
+<li><b>Part damage</b>: the mech has six parts — core, left arm, right arm, back hatch cable launchers, front legs, rear legs. Core hits deal ×1.15, other parts ×0.9. Parts never break, they only weaken: damaged legs = up to 30% slower movement/boost; a damaged arm = worse spread/reload for that arm's MG (the MG loadout carries one gun on each arm, firing alternately) and more blade wear, shorter lunge; Mantis Blade strikes are a flat 2250 and ignore part multipliers; damaged launchers = −30% grapple range and slower reeling. Supply pads repair parts slowly; respawning repairs everything. Kills are still decided by total HP</li>
 <li><b>Tactical Assist</b> (Settings → Assist, on by default): a 3D wireframe of your part wear in the top-left window, red wireframe on the enemy's damaged parts, and estimated enemy ammo and status above its HP bar (blade stance, cooldown, pinned, armor break — all marked ≈ and deliberately not exact). The lead indicator lives here too</li>
 <li><b>Limiter Release</b> (hangar): +10% movement, but arm/leg parts wear 30% faster and the legs wear while boosting. The Mantis Blade loadout is lighter: +5% movement</li>
 <li><b>Leg Nail Gun</b> (doesn't use your arms, 24 nails): while pinned, use the stick to crawl along the wall — one nail per 2.5 m, you drop when they run out. Fire with a wall within 6 m = pin to the nearest wall at any angle (wires retract; boost, hook or pounce to detach). Also a weapon: 400 per nail, and a hit <b style="color:#ffd25a">PINS</b> the enemy mech for 1.5 s (can't move, can still turn and fire). Moving while pinned breaks free at once but causes <b style="color:#ff6a58">ARMOR BREAK</b> for 5 s (+30% damage taken); no re-pin for 5 s after a pin ends</li>
@@ -1929,8 +1935,8 @@ function actorDamage(v, dmg){
   if (match.mode === 'net'){ if (v.kind !== 'net') return false; v.lastCauseSent = dmgKind || 'other';   // v3.8 連線：開槍方判定，傷害交給對方自己扣
     NET.send('hit', { dmg: Math.round(dmg), c: dmgKind || 'other', ...(partOk(pt) ? { pt } : {}), ...(dmgKind === 'nail' ? { pin: 1, pf: v3a(curActor.P.currPos) } : {}) });   // v4.9 pin＝釘槍命中（對方自己判定禁錮；舊版收到會忽略，只扣血）  v5.1 pt＝命中部位（對方自己乘倍率、累積耗損；舊版忽略）
     if (partOk(pt) && v.P.pfl) v.P.pfl[pt] = 1;   // 本機畫面：對手被打中的部位閃一下（耗損數字照對方快照 pw）
-    events.push({ type: 'actorHit', victim: v.pid, dmg: dmg * abMul(v) * partMul(pt), part: pt }); return true; }   // 顯示用：對方快照說他在破甲 → 數字 ×1.3（實際由對方自己乘）
-  dmg *= abMul(v) * partMul(pt);   // v4.9 破甲：所有傷害 ×1.3；v5.1 部位倍率（核心 ×1.15、其他 ×0.9）
+    events.push({ type: 'actorHit', victim: v.pid, dmg: dmg * abMul(v) * (dmgKind === 'melee' ? 1 : partMul(pt)), part: pt }); return true; }   // 顯示用：對方快照說他在破甲 → 數字 ×1.3（實際由對方自己乘）
+  dmg *= abMul(v) * (dmgKind === 'melee' ? 1 : partMul(pt));   // v4.9 破甲：所有傷害 ×1.3；v5.1 部位倍率（核心 ×1.15、其他 ×0.9；螳螂鐮不吃倍率，只累積耗損）
   v.hp = Math.max(0, v.hp - dmg); v.lastHitBy = curActor; events.push({ type: 'actorHit', victim: v.pid, dmg, part: pt }); partAdd(v, pt, dmg);
   if (v.hp <= 0) match.died(v, curActor, dmgKind || 'other');
   else if (dmgKind === 'nail') nailHold(v, curActor && curActor.P.currPos);   // v4.9 釘槍命中＝禁錮
@@ -2585,7 +2591,8 @@ function netOnMsg(t, d){
   if (match.mode !== 'net') return;
   if (t === 'hit'){   // 對方判定打中我：我自己扣血（保護區內不受傷）
     if (match.state !== 'live' || local.P.safe) return;
-    const pt = partOk(d.pt) ? d.pt : -1, dmg = (+d.dmg || 0) * abMul(local) * partMul(pt);   // v4.9 破甲由受害者（我）乘；v5.1 部位倍率也是（舊版對手沒帶 pt → ×1.0、不算部位）
+    const pt = partOk(d.pt) ? d.pt : -1, dmg = (+d.dmg || 0) * abMul(local) * (d.c === 'melee' ? 1 : partMul(pt));   // 螳螂鐮：固定 ×1.0（只算耗損）
+      // v4.9 破甲由受害者（我）乘；v5.1 部位倍率也是（舊版對手沒帶 pt → ×1.0、不算部位）
     local.hp = Math.max(0, local.hp - dmg); local.lastHitBy = bot; events.push({ type: 'actorHit', victim: local.pid, dmg, by: 'net', part: pt }); partAdd(local, pt, dmg);
     if (local.hp <= 0){ match.died(local, bot, typeof d.c === 'string' ? d.c : 'other'); return; }   // 舊版對手沒帶死因 → 一般圖示
     if (d.pin) nailHold(local, Array.isArray(d.pf) && d.pf.length === 3 ? V().fromArray(d.pf) : bot.P.currPos.clone());   // v4.9 對方的釘子打中我：我自己禁錮（舊版對手不會帶 pin → 只扣血）
@@ -2641,7 +2648,7 @@ function netApplyRemote(){
 // ---- 特效同步：開槍、開砲（只有畫面與聲音；傷害一律走 hit 事件）----
 function netQueueFx(ev){
   if (match.mode !== 'net' || NET.state !== 'match') return;
-  if (ev.type === 'shot') NET.fx.push({ k: ev.nail ? 'n' : 's', f: v3a(ev.from), to: v3a(ev.to), h: ev.hit ? 1 : 0, n: ev.normal ? v3a(ev.normal, r3) : 0 });
+  if (ev.type === 'shot') NET.fx.push({ k: ev.nail ? 'n' : 's', f: v3a(ev.from), to: v3a(ev.to), h: ev.hit ? 1 : 0, n: ev.normal ? v3a(ev.normal, r3) : 0, ...(ev.gun === -1 ? { g: -1 } : {}) });   // v5.1 g＝左臂機槍（舊版忽略＝從右臂）
   else if (ev.type === 'cannon'){ const sh = state.weapon.shells[state.weapon.shells.length - 1]; if (sh) NET.fx.push({ k: 'c', p: v3a(sh.p), v: v3a(sh.v) }); }
   else if (ev.type === 'meleeStart') NET.fx.push({ k: 'm', s: ev.side || 1, ...(ev.n ? { n: ev.n, v0: ev.v0 } : {}) });   // v3.9 揮鐮動作（傷害照樣走 hit）；v5.0 n＝第幾刀、v0＝動畫起點（從舉刀直接斬下；舊版忽略＝播完整揮臂）
   else if (ev.type === 'melee') NET.fx.push({ k: 'mh', h: ev.hit ? 1 : 0, at: v3a(ev.at), s: ev.side || 1 });
@@ -2651,7 +2658,7 @@ function netQueueFx(ev){
 }
 function netFx(f){
   if (!bot || !bot.active) return;
-  if (f.k === 's' || f.k === 'n'){ const n = f.n ? V().fromArray(f.n) : null; remoteEvent({ type: 'shot', from: V().fromArray(f.f), to: V().fromArray(f.to), hit: !!f.h, normal: n, nail: f.k === 'n', by: 'net' }); }
+  if (f.k === 's' || f.k === 'n'){ const n = f.n ? V().fromArray(f.n) : null; remoteEvent({ type: 'shot', from: V().fromArray(f.f), to: V().fromArray(f.to), hit: !!f.h, normal: n, nail: f.k === 'n', gun: f.g === -1 ? -1 : 1, by: 'net' }); }
   else if (f.k === 'm'){ const ml = bot.weapon.melee || (bot.weapon.melee = newBlade()); ml.vis = typeof f.v0 === 'number' ? clamp(f.v0, 0, 0.25) : 0; ml.side = f.s || 1; ml.rn = f.n || 0; remoteEvent({ type: 'meleeStart', from: bot.P.currPos.clone(), by: 'net' }); }
   else if (f.k === 'b'){ if (f.me){ const lw = local.weapon, lml = lw.melee;   // v4.8／v5.0 對方判定「我擋下了」：在自己這邊自動舉刀進 ATTACK＋扣耐久（舊版對手沒帶 bk → 拼刀算刀、其他算子彈）
       if (lml && lw.active === 'mg' && bladeOn(lw)){ const bk = typeof f.bk === 'string' ? f.bk : f.p ? 'melee' : 'mg'; if (bladeOnBlock(lml, bk) && bk === 'cannon' && bot) blockPush(local, bot.P.currPos); }   // v5.1 自己判定硬直＋被推   // v5.0 擋下＝自動舉刀進 ATTACK（只有 GUARD 中才會變）
@@ -3204,13 +3211,14 @@ function weaponTick(cmd, dt){
   w.bloom = Math.max(0, w.bloom - dt * (W.spread.max / W.spread.recover));
   if (w.reserve == null) w.reserve = W.reserve;
   if (w.reloading > 0){ w.reloading -= dt; if (w.reloading <= 0){ const n = Math.min(W.ammo - w.ammo, Math.floor(w.reserve)); w.ammo += n; w.reserve -= n; w.reloading = 0; events.push({ type: 'reloaded' }); } return; }   // v4.1 從備用彈匣補
-  if (((cmd.reload && w.ammo < W.ammo) || w.ammo <= 0) && w.reserve >= 1){ w.reloading = w.rlT = W.reload * (1 + CONFIG.parts.armReload * partW(P, 2)); events.push({ type: 'reload' }); return; }   // v5.1 右臂耗損：換彈最多 +30%
+  if (((cmd.reload && w.ammo < W.ammo) || w.ammo <= 0) && w.reserve >= 1){ w.reloading = w.rlT = W.reload * (1 + CONFIG.parts.armReload * Math.max(partW(P, 1), partW(P, 2))); events.push({ type: 'reload' }); return; }   // v5.1 換彈看耗損較重的手臂：最多 +30%
   if (w.ammo <= 0) return;   // 彈匣和備用都打光：到補給平台補
   autoFireCheck(cmd, dt, W.range);
   if (!(cmd.fire || w.autoOn) || w.cooldown > 0) return;
   w.cooldown += 60 / W.rpm;
   w.ammo = Math.floor(w.ammo) - 1; w.shots++; w.fired++;
-  const spreadDeg = currentSpread();
+  const gun = w.mgSide = w.mgSide === 1 ? -1 : 1;   // v5.1 雙臂機槍左右交替（合計 600 rpm＝每挺 300）
+  const spreadDeg = currentSpread(gun);
   w.bloom = Math.min(W.spread.max, w.bloom + W.spread.bloomPerShot);
   const a = rng() * Math.PI * 2, rr = Math.sqrt(rng()) * spreadDeg * DEG;
   const gy = cmd.gunYaw ?? P.yaw, gp = cmd.gunPitch ?? P.pitch;   // 跟手準星（武器）時，往手指準星的方向打
@@ -3230,7 +3238,7 @@ function weaponTick(cmd, dt){
     const t = targetsByCollider.get(hit.handle);
     if (t && !t.dead && dmgAs('mg', t, W.damage, { p: hit.point, d: dir })){ hitTarget = true; w.hits++; }
   }
-  events.push({ type: 'shot', from: origin, to: end, hit: !!hit, hitTarget, normal: hit ? hit.normal : null, tracer: w.shots % W.tracerEvery === 0 });
+  events.push({ type: 'shot', from: origin, to: end, hit: !!hit, hitTarget, normal: hit ? hit.normal : null, tracer: w.shots % W.tracerEvery === 0, gun });
 }
 // v5.0 ATTACK（舉刀）姿勢：[肩 x, 肩 z（往內，×−側別）, 肘 x]
 const RAISE_POSE = [2.25, 0.32, 1.55];
@@ -3414,12 +3422,13 @@ function nailTick(cmd, dt, fireEdge){
   }
   events.push({ type: 'shot', from: origin, to: end, hit: !!hit, hitTarget, normal: hit ? hit.normal : null, tracer: true, nail: true });
 }
-function currentSpread(){
+function currentSpread(gun){   // v5.1 gun：−1 左臂機槍、1 右臂機槍（沒給＝下一發的那挺）
   const P = state.player, s = W.spread, sp = P.vel.length();
   let v = s.base;
   if (sp > 1) v += s.moving;
   if (sp > s.swingSpeed && !P.grounded) v += s.swinging;
-  return Math.min(s.max, v + state.weapon.bloom) * (1 + CONFIG.parts.armSpread * partW(state.player, 2));   // v5.1 右臂（機槍臂）耗損：擴散最多 +60%
+  const g = gun || (state.weapon.mgSide === 1 ? -1 : 1);
+  return Math.min(s.max, v + state.weapon.bloom) * (1 + CONFIG.parts.armSpread * partW(state.player, g === -1 ? 1 : 2));   // v5.1 那挺槍所在手臂的耗損：擴散最多 +60%
 }
 function actorEnvTick(dt){   // v3.0 每台機體各自：後座回復、保護區、補給平台
   state.weapon.recoil *= Math.exp(-dt / W.recoilTau);
@@ -3584,8 +3593,8 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
   const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _k = new THREE.Vector3(), _q = new THREE.Quaternion();
   function seg(mesh, a, b){ _a.subVectors(b, a); const len = _a.length(); mesh.position.copy(a).addScaledVector(_a, 0.5); mesh.scale.set(1, len, 1); mesh.quaternion.setFromUnitVectors(UP, _a.divideScalar(len || 1)); }
   let nailSide = 0;
-  M.muzzle = (kind, out) => { if (!M.loaded) return null;
-    if (kind === 'mg' && M.mgMuzzle) return M.mgMuzzle.getWorldPosition(out);
+  M.muzzle = (kind, out, side) => { if (!M.loaded) return null;
+    if (kind === 'mg' && M.mgMuzzle){ const mz = (side === -1 && M.mgMuzzles && M.mgMuzzles['-1']) || M.mgMuzzle; return mz.getWorldPosition(out); }   // v5.1 雙臂機槍：side −1＝左臂、1＝右臂（舊版沒帶＝右臂）
     if (kind === 'cannon' && M.cannonMuzzle) return M.cannonMuzzle.getWorldPosition(out);
     if (kind === 'nail'){ const fr = M.legs.filter(L => L.rest && L.rest.z < 0); if (!fr.length) return null; const L = fr[(nailSide++) % fr.length];   // 前腳（樁腳）左右輪流
       return M.body.localToWorld(out.copy(L.cur).lerp(L.hip, 0.15)); }
@@ -3814,12 +3823,12 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
         const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.22, 8).translate(0, -0.35, 0), matD); KG.add(cuff);
         const cg = new THREE.Group(); cg.position.set(0, -1.5, 0.12); KG.add(cg); cg.add(new THREE.Mesh(claw.body, matF), new THREE.Mesh(claw.edge, matEdge));
         let gun = null, muz = null;
-        if (sd > 0){ gun = new THREE.Group(); gun.position.set(0, 0, -0.36); KG.add(gun);
+        { gun = new THREE.Group(); gun.position.set(0, 0, -0.36); KG.add(gun);   // v5.1 雙臂機槍：左右各一挺（左臂鏡像）
           const rcv = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.0, 0.3).translate(0, -1.0, 0), matD); gun.add(rcv);
           const shr = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.7, 8).translate(0, -1.8, 0), matF); gun.add(shr);
           const brl = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.3, 8).translate(0, -2.5, 0), matD); gun.add(brl);
           const brk = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.2, 8).translate(0, -3.15, 0), matD); gun.add(brk);
-          const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.2, 10).rotateZ(Math.PI / 2).translate(0.27, -0.95, 0.12), matF); gun.add(drum);   // 外側彈鼓
+          const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.2, 10).rotateZ(Math.PI / 2).translate(0.27 * sd, -0.95, 0.12), matF); gun.add(drum);   // 外側彈鼓
           const tip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 0.05).translate(0, -3.1, -0.1), matAcc); gun.add(tip);   // 準星（點綴色）
           muz = new THREE.Object3D(); muz.position.set(0, -3.3, 0); gun.add(muz); }
         // v3.9b 刀光：弧形月牙（右臂＝右上往左下、左臂鏡像；兩刀合起來是 X）。中段往前鼓、外緣厚內緣薄、兩端收尖；用 drawRange 從刀尖起點「劃開」
@@ -3832,7 +3841,7 @@ function createMech(cfg = {}){   // v3.0 改成工廠：本機一台、AI 一台
       M.slashPts = (side, n) => { const A = M.arm2.arms.find(x => x.sd === (side || 1)), out = []; if (!A) return out; A.slash.updateMatrixWorld(true); const pa = A.slash.geometry.attributes.position;
         for (let j = 0; j < n; j++){ const i = Math.round((CRES.N * (j + 0.5)) / n) * 2; out.push(new THREE.Vector3().fromBufferAttribute(pa, Math.min(i, pa.count - 2)).applyMatrix4(A.slash.matrixWorld)); } return out; };   // v3.9b 沿刀光外緣取點（火花用）
       // v4.1 機槍改裝在右格鬥臂上（以前在機身頂部）：槍口就是右臂槍管前端
-      M.mgArm = armR.gun; M.mgWrist = null; M.mgMuzzle = armR.muz; M.applyPaint(cfg.paint || opts.paint);   // v4.2 手臂建好後套一次塗裝
+      M.mgArm = armR.gun; M.mgWrist = null; M.mgMuzzle = armR.muz; M.mgMuzzles = { '-1': armL.muz, '1': armR.muz }; M.applyPaint(cfg.paint || opts.paint);   // v4.2 手臂建好後套一次塗裝
       // v4.1 依 02 欄選裝切換前臂套件（只在變更時動 visible）
       M.setKit = s2 => { const kk = s2 === 'mg' ? 'mg' : 'blade'; if (M.kit === kk) return; M.kit = kk;
         for (const A of M.arm2.arms){ A.KB.visible = kk === 'blade'; A.KG.visible = kk === 'mg'; } };
@@ -4019,7 +4028,7 @@ function remoteEvent(ev){
   tacObserve(ev);   // v5.1 戰術輔助器：看到對手開火 → 估彈量
   const M2 = bot && bot.mech, dist = ev.from ? ev.from.distanceTo(camera.position) : 100, vol = clamp(60 / Math.max(30, dist), 0.15, 1);
   switch (ev.type){
-    case 'shot': { const mz = M2 ? M2.muzzle(ev.nail ? 'nail' : 'mg', V()) : null, from = mz || ev.from; spawnSparks(from, null); spawnTracer(from, ev.to); if (ev.hit) spawnSparks(ev.to, ev.normal); if (vol > 0.3) sfx('shot'); break; }
+    case 'shot': { const mz = M2 ? M2.muzzle(ev.nail ? 'nail' : 'mg', V(), ev.gun) : null, from = mz || ev.from; spawnSparks(from, null); spawnTracer(from, ev.to); if (ev.hit) spawnSparks(ev.to, ev.normal); if (vol > 0.3) sfx('shot'); break; }
     case 'cannon': { const mz = M2 ? M2.muzzle('cannon', V()) : null, shl = bot.weapon.shells[bot.weapon.shells.length - 1];
       if (mz){ spawnSparks(mz, null); if (shl && !shl.voff){ shl.voff = mz.clone().sub(shl.p); shl.vt = 0.2; } } if (M2) M2.recoil(); sfx(vol > 0.5 ? 'cannon' : 'boom', vol); break; }
     case 'meleeStart': sfx('slash', vol); break;
@@ -4697,10 +4706,11 @@ function miUpdate(dt){
 //   6 射控預判虛線敵人（opts.fcs 變成戰術輔助器底下的子選項）
 // =====================================================================
 const TAC = { fps: 12, px: 128, edgeDeg: 45, edges: 900, tilt: 0.62, mini: null, ov: null, est: null };
-const TAC_COL = [[127, 245, 224], [255, 201, 74], [255, 90, 72]];
-function tacWearCol(w, fl){ const a = w < 0.5 ? TAC_COL[0] : TAC_COL[1], b = w < 0.5 ? TAC_COL[1] : TAC_COL[2], k = w < 0.5 ? w * 2 : (w - 0.5) * 2;
-  let r = a[0] + (b[0] - a[0]) * k, g = a[1] + (b[1] - a[1]) * k, bl = a[2] + (b[2] - a[2]) * k; if (fl > 0){ r += (255 - r) * fl; g += (255 - g) * fl; bl += (255 - bl) * fl; }
-  return `rgb(${r | 0},${g | 0},${bl | 0})`; }
+// v5.1 左上 3D 線框：跟射控預判的虛線敵人同一種畫法（虛線），完好＝淡藍白，受損部位＝橘（耗損越重越濃），被打中閃白
+function tacMiniCol(w, fl){ let r, g, b, a;
+  if (w < 0.04){ r = 207; g = 234; b = 255; a = 0.9; } else { const k = Math.min(1, w); r = 255; g = 205 - 95 * k; b = 150 - 140 * k; a = 0.75 + 0.25 * k; }
+  if (fl > 0){ r += (255 - r) * fl; g += (255 - g) * fl; b += (255 - b) * fl; a = Math.max(a, fl); }
+  return [`rgb(${r | 0},${g | 0},${b | 0})`, a]; }
 function partNearestLocal(q){ let best = 0, bd = Infinity; for (const g of PART_GEO){ const d = partDist(g, q); if (d < bd){ bd = d; best = g.p; } } return best; }
 // 把機體（root 暫時放回原點、朝正前方）的網格算成機身本機座標；fn(mesh, matrixToBodyLocal)
 function tacEachMesh(M, fn){ const sv = [M.root.position.clone(), M.root.quaternion.clone()]; M.root.position.set(0, 0, 0); M.root.quaternion.identity(); M.root.updateMatrixWorld(true);
@@ -4721,22 +4731,23 @@ function tacMiniBuild(M, kit){ const segs = [], p = new THREE.Vector3(), q = new
   cen.divideScalar(Math.max(1, keep.length * 2)); const rs = []; for (const s of keep) rs.push(Math.hypot(s[0] - cen.x, s[1] - cen.y, s[2] - cen.z), Math.hypot(s[3] - cen.x, s[4] - cen.y, s[5] - cen.z));
   rs.sort((a, b) => a - b); const R = Math.max(5.4, (rs[rs.length - 1] || 6) * 0.82);   // 半徑取 99.5%：零星的尖端不會把整台縮得太小
   return { kit, by: by.map(a => new Float32Array(a)), R, c: cen, n: keep.length }; }
+function tacDarkStroke(g){ const lw = g.lineWidth; g.save(); g.strokeStyle = 'rgba(0,10,16,.5)'; g.globalAlpha = 1; g.lineWidth = lw + 1.4; g.stroke(); g.restore(); }   // 線底下一層很淡的暗邊：亮的天空／地面上也看得清楚（不加底框）
 function tacMiniDraw(cv, data, P, ang, M){ const g = cv.getContext('2d'), W = cv.width, H = cv.height; g.clearRect(0, 0, W, H); if (!data) return;
   const ca = Math.cos(ang), sa = Math.sin(ang), tl = TAC.tilt, ct = Math.cos(tl), st = Math.sin(tl), s = Math.min(W * 0.5, H * 0.62) / data.R, ox = W / 2, oy = H * 0.5, C = data.c;
-  g.lineWidth = Math.max(0.8, W / 80); g.lineCap = 'round';
+  g.lineWidth = Math.max(0.8, W / 90); g.lineCap = 'butt'; const dU = Math.max(1, W / 64); g.setLineDash([2.2 * dU, 1.4 * dU]);   // 虛線（跟射控預判的虛線敵人一樣）
   for (let k = 0; k < 6; k++){ const a = data.by[k]; if (!a.length) continue; const w = partW(P, k), fl = P.pfl ? P.pfl[k] || 0 : 0;
-    g.strokeStyle = tacWearCol(w, fl); g.globalAlpha = 0.7 + 0.3 * Math.max(w, fl); g.beginPath();
+    const [cl, al] = tacMiniCol(w, fl); g.strokeStyle = cl; g.globalAlpha = al; g.beginPath();
     for (let i = 0; i < a.length; i += 3){ const x = a[i] - C.x, y = a[i + 1] - C.y, z = a[i + 2] - C.z;   // 繞模型中心轉
       const rx = x * ca - z * sa, rz = x * sa + z * ca, sy = y * ct - rz * st, X = ox + rx * s, Y = oy - sy * s;
       if ((i / 3) % 2 === 0) g.moveTo(X, Y); else g.lineTo(X, Y); }
-    g.stroke(); }
+    tacDarkStroke(g); g.strokeStyle = cl; g.globalAlpha = al; g.stroke(); }
   if (M && M.legs && M.legs.length){   // 腳：照目前的 IK 姿勢畫骨架線（髖 → 膝 → 腳底），細長的腳模型稜線太少、看不出腳
     const pj = v => { const x = v.x - C.x, y = v.y - C.y, z = v.z - C.z, rx = x * ca - z * sa, rz = x * sa + z * ca; return [ox + rx * s, oy - (y * ct - rz * st) * s]; };
     g.lineWidth = Math.max(1.2, W / 50); M.root.updateMatrixWorld(true);
     for (const L of M.legs){ const k = L.rest && L.rest.z < 0 || L.hip.z < -0.5 ? 4 : 5, w = partW(P, k), fl = P.pfl ? P.pfl[k] || 0 : 0;
       const knee = L.kneeG ? M.body.worldToLocal(L.kneeG.getWorldPosition(_tk)) : _tk.copy(L.hip).lerp(L.cur, 0.5).setY(L.hip.y + 0.6);
-      const a0 = pj(L.hip), a1 = pj(knee), a2 = pj(L.cur); g.strokeStyle = tacWearCol(w, fl); g.globalAlpha = 0.95; g.beginPath(); g.moveTo(a0[0], a0[1]); g.lineTo(a1[0], a1[1]); g.lineTo(a2[0], a2[1]); g.stroke(); } }
-  g.globalAlpha = 1; }
+      const a0 = pj(L.hip), a1 = pj(knee), a2 = pj(L.cur), [cl, al] = tacMiniCol(w, fl); g.strokeStyle = cl; g.globalAlpha = al; g.beginPath(); g.moveTo(a0[0], a0[1]); g.lineTo(a1[0], a1[1]); g.lineTo(a2[0], a2[1]); tacDarkStroke(g); g.strokeStyle = cl; g.globalAlpha = al; g.stroke(); } }
+  g.globalAlpha = 1; g.setLineDash([]); }
 const _tk = new THREE.Vector3();
 function tacMiniPrebuild(){ const T = TAC.mini || (TAC.mini = { t: 1, ang: 0.6, data: {} }), kit = bladeOn(local.weapon) ? 'blade' : 'mg'; if (T.data[kit]) return;
   if (mech.setKit) mech.setKit(kit); const tb = performance.now(); T.data[kit] = tacMiniBuild(mech, kit); TAC.buildMs = performance.now() - tb; }
@@ -5184,9 +5195,9 @@ function frame(now){
         if (mz){ spawnSparks(mz, null); spawnSparks(mz, null); if (shl && !shl.voff){ shl.voff = mz.clone().sub(shl.p); shl.vt = 0.2; } } }   // v2.6 砲彈外觀從砲口出發，0.2 秒內併回實際彈道
         mech.recoil(); sfx('cannon'); if (opts.shake){ shakeT = CONFIG.camera.shakeDur * 0.6; shakeAmp = 0.25 * CONFIG.camera.shakeScale; } buzz(25); break;
       case 'boom': sfx('boom', ev.hitTarget ? 1 : 0.6); spawnBoom(ev.at, ev.normal); if (ev.hitTarget){ hitMarkT = 0.18; sfx('hit'); } break;
-      case 'shot': { sfx('shot'); const mz = opts.view3P ? mech.muzzle(ev.nail ? 'nail' : 'mg', V()) : null; const from = mz || ev.from; if (mz) spawnSparks(mz, null); if (ev.tracer) spawnTracer(from, ev.to); } if (ev.hit) spawnSparks(ev.to, ev.normal); if (ev.hitTarget){ hitMarkT = 0.12; sfx('hit'); } break;
+      case 'shot': { sfx('shot'); const mz = opts.view3P ? mech.muzzle(ev.nail ? 'nail' : 'mg', V(), ev.gun) : null; const from = mz || ev.from; if (mz) spawnSparks(mz, null); if (ev.tracer) spawnTracer(from, ev.to); } if (ev.hit) spawnSparks(ev.to, ev.normal); if (ev.hitTarget){ hitMarkT = 0.12; sfx('hit'); } break;
       case 'kill': sfx('clank', 0.6); break;
-      case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '01 主武：57mm 滑膛炮' : state.weapon.active === 'mg' ? (bladeOn(state.weapon) ? '02 副武：螳螂鐮（按射擊：格擋 → 舉刀 → 左斬 → 右斬）' : '02 副武：14.5mm 機槍') : '03 腿部：釘槍（打中敵機＝禁錮；靠牆開槍＝釘住自己）', 1200); break;
+      case 'swap': sfx('hook'); toast(state.weapon.active === 'main' ? '01 主武：57mm 滑膛炮' : state.weapon.active === 'mg' ? (bladeOn(state.weapon) ? '02 副武：螳螂鐮（按射擊：格擋 → 舉刀 → 左斬 → 右斬）' : '02 副武：雙臂 14.5mm 機槍（左右交替射擊）') : '03 腿部：釘槍（打中敵機＝禁錮；靠牆開槍＝釘住自己）', 1200); break;
       case 'pin': sfx('clank', 0.8); buzz(25); flashT = 0.05; break;
       case 'unpin': sfx('miss'); break;
       case 'nailOut': toast('釘子用完了！', 1500); break;
@@ -5477,7 +5488,7 @@ $('optPaint').addEventListener('change', () => menuPaints());
 $('optPaint').addEventListener('change', () => profThumb());   // v4.5 換塗裝 → 大廳機體縮圖跟著換
 $('mHangar').addEventListener('click', () => menuGo('hangar'));
 // v3.9 機庫選裝：02 欄＝螳螂鐮／14.5mm 機槍（存在本機，下一場開始生效；練習中換也立刻生效）
-const S2_INFO = { blade: ['螳螂鐮', '按射擊：格擋（正面 ±30° 的子彈、砲彈、刀都擋得住，每擋一次磨損刀刃）→ 舉刀（再按，或擋下東西自動舉起，擋下後短暫硬直）→ 左斬 2250 → 0.7 秒內右斬 2250（合計 4500＝殘血，再用其他武器收尾）；連段結束冷卻 6 秒；刀刃耐久 100＋1 把備用刃（R 換刃、補給平台補），越鈍越砍不進去'], mg: ['14.5mm 機槍', '每分鐘 600 發、射程 500m；不能格擋'] };
+const S2_INFO = { blade: ['螳螂鐮', '按射擊：格擋（正面 ±30° 的子彈、砲彈、刀都擋得住，每擋一次磨損刀刃）→ 舉刀（再按，或擋下東西自動舉起，擋下後短暫硬直）→ 左斬 2250 → 0.7 秒內右斬 2250（合計 4500＝殘血，再用其他武器收尾）；連段結束冷卻 6 秒；刀刃耐久 100＋1 把備用刃（R 換刃、補給平台補），越鈍越砍不進去'], mg: ['雙臂 14.5mm 機槍', '雙臂 14.5mm 機槍（左右交替射擊）：左右兩挺交替，合計每分鐘 600 發、射程 500m；每挺的擴散看自己那隻手臂的耗損；不能格擋'] };
 function menuS2(){ $('mS2').textContent = _T(S2_INFO[LOADOUT.s2][0]); $('mS2Note').textContent = _T(S2_INFO[LOADOUT.s2][1]);
   for (const im of document.querySelectorAll('img.m-thumb[data-part]')) if (PART_IMG[im.dataset.part]) im.src = PART_IMG[im.dataset.part];
   if (PART_IMG[LOADOUT.s2]) $('mS2Img').src = PART_IMG[LOADOUT.s2];   // 選裝的零件圖
