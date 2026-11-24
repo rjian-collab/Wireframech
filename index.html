@@ -866,6 +866,8 @@ const D = {
   "戰術輔助器": ["戦術支援システム", "전술 보조 장치", "Tactical Assist"],
   "自機部位耗損 3D 線框、敵機受損部位紅色投影、格擋範圍、估計的敵方彈量與狀態（約）、射控預判": ["自機の部位損耗3Dワイヤー、敵機の損傷部位を赤く投影、ガード範囲、敵の残弾と状態の推定（約）、偏差射撃ガイド", "자기 기체 부위 마모 3D 와이어프레임, 적 기체 손상 부위 빨간 투영, 가드 범위, 적 잔탄·상태 추정(약), 사격 예측선", "3D wireframe of your part wear, red overlay on the enemy's damaged parts, guard arcs, estimated enemy ammo and status (≈), lead indicator"],
   "約": ["約", "약", "≈"],
+  "禁": ["拘", "구", "PIN"],
+  "破": ["破", "AB", "AB"],
   "冷卻": ["クールダウン", "쿨다운", "CD"],
   "射控預判": ["偏差射撃ガイド", "사격 예측선", "Lead indicator"],
   "主砲進入射程時，用虛線畫出敵人中彈當下的位置": ["主砲の射程内で、着弾時の敵の位置を点線で表示", "주포 사거리 안이면 명중 순간의 적 위치를 점선으로 표시", "In main-gun range, a dashed line shows where the enemy will be on impact"],
@@ -4636,7 +4638,7 @@ function hpCol(fr){ return fr > 0.6 ? 'rgb(127,245,224)' : fr > 0.3 ? '#ffc94a' 
 function miUpdate(dt){
   const want = running && match.state !== 'intro' && !document.body.classList.contains('inMenu') && hud.style.display !== 'none';   // 宣傳片錄影把 HUD 畫布藏起來時一起藏
   if (want !== MI.shown){ MI.shown = want; miEl.classList.toggle('on', want); kfEl.style.display = want ? '' : 'none'; if (want){ miEl.classList.remove('wo'); void miEl.offsetWidth; miEl.classList.add('wo'); kfLayout(); } }
-  if (!want) return;
+  if (!want){ if (match.state === 'intro' && tacOn() && mech.loaded) tacMiniPrebuild(); return; }   // v5.1 開場對戰畫面期間先算好線框（避免開打第一格卡一下）
   tacMiniUpdate(dt);   // v5.1 3D 線框（戰術輔助器）
   const P = state.player, w = local.weapon, pvp = match.mode === 'ai' || match.mode === 'net';
   const nm = profName(); if (miLast.nm !== nm){ miLast.nm = nm; miEl.dataset.name = nm; }
@@ -4736,6 +4738,8 @@ function tacMiniDraw(cv, data, P, ang, M){ const g = cv.getContext('2d'), W = cv
       const a0 = pj(L.hip), a1 = pj(knee), a2 = pj(L.cur); g.strokeStyle = tacWearCol(w, fl); g.globalAlpha = 0.95; g.beginPath(); g.moveTo(a0[0], a0[1]); g.lineTo(a1[0], a1[1]); g.lineTo(a2[0], a2[1]); g.stroke(); } }
   g.globalAlpha = 1; }
 const _tk = new THREE.Vector3();
+function tacMiniPrebuild(){ const T = TAC.mini || (TAC.mini = { t: 1, ang: 0.6, data: {} }), kit = bladeOn(local.weapon) ? 'blade' : 'mg'; if (T.data[kit]) return;
+  if (mech.setKit) mech.setKit(kit); const tb = performance.now(); T.data[kit] = tacMiniBuild(mech, kit); TAC.buildMs = performance.now() - tb; }
 function tacMiniUpdate(dt){ const cv = document.getElementById('miMech3'); if (!cv) return; const on = tacOn() && mech.loaded;
   if (miLast.tac3 !== on){ miLast.tac3 = on; miEl.classList.toggle('tac3', on); }
   const P = local.P; if (P.pfl) for (let i = 0; i < 6; i++) if (P.pfl[i] > 0) P.pfl[i] = Math.max(0, P.pfl[i] - dt * 2.5);
@@ -4743,7 +4747,7 @@ function tacMiniUpdate(dt){ const cv = document.getElementById('miMech3'); if (!
   const T = TAC.mini || (TAC.mini = { t: 1, ang: 0.6, data: {} }); T.ang += dt * 0.55; T.t += dt; if (T.t < 1 / TAC.fps) return; T.t = 0;
   const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1), Wp = Math.min(TAC.px, Math.round(r.width * dpr)), Hp = Math.min(TAC.px, Math.round(r.height * dpr));
   if (Wp > 4 && (cv.width !== Wp || cv.height !== Hp)){ cv.width = Wp; cv.height = Hp; }
-  const kit = bladeOn(local.weapon) ? 'blade' : 'mg'; if (!T.data[kit]){ if (mech.setKit) mech.setKit(kit); const tb = performance.now(); T.data[kit] = tacMiniBuild(mech, kit); TAC.buildMs = performance.now() - tb; }
+  tacMiniPrebuild(); const kit = bladeOn(local.weapon) ? 'blade' : 'mg';
   const t0 = performance.now(); tacMiniDraw(cv, T.data[kit], P, T.ang, mech); TAC.miniMs = performance.now() - t0; }
 // ---- 2 敵機部位紅色投影（每個網格加一個共用幾何的子網格；材質一個部位一份）----
 function tacOverlayBuild(M){ const mats = [0, 1, 2, 3, 4, 5].map(() => new THREE.MeshBasicMaterial({ color: 0xff1e10, wireframe: true, transparent: true, opacity: 0, depthWrite: false, toneMapped: false, visible: false }));
@@ -4785,12 +4789,21 @@ function tacEnemyTags(){ const E = tacEstTick(); if (!E || !bot) return []; cons
     if (st === 1) tags.push([_T('格擋'), '#9fe8ff']); else if (st === 2) tags.push([_T('攻擊'), '#ffc94a']); else if (st === 3) tags.push([_T('斬'), '#ff7a5c']);
     else if (cd > 0.3) tags.push([_T('冷卻') + ' ' + tacAbout(Math.max(1, Math.ceil(cd + E.cdNoise)) + 's'), '#9aa6b2']);
     else tags.push([_T('螳螂鐮'), '#ffc890']); }
-  if (bot.P.holdT > 0) tags.push([_T('禁錮') + ' ' + tacAbout(Math.max(1, Math.ceil(bot.P.holdT)) + 's'), '#ffd25a']);
-  if (bot.P.abT > 0) tags.push([_T('破甲') + ' ' + tacAbout(Math.max(1, Math.ceil(bot.P.abT)) + 's'), '#ff6a58']);
+  const sm = innerWidth < 720;   // 小螢幕：禁錮／破甲用短標籤
+  if (bot.P.holdT > 0) tags.push([_T(sm ? '禁' : '禁錮') + ' ' + tacAbout(Math.max(1, Math.ceil(bot.P.holdT)) + 's'), '#ffd25a']);
+  if (bot.P.abT > 0) tags.push([_T(sm ? '破' : '破甲') + ' ' + tacAbout(Math.max(1, Math.ceil(bot.P.abT)) + 's'), '#ff6a58']);
   return tags; }
 function tacDrawEnemyTags(c, x, y, k){ const tags = tacEnemyTags(); hudDbg.etac = tags.map(t => t[0]); if (!tags.length) return;
   const fs = Math.max(9, Math.round(9.5 * k)); c.font = `700 ${fs}px sans-serif`; c.textAlign = 'left';
-  const ws = tags.map(t => c.measureText(t[0]).width + 6), tw = ws.reduce((a, b) => a + b, 0) + (tags.length - 1) * 3; let cx2 = clamp(x - tw / 2, 4, innerWidth - tw - 4);
+  // 不蓋住觸控按鈕：跟按鈕重疊就左右挪；挪不開就從後面的標籤開始拿掉
+  const now = performance.now(); if (!TAC.btnT || now - TAC.btnT > 1000){ TAC.btnT = now; TAC.btns = [...document.querySelectorAll('#touch .btn, #stickBase')].map(e => e.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0); }
+  const hitB = (x0, w0) => (TAC.btns || []).some(r => x0 < r.right + 2 && x0 + w0 > r.left - 2 && y < r.bottom + 2 && y + fs + 4 > r.top - 2);
+  let ws, tw, cx2;
+  for (;;){ ws = tags.map(t => c.measureText(t[0]).width + 6); tw = ws.reduce((a, b) => a + b, 0) + (tags.length - 1) * 3; cx2 = clamp(x - tw / 2, 4, innerWidth - tw - 4);
+    if (!hitB(cx2, tw)) break; let ok = false;
+    for (const r of TAC.btns || []){ for (const nx of [r.right + 4, r.left - tw - 4]){ if (nx >= 4 && nx + tw <= innerWidth - 4 && Math.abs(nx + tw / 2 - x) < 160 && !hitB(nx, tw)){ cx2 = nx; ok = true; break; } } if (ok) break; }
+    if (ok) break; if (tags.length <= 1){ hudDbg.etac = []; return; } tags.pop(); }
+  hudDbg.etac = tags.map(t => t[0]);
   tags.forEach((t, i) => { c.fillStyle = 'rgba(6,20,22,.72)'; c.fillRect(cx2, y, ws[i], fs + 4); c.strokeStyle = t[1]; c.lineWidth = 1; c.strokeRect(cx2 + 0.5, y + 0.5, ws[i] - 1, fs + 3);
     c.fillStyle = t[1]; c.fillText(t[0], cx2 + 3, y + fs); cx2 += ws[i] + 3; }); }
 // ---- 擊破卡片 ----
